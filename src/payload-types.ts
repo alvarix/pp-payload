@@ -168,6 +168,9 @@ export interface Media {
 export interface Event {
   id: number;
   title: string;
+  /**
+   * Auto-generated from title. Edit only if needed.
+   */
   slug: string;
   startAt: string;
   endAt?: string | null;
