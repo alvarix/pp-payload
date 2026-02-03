@@ -152,6 +152,9 @@ export interface User {
  */
 export interface Media {
   id: number;
+  /**
+   * Auto-generated from filename. Edit if needed.
+   */
   alt: string;
   updatedAt: string;
   createdAt: string;
