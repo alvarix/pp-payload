@@ -71,6 +71,7 @@ export interface Config {
     media: Media;
     events: Event;
     clients: Client;
+    jobs: Job;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -82,6 +83,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
     clients: ClientsSelect<false> | ClientsSelect<true>;
+    jobs: JobsSelect<false> | JobsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -230,6 +232,102 @@ export interface Client {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "jobs".
+ */
+export interface Job {
+  id: number;
+  /**
+   * Customer who commissioned this work
+   */
+  client: number | Client;
+  status:
+    | 'new'
+    | 'intake_received'
+    | 'in_progress'
+    | 'awaiting_pics'
+    | 'ready_to_ship'
+    | 'delivered'
+    | 'portfolio_ready';
+  /**
+   * Auto-calculated: true if any pet has pics uploaded
+   */
+  pics_received?: boolean | null;
+  payment_methods?:
+    | {
+        method?: ('stripe' | 'cash' | 'check' | 'other') | null;
+        amount?: number | null;
+        date?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * From Stripe webhook
+   */
+  stripe_payment_intent_id?: string | null;
+  /**
+   * From Stripe webhook
+   */
+  stripe_customer_id?: string | null;
+  /**
+   * Mirrored from Stripe at checkout
+   */
+  shipping_address?: {
+    line1?: string | null;
+    line2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postal_code?: string | null;
+    country?: string | null;
+  };
+  /**
+   * How did you hear about us?
+   */
+  referral?: string | null;
+  due_date?: string | null;
+  notes?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Pet information from intake form
+   */
+  pets: {
+    name: string;
+    sex?: ('male' | 'female' | 'unknown') | null;
+    /**
+     * Breed and markings
+     */
+    breed?: string | null;
+    /**
+     * Personality notes from intake form
+     */
+    personality?: string | null;
+    /**
+     * Pet's social media handles
+     */
+    social_media?: string | null;
+    /**
+     * Reference photos uploaded by client
+     */
+    pics?: (number | Media)[] | null;
+    id?: string | null;
+  }[];
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -267,6 +365,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'clients';
         value: number | Client;
+      } | null)
+    | ({
+        relationTo: 'jobs';
+        value: number | Job;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -382,6 +484,51 @@ export interface ClientsSelect<T extends boolean = true> {
     | T
     | {
         tag?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "jobs_select".
+ */
+export interface JobsSelect<T extends boolean = true> {
+  client?: T;
+  status?: T;
+  pics_received?: T;
+  payment_methods?:
+    | T
+    | {
+        method?: T;
+        amount?: T;
+        date?: T;
+        id?: T;
+      };
+  stripe_payment_intent_id?: T;
+  stripe_customer_id?: T;
+  shipping_address?:
+    | T
+    | {
+        line1?: T;
+        line2?: T;
+        city?: T;
+        state?: T;
+        postal_code?: T;
+        country?: T;
+      };
+  referral?: T;
+  due_date?: T;
+  notes?: T;
+  pets?:
+    | T
+    | {
+        name?: T;
+        sex?: T;
+        breed?: T;
+        personality?: T;
+        social_media?: T;
+        pics?: T;
         id?: T;
       };
   updatedAt?: T;

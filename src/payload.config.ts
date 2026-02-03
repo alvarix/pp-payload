@@ -1,3 +1,4 @@
+import { Jobs } from "./collections/Jobs";
 import { Clients } from "./collections/Clients";
 import { Events } from "./collections/Events";
 import { postgresAdapter } from "@payloadcms/db-postgres";
@@ -20,7 +21,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Events, Clients],
+  collections: [Users, Media, Events, Clients, Jobs],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "",
   typescript: {
