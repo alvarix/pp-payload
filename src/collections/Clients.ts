@@ -1,9 +1,3 @@
-import type { CollectionConfig } from "payload";
-
-/**
- * Clients collection
- * Central contact list - source of truth for all customer information
- */
 export const Clients: CollectionConfig = {
   slug: "clients",
   admin: {
@@ -17,16 +11,19 @@ export const Clients: CollectionConfig = {
     {
       name: "first_name",
       type: "text",
+      label: "First Name",
       required: true,
     },
     {
       name: "last_name",
       type: "text",
+      label: "Last Name",
       required: true,
     },
     {
       name: "email",
       type: "email",
+      label: "Email",
       required: true,
       unique: true,
       index: true,
@@ -34,11 +31,13 @@ export const Clients: CollectionConfig = {
     {
       name: "phone",
       type: "text",
+      label: "Phone",
       index: true,
     },
     {
       name: "marketing_consent",
       type: "checkbox",
+      label: "Marketing Consent",
       defaultValue: false,
       admin: {
         description: "Client has consented to marketing emails",
@@ -47,6 +46,7 @@ export const Clients: CollectionConfig = {
     {
       name: "portfolio_consent",
       type: "checkbox",
+      label: "Portfolio Consent",
       defaultValue: false,
       admin: {
         description: "Client has consented to portfolio display",
@@ -55,10 +55,12 @@ export const Clients: CollectionConfig = {
     {
       name: "tags",
       type: "array",
+      label: "Tags",
       fields: [
         {
           name: "tag",
           type: "text",
+          label: "Tag",
         },
       ],
       admin: {
