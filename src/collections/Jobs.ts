@@ -188,5 +188,142 @@ export const Jobs: CollectionConfig = {
         description: "Pet information from intake form",
       },
     },
+    // Portfolio fields - for displaying finished work
+    {
+      name: "portfolio",
+      type: "group",
+      label: "Portfolio",
+      fields: [
+        {
+          name: "images",
+          type: "array",
+          label: "Portfolio Images",
+          fields: [
+            {
+              name: "image",
+              type: "upload",
+              label: "Image",
+              relationTo: "media",
+              required: true,
+            },
+            {
+              name: "image_tags",
+              type: "select",
+              label: "Image Tags",
+              hasMany: true,
+              options: [
+                { label: "Main", value: "main" },
+                { label: "Thumbnail", value: "thumbnail" },
+                { label: "Alternate View", value: "alternate" },
+                { label: "WIP", value: "wip" },
+                { label: "Detail", value: "detail" },
+              ],
+              admin: {
+                description:
+                  "Tag images to designate usage (can select multiple). Change tags to swap which is main/thumb without re-uploading.",
+              },
+            },
+          ],
+          admin: {
+            description: "Finished artwork images with flexible tagging",
+          },
+        },
+        {
+          name: "reference_images",
+          type: "array",
+          label: "Portfolio Reference Images",
+          fields: [
+            {
+              name: "image",
+              type: "upload",
+              label: "Image",
+              relationTo: "media",
+              admin: {
+                description:
+                  "Original intake pic or edited version for portfolio display",
+              },
+            },
+            {
+              name: "is_original",
+              type: "checkbox",
+              label: "Original Intake Photo",
+              defaultValue: true,
+              admin: {
+                description: "Uncheck if this is an altered/cropped version",
+              },
+            },
+            {
+              name: "reference_tags",
+              type: "select",
+              label: "Reference Tags",
+              hasMany: true,
+              options: [
+                { label: "Featured", value: "featured" },
+                { label: "Before", value: "before" },
+                { label: "Cropped", value: "cropped" },
+                { label: "Enhanced", value: "enhanced" },
+              ],
+              admin: {
+                description: "Tag reference images for display context",
+              },
+            },
+          ],
+          admin: {
+            description:
+              "Reference photos to display in portfolio (select from intake pics or upload altered versions)",
+          },
+        },
+        {
+          name: "testimonial",
+          type: "richText",
+          label: "Testimonial",
+          admin: {
+            description: "Client testimonial or feedback",
+          },
+        },
+        {
+          name: "portfolio_status",
+          type: "select",
+          label: "Portfolio Status",
+          defaultValue: "hidden",
+          options: [
+            { label: "Hidden", value: "hidden" },
+            { label: "Draft", value: "draft" },
+            { label: "Published", value: "published" },
+          ],
+          admin: {
+            description: "Only published items appear on public portfolio",
+          },
+        },
+        {
+          name: "featured",
+          type: "checkbox",
+          label: "Featured",
+          defaultValue: false,
+          admin: {
+            description: "Highlight on homepage",
+          },
+        },
+        {
+          name: "portfolio_tags",
+          type: "array",
+          label: "Portfolio Tags",
+          fields: [
+            {
+              name: "tag",
+              type: "text",
+              label: "Tag",
+            },
+          ],
+          admin: {
+            description: 'Categories (e.g., "dog", "cat", "watercolor")',
+          },
+        },
+      ],
+      admin: {
+        description:
+          "Portfolio display settings - completed artwork for public showcase",
+      },
+    },
   ],
 };
