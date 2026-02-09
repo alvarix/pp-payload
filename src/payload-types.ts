@@ -287,21 +287,7 @@ export interface Job {
    */
   referral?: string | null;
   due_date?: string | null;
-  notes?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
+  notes?: string | null;
   /**
    * Pet information from intake form
    */

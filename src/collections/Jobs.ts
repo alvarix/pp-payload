@@ -1,3 +1,5 @@
+import type { CollectionConfig } from "payload";
+
 export const Jobs: CollectionConfig = {
   slug: "jobs",
   admin: {
@@ -123,7 +125,7 @@ export const Jobs: CollectionConfig = {
     },
     {
       name: "notes",
-      type: "richText",
+      type: "textarea",
       label: "Notes",
     },
     {
