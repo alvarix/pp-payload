@@ -1,67 +1,90 @@
-# Payload Blank Template
+# pp-v2
 
-This template comes configured with the bare minimum to get started on anything you need.
+Portfolio/project management CMS built with Payload 3 and Next.js 15.
 
-## Quick start
+## Tech Stack
 
-This template can be deployed directly from our Cloud hosting and it will setup MongoDB and cloud S3 object storage for media.
-
-## Quick Start - local setup
-
-To spin up this template locally, follow these steps:
-
-### Clone
-
-After you click the `Deploy` button above, you'll want to have standalone copy of this repo on your machine. If you've already cloned this repo, skip to [Development](#development).
-
-### Development
-
-1. First [clone the repo](#clone) if you have not done so already
-2. `cd my-project && cp .env.example .env` to copy the example environment variables. You'll need to add the `MONGODB_URL` from your Cloud project to your `.env` if you want to use S3 storage and the MongoDB database that was created for you.
-
-3. `pnpm install && pnpm dev` to install dependencies and start the dev server
-4. open `http://localhost:3000` to open the app in your browser
-
-That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
-
-#### Docker (Optional)
-
-If you prefer to use Docker for local development instead of a local MongoDB instance, the provided docker-compose.yml file can be used.
-
-To do so, follow these steps:
-
-- Modify the `MONGODB_URL` in your `.env` file to `mongodb://127.0.0.1/<dbname>`
-- Modify the `docker-compose.yml` file's `MONGODB_URL` to match the above `<dbname>`
-- Run `docker-compose up` to start the database, optionally pass `-d` to run in the background.
-
-## How it works
-
-The Payload config is tailored specifically to the needs of most websites. It is pre-configured in the following ways:
+| Layer | Technology |
+|---|---|
+| Framework | [Next.js](https://nextjs.org/) 15 (App Router) |
+| CMS | [Payload](https://payloadcms.com/) 3.72 |
+| Database | PostgreSQL 16 (via `@payloadcms/db-postgres`) |
+| Styling | Tailwind CSS 4 |
+| Rich Text | Lexical (`@payloadcms/richtext-lexical`) |
+| Language | TypeScript 5.7 |
+| Runtime | Node 20+ |
+| Package Manager | pnpm 9+ |
 
 ### Collections
 
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
+- **Users** — admin auth
+- **Media** — image uploads with resizing (sharp)
+- **Clients**
+- **Events**
+- **Jobs**
 
-- #### Users (Authentication)
+## Local Setup
 
-  Users are auth-enabled collections that have access to the admin panel.
+### Prerequisites
 
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/main/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
+- Node >= 20.9.0
+- pnpm >= 9
+- Docker (for Postgres)
 
-- #### Media
+### Environment
 
-  This is the uploads enabled collection. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
+Create a `.env` file in the project root:
 
-### Docker
+```env
+DATABASE_URL=postgresql://payload:payload@127.0.0.1:5432/payload
+PAYLOAD_SECRET=your-secret-here
+```
 
-Alternatively, you can use [Docker](https://www.docker.com) to spin up this template locally. To do so, follow these steps:
+### Start Postgres via Docker
 
-1. Follow [steps 1 and 2 from above](#development), the docker-compose file will automatically use the `.env` file in your project root
-1. Next run `docker-compose up`
-1. Follow [steps 4 and 5 from above](#development) to login and create your first admin user
+```bash
+docker-compose up -d
+```
 
-That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
+This runs Postgres 16 on port `5432` with:
 
-## Questions
+- user: `payload`
+- password: `payload`
+- database: `payload`
 
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+Data is persisted in a named Docker volume (`pgdata`).
+
+### Install and run
+
+```bash
+pnpm install
+pnpm dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). The first time you visit, you'll be prompted to create an admin user.
+
+The admin panel is at [http://localhost:3000/admin](http://localhost:3000/admin).
+
+### Useful scripts
+
+```bash
+pnpm dev            # start dev server
+pnpm devsafe        # clear .next cache and start dev server
+pnpm build          # production build
+pnpm start          # serve production build
+pnpm generate:types # regenerate payload-types.ts
+pnpm lint           # ESLint
+pnpm test           # run all tests (integration + e2e)
+pnpm test:int       # Vitest integration tests
+pnpm test:e2e       # Playwright e2e tests
+```
+
+## Project Structure
+
+```
+src/
+  app/           # Next.js App Router pages and API routes
+  collections/   # Payload collection configs
+  payload.config.ts
+  payload-types.ts
+```

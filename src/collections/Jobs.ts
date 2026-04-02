@@ -33,7 +33,10 @@ export const Jobs: CollectionConfig = {
         { label: "New (intake pending)", value: "new" },
         { label: "Intake received", value: "intake_received" },
         { label: "In progress", value: "in_progress" },
-        { label: "Awaiting pics", value: "awaiting_pics" },
+        {
+          label: "Awaiting pics or payment",
+          value: "awaiting_pics_or_payment",
+        },
         { label: "Ready to ship", value: "ready_to_ship" },
         { label: "Delivered", value: "delivered" },
         { label: "Portfolio ready", value: "portfolio_ready" },

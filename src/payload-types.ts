@@ -77,7 +77,11 @@ export interface Config {
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    clients: {
+      jobs: 'jobs';
+    };
+  };
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
@@ -209,10 +213,23 @@ export interface Event {
  */
 export interface Client {
   id: number;
+  jobs?: {
+    docs?: (number | Job)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   first_name: string;
   last_name: string;
   email: string;
+  pet?: string | null;
+  pet_notes?: string | null;
+  notes?: string | null;
+  status?: ('interested' | 'ready' | 'drawn' | 'delivered') | null;
+  delivery?: ('usps' | 'pickup' | 'other') | null;
+  payment?: ('website' | 'pos' | 'zelle' | 'venmo' | 'cash' | 'other') | null;
   phone?: string | null;
+  company?: string | null;
+  price?: number | null;
   /**
    * Client has consented to marketing emails
    */
@@ -222,7 +239,7 @@ export interface Client {
    */
   portfolio_consent?: boolean | null;
   /**
-   * Tags for Mailchimp sync
+   * Tags for Segmentation
    */
   tags?:
     | {
@@ -247,7 +264,7 @@ export interface Job {
     | 'new'
     | 'intake_received'
     | 'in_progress'
-    | 'awaiting_pics'
+    | 'awaiting_pics_or_payment'
     | 'ready_to_ship'
     | 'delivered'
     | 'portfolio_ready';
@@ -536,10 +553,19 @@ export interface EventsSelect<T extends boolean = true> {
  * via the `definition` "clients_select".
  */
 export interface ClientsSelect<T extends boolean = true> {
+  jobs?: T;
   first_name?: T;
   last_name?: T;
   email?: T;
+  pet?: T;
+  pet_notes?: T;
+  notes?: T;
+  status?: T;
+  delivery?: T;
+  payment?: T;
   phone?: T;
+  company?: T;
+  price?: T;
   marketing_consent?: T;
   portfolio_consent?: T;
   tags?:
