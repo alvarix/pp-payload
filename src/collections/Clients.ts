@@ -17,6 +17,9 @@ export const Clients: CollectionConfig = {
       label: "Jobs",
       collection: "jobs",
       on: "client",
+      admin: {
+        defaultColumns: ["pet_names", "status", "due_date"],
+      },
     },
     {
       name: "first_name",

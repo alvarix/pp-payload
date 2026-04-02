@@ -333,5 +333,24 @@ export const Jobs: CollectionConfig = {
           "Portfolio display settings - completed artwork for public showcase",
       },
     },
+    {
+      name: "pet_names",
+      type: "text",
+      label: "Pets",
+      virtual: true,
+      admin: {
+        readOnly: true,
+      },
+    }
   ],
+  hooks: {
+    beforeRead: [
+      ({ doc }) => {
+        if (doc?.pets?.length) {
+          doc.pet_names = doc.pets.map((p) => p.name).join(", ");
+        }
+        return doc;
+      },
+    ],
+  },
 };

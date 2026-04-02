@@ -397,6 +397,7 @@ export interface Job {
         }[]
       | null;
   };
+  pet_names?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -637,6 +638,7 @@ export interface JobsSelect<T extends boolean = true> {
               id?: T;
             };
       };
+  pet_names?: T;
   updatedAt?: T;
   createdAt?: T;
 }
