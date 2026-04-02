@@ -219,14 +219,9 @@ export interface Client {
     totalDocs?: number;
   };
   first_name: string;
-  last_name: string;
+  last_name?: string | null;
   email: string;
-  pet?: string | null;
-  pet_notes?: string | null;
   notes?: string | null;
-  status?: ('interested' | 'ready' | 'drawn' | 'delivered') | null;
-  delivery?: ('usps' | 'pickup' | 'other') | null;
-  payment?: ('website' | 'pos' | 'zelle' | 'venmo' | 'cash' | 'other') | null;
   phone?: string | null;
   company?: string | null;
   price?: number | null;
@@ -260,6 +255,32 @@ export interface Job {
    * Customer who commissioned this work
    */
   client: number | Client;
+  due_date?: string | null;
+  notes?: string | null;
+  /**
+   * Pet information from intake form
+   */
+  pets: {
+    name: string;
+    sex?: ('male' | 'female' | 'unknown') | null;
+    /**
+     * Breed and markings
+     */
+    breed?: string | null;
+    /**
+     * Personality notes from intake form
+     */
+    personality?: string | null;
+    /**
+     * Pet's social media handles
+     */
+    social_media?: string | null;
+    /**
+     * Reference photos uploaded by client
+     */
+    pics?: (number | Media)[] | null;
+    id?: string | null;
+  }[];
   status:
     | 'new'
     | 'intake_received'
@@ -274,7 +295,7 @@ export interface Job {
   pics_received?: boolean | null;
   payment_methods?:
     | {
-        method?: ('stripe' | 'cash' | 'check' | 'other') | null;
+        method?: ('website' | 'pos' | 'cash' | 'venmo' | 'zelle' | 'other') | null;
         amount?: number | null;
         date?: string | null;
         id?: string | null;
@@ -303,32 +324,6 @@ export interface Job {
    * How did you hear about us?
    */
   referral?: string | null;
-  due_date?: string | null;
-  notes?: string | null;
-  /**
-   * Pet information from intake form
-   */
-  pets: {
-    name: string;
-    sex?: ('male' | 'female' | 'unknown') | null;
-    /**
-     * Breed and markings
-     */
-    breed?: string | null;
-    /**
-     * Personality notes from intake form
-     */
-    personality?: string | null;
-    /**
-     * Pet's social media handles
-     */
-    social_media?: string | null;
-    /**
-     * Reference photos uploaded by client
-     */
-    pics?: (number | Media)[] | null;
-    id?: string | null;
-  }[];
   /**
    * Portfolio display settings - completed artwork for public showcase
    */
@@ -557,12 +552,7 @@ export interface ClientsSelect<T extends boolean = true> {
   first_name?: T;
   last_name?: T;
   email?: T;
-  pet?: T;
-  pet_notes?: T;
   notes?: T;
-  status?: T;
-  delivery?: T;
-  payment?: T;
   phone?: T;
   company?: T;
   price?: T;
@@ -583,6 +573,19 @@ export interface ClientsSelect<T extends boolean = true> {
  */
 export interface JobsSelect<T extends boolean = true> {
   client?: T;
+  due_date?: T;
+  notes?: T;
+  pets?:
+    | T
+    | {
+        name?: T;
+        sex?: T;
+        breed?: T;
+        personality?: T;
+        social_media?: T;
+        pics?: T;
+        id?: T;
+      };
   status?: T;
   pics_received?: T;
   payment_methods?:
@@ -606,19 +609,6 @@ export interface JobsSelect<T extends boolean = true> {
         country?: T;
       };
   referral?: T;
-  due_date?: T;
-  notes?: T;
-  pets?:
-    | T
-    | {
-        name?: T;
-        sex?: T;
-        breed?: T;
-        personality?: T;
-        social_media?: T;
-        pics?: T;
-        id?: T;
-      };
   portfolio?:
     | T
     | {
