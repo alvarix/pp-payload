@@ -24,6 +24,7 @@
     "@payloadcms/ui": "3.72.0",
     "@tailwindcss/postcss": "^4.1.18",
     "cross-env": "^7.0.3",
+    "csv-parser": "^3.2.0",
     "dotenv": "16.4.7",
     "graphql": "^16.8.1",
     "next": "15.4.10",
@@ -47,6 +48,7 @@
     "playwright": "1.56.1",
     "playwright-core": "1.56.1",
     "prettier": "^3.4.2",
+    "tsx": "^4.21.0",
     "typescript": "5.7.3",
     "vite-tsconfig-paths": "5.1.4",
     "vitest": "3.2.3"

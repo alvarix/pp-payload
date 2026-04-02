@@ -218,7 +218,7 @@ export interface Client {
     hasNextPage?: boolean;
     totalDocs?: number;
   };
-  first_name: string;
+  first_name?: string | null;
   last_name?: string | null;
   email: string;
   notes?: string | null;

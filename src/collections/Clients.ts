@@ -25,7 +25,6 @@ export const Clients: CollectionConfig = {
       name: "first_name",
       type: "text",
       label: "First Name",
-      required: true,
     },
     {
       name: "last_name",
