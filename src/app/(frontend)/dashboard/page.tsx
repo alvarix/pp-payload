@@ -74,12 +74,20 @@ export default async function DashboardPage() {
     limit: 0,
   });
 
-  // Delivered jobs without a portfolio testimonial = feedback opportunity
-  const { totalDocs: feedbackCount } = await payload.find({
+  // Jobs awaiting client info (pics or payment)
+  const { totalDocs: needInfoCount } = await payload.find({
     collection: "jobs",
-    where: { status: { equals: "delivered" } },
+    where: { status: { equals: "awaiting_pics_or_payment" } },
     limit: 0,
   });
+
+  // Jobs where client has given feedback (portfolio testimonial exists)
+  const { docs: jobsWithTestimonial } = await payload.find({
+    collection: "jobs",
+    where: { "portfolio.testimonial": { exists: true } },
+    limit: 0,
+  });
+  const feedbackCount = jobsWithTestimonial.length;
 
   // Total client count
   const { totalDocs: totalClients } = await payload.find({
@@ -180,6 +188,7 @@ export default async function DashboardPage() {
 
       <StatsBar
         activeJobCount={activeJobs.length}
+        needInfoCount={needInfoCount}
         drawnCount={drawnCount}
         feedbackCount={feedbackCount}
         totalClients={totalClients}
