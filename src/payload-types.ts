@@ -72,6 +72,7 @@ export interface Config {
     events: Event;
     clients: Client;
     jobs: Job;
+    leads: Lead;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -88,6 +89,7 @@ export interface Config {
     events: EventsSelect<false> | EventsSelect<true>;
     clients: ClientsSelect<false> | ClientsSelect<true>;
     jobs: JobsSelect<false> | JobsSelect<true>;
+    leads: LeadsSelect<false> | LeadsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -255,6 +257,10 @@ export interface Job {
    * Customer who commissioned this work
    */
   client: number | Client;
+  /**
+   * Link to a venue Lead for event/bulk orders
+   */
+  lead?: (number | null) | Lead;
   due_date?: string | null;
   notes?: string | null;
   /**
@@ -403,6 +409,46 @@ export interface Job {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "leads".
+ */
+export interface Lead {
+  id: number;
+  name: string;
+  type: 'brewery' | 'pet_store' | 'gift_shop' | 'gallery' | 'cafe' | 'venue' | 'other';
+  address?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  placeId?: string | null;
+  /**
+   * Handle only, no @
+   */
+  instagram?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  preferredContactMethod?: ('email' | 'instagram_dm' | 'contact_form' | 'phone' | 'in_person') | null;
+  dogFriendly?: boolean | null;
+  hasEventSpace?: boolean | null;
+  popUpHistory?: boolean | null;
+  independentlyOwned?: boolean | null;
+  rating?: number | null;
+  fitScore?: ('top_tier' | 'strong' | 'worth_trying') | null;
+  fitNotes?: string | null;
+  status: 'researched' | 'contacted' | 'responded' | 'meeting_scheduled' | 'confirmed' | 'declined' | 'no_response';
+  dateContacted?: string | null;
+  followUpDate?: string | null;
+  responseNotes?: string | null;
+  eventDate?: string | null;
+  eventTerms?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -444,6 +490,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'jobs';
         value: number | Job;
+      } | null)
+    | ({
+        relationTo: 'leads';
+        value: number | Lead;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -574,6 +624,7 @@ export interface ClientsSelect<T extends boolean = true> {
  */
 export interface JobsSelect<T extends boolean = true> {
   client?: T;
+  lead?: T;
   due_date?: T;
   notes?: T;
   pets?:
@@ -639,6 +690,42 @@ export interface JobsSelect<T extends boolean = true> {
             };
       };
   pet_names?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "leads_select".
+ */
+export interface LeadsSelect<T extends boolean = true> {
+  name?: T;
+  type?: T;
+  address?: T;
+  neighborhood?: T;
+  city?: T;
+  state?: T;
+  country?: T;
+  latitude?: T;
+  longitude?: T;
+  placeId?: T;
+  instagram?: T;
+  email?: T;
+  phone?: T;
+  website?: T;
+  preferredContactMethod?: T;
+  dogFriendly?: T;
+  hasEventSpace?: T;
+  popUpHistory?: T;
+  independentlyOwned?: T;
+  rating?: T;
+  fitScore?: T;
+  fitNotes?: T;
+  status?: T;
+  dateContacted?: T;
+  followUpDate?: T;
+  responseNotes?: T;
+  eventDate?: T;
+  eventTerms?: T;
   updatedAt?: T;
   createdAt?: T;
 }
