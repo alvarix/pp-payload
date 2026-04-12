@@ -8,7 +8,7 @@ import { StatsBar } from "./components/StatsBar";
 import { OverdueAlert } from "./components/OverdueAlert";
 import { StatusColumn } from "./components/StatusColumn";
 
-/** Status values considered "active" (not delivered/portfolio_ready). */
+/** Status values shown as columns (not delivered or archived). */
 const ACTIVE_STATUSES = [
   "new",
   "intake_received",
@@ -28,7 +28,7 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
 
 /**
  * Stale thresholds in days, keyed by job status.
- * A job is "stale" if updatedAt is older than the threshold.
+ * A job is considered stale if updatedAt exceeds this threshold.
  */
 export const STALE_THRESHOLDS: Record<string, number> = {
   new: 3,
@@ -37,10 +37,9 @@ export const STALE_THRESHOLDS: Record<string, number> = {
 };
 
 /**
- * Determines whether a job is stale based on its status and updatedAt.
+ * Returns days stale for a job, or 0 if not stale.
  * @param status - current job status
  * @param updatedAt - ISO date string of last update
- * @returns number of days stale, or 0 if not stale
  */
 export function getDaysStale(status: string, updatedAt: string | undefined): number {
   if (!updatedAt) return 0;
@@ -59,53 +58,73 @@ export default async function DashboardPage() {
   const { user } = await payload.auth({ headers });
   if (!user) redirect("/admin/login");
 
-  // Fetch active jobs with populated client
+  // Active jobs (not delivered or portfolio_ready), with client populated
   const { docs: activeJobs } = await payload.find({
     collection: "jobs",
-    where: {
-      status: { not_in: ["delivered", "portfolio_ready"] },
-    },
+    where: { status: { not_in: ["delivered", "portfolio_ready"] } },
     sort: "due_date",
     limit: 200,
     depth: 1,
   });
 
-  // Fetch client counts
+  // Jobs ready to ship ("drawn, awaiting delivery")
+  const { totalDocs: drawnCount } = await payload.find({
+    collection: "jobs",
+    where: { status: { equals: "ready_to_ship" } },
+    limit: 0,
+  });
+
+  // Delivered jobs without a portfolio testimonial = feedback opportunity
+  const { totalDocs: feedbackCount } = await payload.find({
+    collection: "jobs",
+    where: { status: { equals: "delivered" } },
+    limit: 0,
+  });
+
+  // Total client count
   const { totalDocs: totalClients } = await payload.find({
     collection: "clients",
     limit: 0,
   });
 
-  // Fetch clients with tags for tag breakdown
-  const { docs: clientsWithTags } = await payload.find({
-    collection: "clients",
-    limit: 200,
+  // All jobs (shallow) to compute top clients by job count
+  const { docs: allJobs } = await payload.find({
+    collection: "jobs",
+    limit: 500,
+    depth: 1,
   });
 
-  // Build tag counts
-  const tagCounts: Record<string, number> = {};
-  for (const client of clientsWithTags) {
-    const tags = (client as any).tags as { tag: string }[] | undefined;
-    if (tags) {
-      for (const t of tags) {
-        if (t.tag) {
-          tagCounts[t.tag] = (tagCounts[t.tag] || 0) + 1;
-        }
-      }
+  // Count jobs per client ID
+  const jobCountByClientId: Record<number, { name: string; count: number; id: number }> = {};
+  for (const job of allJobs) {
+    const client = job.client as Client | null;
+    if (!client || typeof client !== "object") continue;
+    const id = client.id;
+    if (!jobCountByClientId[id]) {
+      const name =
+        [client.first_name, client.last_name].filter(Boolean).join(" ") ||
+        client.email;
+      jobCountByClientId[id] = { name, count: 0, id };
     }
+    jobCountByClientId[id].count++;
   }
 
-  // Leads summary: follow-ups due today or earlier
+  // Top 5 clients by job count
+  const topClients = Object.values(jobCountByClientId)
+    .filter((c) => c.count > 1)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
+    .map((c) => ({ name: c.name, jobCount: c.count, id: c.id }));
+
+  // Leads with follow-up due today or earlier
   const today = new Date().toISOString().split("T")[0];
   const { totalDocs: leadsNeedingFollowUp } = await payload.find({
     collection: "leads",
-    where: {
-      followUpDate: { less_than_equal: today },
-    },
+    where: { followUpDate: { less_than_equal: today } },
     limit: 0,
   });
 
-  // Group jobs by status
+  // Group active jobs by status for column rendering
   const jobsByStatus: Record<string, Job[]> = {};
   for (const status of ACTIVE_STATUSES) {
     jobsByStatus[status] = [];
@@ -117,57 +136,56 @@ export default async function DashboardPage() {
     }
   }
 
-  // Status counts for stats bar
-  const statusCounts: Record<string, number> = {};
-  for (const [status, jobs] of Object.entries(jobsByStatus)) {
-    statusCounts[status] = jobs.length;
-  }
-
-  // Detect stale jobs
+  // Detect stale/overdue jobs
   const staleJobs: { id: number; clientName: string; status: string; daysStale: number }[] = [];
   for (const job of activeJobs) {
     const days = getDaysStale(job.status as string, job.updatedAt);
     if (days > 0) {
       const client = job.client as Client | null;
-      const clientName = client
-        ? [client.first_name, client.last_name].filter(Boolean).join(" ") ||
-          client.email
-        : "Unknown";
-      staleJobs.push({
-        id: job.id,
-        clientName,
-        status: job.status as string,
-        daysStale: days,
-      });
+      const clientName =
+        client && typeof client === "object"
+          ? [client.first_name, client.last_name].filter(Boolean).join(" ") ||
+            client.email
+          : "Unknown";
+      staleJobs.push({ id: job.id, clientName, status: job.status as string, daysStale: days });
     }
   }
-
-  const overdueCount = staleJobs.length;
 
   return (
     <div className="p-6 max-w-[1400px] mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <a
-          href="/admin/collections/leads"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-        >
-          Leads
-          {leadsNeedingFollowUp > 0 && (
-            <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
-              {leadsNeedingFollowUp}
-            </span>
-          )}
-        </a>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <div className="flex items-center gap-2">
+          <a
+            href="/dashboard/import"
+            className="text-sm px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 text-gray-700"
+          >
+            Import CSV
+          </a>
+          <a
+            href="/admin/collections/leads"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+          >
+            Leads
+            {leadsNeedingFollowUp > 0 && (
+              <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                {leadsNeedingFollowUp}
+              </span>
+            )}
+          </a>
+        </div>
       </div>
 
       <StatsBar
         activeJobCount={activeJobs.length}
+        drawnCount={drawnCount}
+        feedbackCount={feedbackCount}
         totalClients={totalClients}
-        overdueCount={overdueCount}
+        overdueCount={staleJobs.length}
         leadsNeedingFollowUp={leadsNeedingFollowUp}
-        statusCounts={statusCounts}
-        tagCounts={tagCounts}
+        topClients={topClients}
       />
 
       <OverdueAlert staleJobs={staleJobs} />

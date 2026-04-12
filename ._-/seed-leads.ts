@@ -22,7 +22,9 @@ const BASE_URL = process.env.PAYLOAD_URL ?? "http://localhost:3000";
 const ADMIN_EMAIL = process.env.PAYLOAD_ADMIN_EMAIL ?? "";
 const ADMIN_PASSWORD = process.env.PAYLOAD_ADMIN_PASSWORD ?? "";
 
-const SEED_FILE = path.resolve("docs/outreach-leads-seed.json");
+const SEED_FILE = process.argv[2]
+  ? path.resolve(process.argv[2])
+  : path.resolve("docs/all-leads-seed.json");
 
 let authToken = "";
 
@@ -88,7 +90,8 @@ async function findLeadByName(name: string): Promise<any | null> {
 }
 
 async function run(): Promise<void> {
-  const seedData = JSON.parse(fs.readFileSync(SEED_FILE, "utf-8")) as any[];
+  const raw = JSON.parse(fs.readFileSync(SEED_FILE, "utf-8")) as any[];
+  const seedData = raw.filter((r) => r.name);
   console.log(`Loaded ${seedData.length} leads from seed file.\n`);
 
   await login();
