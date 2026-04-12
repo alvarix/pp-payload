@@ -15,6 +15,8 @@ Handles client intake, job tracking, portfolio management, and events. The publi
 - Shipping address
 - A portfolio group with images (tagged by role), testimonial, portfolio status, and featured flag
 
+**Leads** - outreach pipeline for pop-up event collaborations. Tracks business info, contact details, qualification (dog-friendly, event space, pop-up history), fit scoring, and outreach status through a 7-stage workflow: `researched → contacted → responded → meeting_scheduled → confirmed → declined → no_response`. Organized in tabs: Business Info, Contact, Qualification, Outreach.
+
 **Events** - calendar/marketing events with slug, dates, location, rich text description, image, and publish status.
 
 **Media** - image uploads with sharp resizing. Alt text is auto-generated from filename on upload.
@@ -87,6 +89,29 @@ pnpm test             # all tests (integration + e2e)
 pnpm test:int         # Vitest integration tests
 pnpm test:e2e         # Playwright e2e tests
 ```
+
+### Data import
+
+Import scripts live in `data_import/`. All require the dev server to be running.
+
+```bash
+# Import client leads (past collaborators) into the Clients collection
+PAYLOAD_EMAIL=admin@example.com PAYLOAD_PASSWORD=yourpassword \
+  node data_import/import-leads.mjs
+
+# Import all leads (past collaborators + prospects) into the Leads collection
+PAYLOAD_EMAIL=admin@example.com PAYLOAD_PASSWORD=yourpassword \
+  node data_import/import-all-leads.mjs
+
+# Dry run either script (prints what would be created, no changes)
+DRY_RUN=1 PAYLOAD_EMAIL=admin@example.com PAYLOAD_PASSWORD=yourpassword \
+  node data_import/import-all-leads.mjs
+```
+
+| Script | Target collection | Data file | Deduplicates on |
+|---|---|---|---|
+| `import-leads.mjs` | Clients | `leads.json` | email |
+| `import-all-leads.mjs` | Leads | `all-leads-seed.json` | name |
 
 ## Project structure
 

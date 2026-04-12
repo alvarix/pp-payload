@@ -217,6 +217,16 @@ export const Leads: CollectionConfig = {
               type: "textarea",
               label: "Event Terms",
             },
+            {
+              name: "events",
+              type: "join",
+              label: "Events",
+              collection: "events",
+              on: "lead",
+              admin: {
+                defaultColumns: ["title", "startAt", "status"],
+              },
+            },
           ],
         },
       ],

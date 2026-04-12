@@ -90,5 +90,17 @@ export const Events: CollectionConfig = {
       type: "checkbox",
       defaultValue: false,
     },
+    {
+      name: "lead",
+      type: "relationship",
+      label: "Venue (Lead)",
+      relationTo: "leads",
+      required: false,
+      hasMany: false,
+      admin: {
+        description: "Link to the venue Lead record for this event",
+        position: "sidebar",
+      },
+    },
   ],
 };
