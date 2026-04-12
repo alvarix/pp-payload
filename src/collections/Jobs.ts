@@ -23,6 +23,17 @@ export const Jobs: CollectionConfig = {
       },
     },
     {
+      name: "lead",
+      type: "relationship",
+      label: "Venue / Lead",
+      relationTo: "leads",
+      required: false,
+      hasMany: false,
+      admin: {
+        description: "Link to a venue Lead for event/bulk orders",
+      },
+    },
+    {
       name: "due_date",
       type: "date",
       label: "Due Date",
