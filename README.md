@@ -1,29 +1,44 @@
 # pp-v2
 
-Portfolio/project management CMS built with Payload 3 and Next.js 15.
+CRM and portfolio backend for a pet portrait business. Built with Payload 3 and Next.js 15, backed by PostgreSQL.
 
-## Tech Stack
+Handles client intake, job tracking, portfolio management, and events. The public-facing shop runs on a separate WordPress site - see [bulk-cpt-pay](https://github.com/alvarix/bulk-cpt-pay) for that plugin.
+
+## Collections
+
+**Clients** - core CRM entity. Stores contact info, consent flags (marketing, portfolio), and tags for segmentation. A `jobs` join field gives a reverse-lookup of all jobs for a given client. Deletion is blocked if linked jobs exist.
+
+**Jobs** - the main work unit. Each job belongs to a client and tracks:
+- One or more pets (name, sex, breed, personality, social handle, reference photos)
+- Status through a 7-stage workflow: `new → intake_received → in_progress → awaiting_pics_or_payment → ready_to_ship → delivered → portfolio_ready`
+- Payment records (method, amount, date) and Stripe IDs
+- Shipping address
+- A portfolio group with images (tagged by role), testimonial, portfolio status, and featured flag
+
+**Events** - calendar/marketing events with slug, dates, location, rich text description, image, and publish status.
+
+**Media** - image uploads with sharp resizing. Alt text is auto-generated from filename on upload.
+
+**Users** - admin authentication.
+
+## API routes
+
+`POST /api/intake` - public intake form endpoint. Accepts client contact info, pet data, and photo uploads. Creates or updates the client by email and creates a job. Used by the intake form at `/intake`.
+
+## Tech stack
 
 | Layer | Technology |
 |---|---|
-| Framework | [Next.js](https://nextjs.org/) 15 (App Router) |
-| CMS | [Payload](https://payloadcms.com/) 3.72 |
-| Database | PostgreSQL 16 (via `@payloadcms/db-postgres`) |
+| Framework | Next.js 15 (App Router) |
+| CMS | Payload 3.72 |
+| Database | PostgreSQL 16 via `@payloadcms/db-postgres` |
 | Styling | Tailwind CSS 4 |
-| Rich Text | Lexical (`@payloadcms/richtext-lexical`) |
+| Rich text | Lexical |
 | Language | TypeScript 5.7 |
 | Runtime | Node 20+ |
-| Package Manager | pnpm 9+ |
+| Package manager | pnpm 9+ |
 
-### Collections
-
-- **Users** — admin auth
-- **Media** — image uploads with resizing (sharp)
-- **Clients**
-- **Events**
-- **Jobs**
-
-## Local Setup
+## Local setup
 
 ### Prerequisites
 
@@ -40,19 +55,13 @@ DATABASE_URL=postgresql://payload:payload@127.0.0.1:5432/payload
 PAYLOAD_SECRET=your-secret-here
 ```
 
-### Start Postgres via Docker
+### Start Postgres
 
 ```bash
 docker-compose up -d
 ```
 
-This runs Postgres 16 on port `5432` with:
-
-- user: `payload`
-- password: `payload`
-- database: `payload`
-
-Data is persisted in a named Docker volume (`pgdata`).
+Runs Postgres 16 on port `5432`. Credentials: `payload / payload`, database: `payload`. Data persists in the `pgdata` Docker volume.
 
 ### Install and run
 
@@ -61,30 +70,45 @@ pnpm install
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The first time you visit, you'll be prompted to create an admin user.
+Open [http://localhost:3000](http://localhost:3000). First visit prompts for admin user creation.
 
-The admin panel is at [http://localhost:3000/admin](http://localhost:3000/admin).
+Admin panel: [http://localhost:3000/admin](http://localhost:3000/admin)
 
-### Useful scripts
+### Scripts
 
 ```bash
-pnpm dev            # start dev server
-pnpm devsafe        # clear .next cache and start dev server
-pnpm build          # production build
-pnpm start          # serve production build
-pnpm generate:types # regenerate payload-types.ts
-pnpm lint           # ESLint
-pnpm test           # run all tests (integration + e2e)
-pnpm test:int       # Vitest integration tests
-pnpm test:e2e       # Playwright e2e tests
+pnpm dev              # start dev server
+pnpm devsafe          # clear .next cache and start
+pnpm build            # production build
+pnpm start            # serve production build
+pnpm generate:types   # regenerate payload-types.ts after schema changes
+pnpm lint             # ESLint
+pnpm test             # all tests (integration + e2e)
+pnpm test:int         # Vitest integration tests
+pnpm test:e2e         # Playwright e2e tests
 ```
 
-## Project Structure
+## Project structure
 
 ```
 src/
-  app/           # Next.js App Router pages and API routes
-  collections/   # Payload collection configs
+  app/
+    (frontend)/         Public-facing pages (intake form, events)
+    api/                Custom API routes
+  collections/          Payload collection definitions
   payload.config.ts
-  payload-types.ts
+  payload-types.ts      Auto-generated - do not edit manually
+data_import/            CSV migration scripts from legacy system
+docs/                   Internal documentation
+tests/                  Vitest integration + Playwright e2e
 ```
+
+## Security notes
+
+- `pp-wp` and `pp-wp.pub` in the project root are SSH keys used for server communication. **These must not be committed to version control.** Add them to `.gitignore` and store securely.
+- All collections currently have open read access (`() => true`). Role-based access control should be implemented before exposing the API publicly.
+- The intake endpoint is unauthenticated - consider adding an API key check for production.
+
+## WordPress integration
+
+This backend pairs with the [bulk-cpt-pay](https://github.com/alvarix/bulk-cpt-pay) WordPress plugin, which handles the public adoption shop. The two systems are separate deployments. Clients who complete a purchase through WordPress can be looked up or created here via the `/api/intake` endpoint.
