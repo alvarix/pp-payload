@@ -82,6 +82,9 @@ export interface Config {
     clients: {
       jobs: 'jobs';
     };
+    leads: {
+      events: 'events';
+    };
   };
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
@@ -206,6 +209,55 @@ export interface Event {
   image?: (number | null) | Media;
   status: 'draft' | 'published';
   featured?: boolean | null;
+  /**
+   * Link to the venue Lead record for this event
+   */
+  lead?: (number | null) | Lead;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "leads".
+ */
+export interface Lead {
+  id: number;
+  name: string;
+  type: 'brewery' | 'pet_store' | 'gift_shop' | 'gallery' | 'cafe' | 'venue' | 'other';
+  address?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  placeId?: string | null;
+  /**
+   * Handle only, no @
+   */
+  instagram?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  preferredContactMethod?: ('email' | 'instagram_dm' | 'contact_form' | 'phone' | 'in_person') | null;
+  dogFriendly?: boolean | null;
+  hasEventSpace?: boolean | null;
+  popUpHistory?: boolean | null;
+  independentlyOwned?: boolean | null;
+  rating?: number | null;
+  fitScore?: ('top_tier' | 'strong' | 'worth_trying') | null;
+  fitNotes?: string | null;
+  status: 'researched' | 'contacted' | 'responded' | 'meeting_scheduled' | 'confirmed' | 'declined' | 'no_response';
+  dateContacted?: string | null;
+  followUpDate?: string | null;
+  responseNotes?: string | null;
+  eventDate?: string | null;
+  eventTerms?: string | null;
+  events?: {
+    docs?: (number | Event)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -409,46 +461,6 @@ export interface Job {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "leads".
- */
-export interface Lead {
-  id: number;
-  name: string;
-  type: 'brewery' | 'pet_store' | 'gift_shop' | 'gallery' | 'cafe' | 'venue' | 'other';
-  address?: string | null;
-  neighborhood?: string | null;
-  city?: string | null;
-  state?: string | null;
-  country?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
-  placeId?: string | null;
-  /**
-   * Handle only, no @
-   */
-  instagram?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  website?: string | null;
-  preferredContactMethod?: ('email' | 'instagram_dm' | 'contact_form' | 'phone' | 'in_person') | null;
-  dogFriendly?: boolean | null;
-  hasEventSpace?: boolean | null;
-  popUpHistory?: boolean | null;
-  independentlyOwned?: boolean | null;
-  rating?: number | null;
-  fitScore?: ('top_tier' | 'strong' | 'worth_trying') | null;
-  fitNotes?: string | null;
-  status: 'researched' | 'contacted' | 'responded' | 'meeting_scheduled' | 'confirmed' | 'declined' | 'no_response';
-  dateContacted?: string | null;
-  followUpDate?: string | null;
-  responseNotes?: string | null;
-  eventDate?: string | null;
-  eventTerms?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -591,6 +603,7 @@ export interface EventsSelect<T extends boolean = true> {
   image?: T;
   status?: T;
   featured?: T;
+  lead?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -726,6 +739,7 @@ export interface LeadsSelect<T extends boolean = true> {
   responseNotes?: T;
   eventDate?: T;
   eventTerms?: T;
+  events?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -26,15 +26,74 @@ The admin panel at `/admin` is the primary interface for managing data. The dash
   [tag array]       Leads
                       |
                       v
-                    Events (future link)
+                    Events (linked via lead field)
 ```
 
 - **Users** -- admin accounts (Payload auth)
 - **Clients** -- people who commission portraits. Has email (unique), name, phone, tags, consent flags
 - **Jobs** -- a single commission. Belongs to one Client. Contains pets array, status workflow, payment info, shipping address, portfolio group. Optionally links to a Lead
-- **Leads** -- venues being researched for pop-up events. Contains business info, contact details, qualification scores, and outreach tracking
-- **Events** -- scheduled events with location, dates, status
+- **Leads** -- prospective venues being researched for pop-up events. Internal CRM data: business info, contact details, qualification scores, outreach tracking. Status progresses from researched -> contacted -> confirmed -> declined etc.
+- **Events** -- confirmed pop-up occurrences (public-facing). Linked to a Lead via the `lead` relationship field. One Lead can have many Events (return visits). The Lead's Outreach tab shows all linked Events via a join field.
 - **Media** -- uploaded files (images). Referenced by Jobs for pet pics and portfolio images
+
+---
+
+## Leads and Events relationship
+
+A **Lead** represents a prospective venue (brewery, pet store, gallery, etc.) being researched for hosting pop-up portrait events. Leads are internal CRM data -- they track outreach status, contact info, and qualification scoring. They are not public-facing.
+
+An **Event** represents a confirmed pop-up occurrence. Events are public-facing (calendar listings, etc.) and contain the actual date, location, and status.
+
+The relationship is **one Lead to many Events**. A single venue can host multiple pop-ups over time (return visits).
+
+**Workflow:**
+
+1. Research a venue and create a Lead (status: `researched`)
+2. Track outreach through `contacted` -> `responded` -> `confirmed`
+3. Once confirmed, create an Event record
+4. Link the Event to the Lead using the `lead` field on the Event (sidebar)
+5. The Lead's Outreach tab automatically shows all linked Events via the `events` join field
+
+**Schema details:**
+
+- `Events.lead` -- optional relationship field pointing to `leads` collection
+- `Leads.events` -- virtual join field (read-only), shows all Events where `event.lead === lead.id`
+
+---
+
+## Event CSV import
+
+The `._-/event-import.ts` script imports post-event client data from a CSV file, creating Client and Job records.
+
+**CSV columns:**
+
+| Column | Description |
+|--------|-------------|
+| `First` | Client first name |
+| `Last` | Client last name |
+| `Pet` | Pet name |
+| `Breed` | Pet breed |
+| `Date` | Date of event/purchase |
+| `Event` | Event name (matched against existing Events) |
+
+**Behavior:**
+
+- Matches clients by first + last name (case-insensitive). Creates new clients if no match found (with a placeholder email).
+- Matches events by title (case-insensitive partial match). Does NOT auto-create events -- unmatched event names are reported.
+- Creates a Job per row with pet info, date, and status (`delivered` if past, `new` otherwise).
+- The Event column value is stored in the job's notes for reference.
+
+**Usage:**
+
+```bash
+# Preview what would be created
+pnpm tsx ._-/event-import.ts data_import/my-event.csv --dry-run
+
+# Live import
+pnpm tsx ._-/event-import.ts data_import/my-event.csv
+```
+
+**Env vars:** `PAYLOAD_ADMIN_EMAIL`, `PAYLOAD_ADMIN_PASSWORD`, `PAYLOAD_URL` (default `http://localhost:3001`)
 
 ---
 
