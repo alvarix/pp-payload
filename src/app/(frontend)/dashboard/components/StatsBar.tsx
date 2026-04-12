@@ -6,6 +6,7 @@ interface TopClient {
 
 interface StatsBarProps {
   activeJobCount: number;
+  needInfoCount: number;
   drawnCount: number;
   feedbackCount: number;
   totalClients: number;
@@ -15,11 +16,12 @@ interface StatsBarProps {
 }
 
 /**
- * Top stats bar showing key metrics at a glance.
- * Each stat card is a link to the relevant filtered admin view.
+ * Top stats bar — four primary stats + top clients by job count.
+ * Each stat card links to the relevant admin filtered view.
  */
 export function StatsBar({
   activeJobCount,
+  needInfoCount,
   drawnCount,
   feedbackCount,
   totalClients,
@@ -29,53 +31,65 @@ export function StatsBar({
 }: StatsBarProps) {
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard
-          label="Active Jobs"
+          label="Active"
           value={activeJobCount}
           href="/admin/collections/jobs"
+          description="Jobs in progress"
         />
         <StatCard
-          label="Drawn / To Deliver"
+          label="Need Info"
+          value={needInfoCount}
+          href="/admin/collections/jobs?where[status][equals]=awaiting_pics_or_payment"
+          highlight={needInfoCount > 0 ? "amber" : undefined}
+          description="Awaiting pics or payment"
+        />
+        <StatCard
+          label="To Deliver"
           value={drawnCount}
           href="/admin/collections/jobs?where[status][equals]=ready_to_ship"
           highlight={drawnCount > 0 ? "purple" : undefined}
+          description="Ready to ship"
         />
         <StatCard
-          label="Awaiting Feedback"
+          label="Feedback"
           value={feedbackCount}
-          href="/admin/collections/jobs?where[status][equals]=delivered"
-          highlight={feedbackCount > 5 ? "amber" : undefined}
-        />
-        <StatCard
-          label="Overdue / Stale"
-          value={overdueCount}
-          highlight={overdueCount > 0 ? "red" : undefined}
-        />
-        <StatCard
-          label="Follow-ups Due"
-          value={leadsNeedingFollowUp}
-          href="/admin/collections/leads"
-          highlight={leadsNeedingFollowUp > 0 ? "amber" : undefined}
+          href="/admin/collections/jobs?where[portfolio.testimonial][exists]=true"
+          description="Clients who gave feedback"
         />
       </div>
 
-      {topClients.length > 0 && (
-        <div className="flex gap-3 flex-wrap">
-          <span className="text-xs text-gray-500 uppercase tracking-wide self-center">
-            Most jobs:
-          </span>
-          {topClients.map((c) => (
-            <a
-              key={c.id}
-              href={`/admin/collections/clients/${c.id}`}
-              className="text-xs px-3 py-1.5 bg-white border border-gray-200 rounded-full shadow-sm hover:border-blue-400 hover:text-blue-700 text-gray-700"
-            >
-              {c.name} <span className="font-semibold">{c.jobCount}</span>
-            </a>
-          ))}
-        </div>
-      )}
+      {/* Secondary row */}
+      <div className="flex gap-3 flex-wrap items-center">
+        <StatPill label="Clients" value={totalClients} />
+        {overdueCount > 0 && (
+          <StatPill label="Stale" value={overdueCount} color="red" />
+        )}
+        {leadsNeedingFollowUp > 0 && (
+          <a href="/admin/collections/leads" target="_blank" rel="noopener noreferrer">
+            <StatPill label="Follow-ups due" value={leadsNeedingFollowUp} color="amber" />
+          </a>
+        )}
+
+        {topClients.length > 0 && (
+          <>
+            <span className="text-xs text-gray-400">|</span>
+            <span className="text-xs text-gray-500 uppercase tracking-wide">Most jobs:</span>
+            {topClients.map((c) => (
+              <a
+                key={c.id}
+                href={`/admin/collections/clients/${c.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs px-3 py-1 bg-white border border-gray-200 rounded-full shadow-sm hover:border-blue-400 hover:text-blue-700 text-gray-700"
+              >
+                {c.name} <span className="font-semibold">{c.jobCount}</span>
+              </a>
+            ))}
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -85,11 +99,13 @@ function StatCard({
   value,
   highlight,
   href,
+  description,
 }: {
   label: string;
   value: number;
   highlight?: "red" | "amber" | "purple";
   href?: string;
+  description?: string;
 }) {
   const borderColor =
     highlight === "red"
@@ -100,10 +116,13 @@ function StatCard({
           ? "border-purple-400"
           : "border-gray-200";
 
-  const content = (
-    <div className={`border ${borderColor} rounded-lg p-3 bg-white shadow-sm h-full`}>
-      <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
-      <p className="text-2xl font-bold mt-1 text-gray-900">{value}</p>
+  const inner = (
+    <div className={`border ${borderColor} rounded-lg p-4 bg-white shadow-sm h-full`}>
+      <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">{label}</p>
+      <p className="text-3xl font-bold mt-1 text-gray-900">{value}</p>
+      {description && (
+        <p className="text-xs text-gray-400 mt-1">{description}</p>
+      )}
     </div>
   );
 
@@ -115,10 +134,31 @@ function StatCard({
         rel="noopener noreferrer"
         className="block hover:opacity-80 transition-opacity"
       >
-        {content}
+        {inner}
       </a>
     );
   }
+  return inner;
+}
 
-  return content;
+function StatPill({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: number;
+  color?: "red" | "amber";
+}) {
+  const cls =
+    color === "red"
+      ? "bg-red-100 text-red-700 border-red-200"
+      : color === "amber"
+        ? "bg-amber-100 text-amber-700 border-amber-200"
+        : "bg-gray-100 text-gray-600 border-gray-200";
+  return (
+    <span className={`text-xs px-3 py-1 rounded-full border ${cls}`}>
+      {label}: <strong>{value}</strong>
+    </span>
+  );
 }
