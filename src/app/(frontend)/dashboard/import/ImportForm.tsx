@@ -87,6 +87,19 @@ export function ImportForm() {
           <p className="text-xs text-gray-400 mt-1">Click above to change file</p>
         )}
       </div>
+      <textarea
+        value={csvText}
+        onChange={(e) => {
+          setCsvText(e.target.value);
+          setFileName("");
+          setResult(null);
+          setError("");
+        }}
+        placeholder="Or paste CSV content here…"
+        rows={6}
+        className="w-full text-xs font-mono border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-y"
+      />
+
 
       <div className="flex gap-3">
         <button
