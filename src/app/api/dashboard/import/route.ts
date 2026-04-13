@@ -43,7 +43,7 @@ function splitCSVLine(line: string): string[] {
 /**
  * POST /api/dashboard/import
  * Body: { csv: string, dryRun: boolean }
- * Processes a CSV with columns: First, Last, Pet, Breed, Date, Event
+ * Processes a CSV with columns: First, Last, Email, Pet, Breed, Date, Event, Type, Status
  * Creates/matches Clients and creates Jobs.
  */
 export async function POST(request: Request) {
@@ -95,6 +95,7 @@ export async function POST(request: Request) {
     const email = row["Email"] || row["email"] || "";
     const jobTypeRaw = (row["Type"] || row["type"] || "street").toLowerCase().trim();
     const jobType = jobTypeRaw === "studio" ? "studio" : "street";
+    const statusOverride = (row["Status"] || row["status"] || "").toLowerCase().trim();
 
     // Skip rows missing both name and pet
     if (!first && !last && !pet) {
@@ -116,6 +117,11 @@ export async function POST(request: Request) {
       due.setDate(due.getDate() + shippingDays);
       parsedDate = due.toISOString();
       jobStatus = eventDate < new Date() ? "delivered" : "new";
+    }
+
+    const VALID_STATUSES = ["new", "intake_received", "in_progress", "awaiting_pics_or_payment", "ready_to_ship", "delivered"];
+    if (statusOverride && VALID_STATUSES.includes(statusOverride)) {
+      jobStatus = statusOverride;
     }
 
 

@@ -40,7 +40,7 @@ export default async function ImportPage() {
       <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm mb-6">
         <h2 className="font-semibold text-gray-800 mb-2">Expected CSV columns</h2>
         <div className="grid grid-cols-4 gap-2 text-sm">
-          {["First", "Last", "Email", "Pet", "Breed", "Date", "Event", "Type"].map((col) => (
+          {["First", "Last", "Email", "Pet", "Breed", "Date", "Event", "Type", "Status"].map((col) => (
             <code
               key={col}
               className="bg-gray-100 px-2 py-1 rounded text-gray-700"
@@ -54,7 +54,8 @@ export default async function ImportPage() {
           <li>Email is optional — a placeholder is generated if omitted.</li>
           <li>Event matched by name to existing Event records. Not created if missing.</li>
           <li>Type: <code className="bg-gray-100 px-1 rounded">street</code> or <code className="bg-gray-100 px-1 rounded">studio</code>. Defaults to street. Due date is calculated as event date + 7 days (street) or + 10 days (studio).</li>
-          <li>Date is the event date. Due date is calculated from it. Blank defaults to today. Status is <code className="bg-gray-100 px-1 rounded">delivered</code> if event date is in the past.</li>
+          <li>Date is the event date. Due date is calculated from it. Blank defaults to today.</li>
+          <li>Status overrides the auto-detected value. Valid values: <code className="bg-gray-100 px-1 rounded">new</code>, <code className="bg-gray-100 px-1 rounded">intake_received</code>, <code className="bg-gray-100 px-1 rounded">in_progress</code>, <code className="bg-gray-100 px-1 rounded">awaiting_pics_or_payment</code>, <code className="bg-gray-100 px-1 rounded">ready_to_ship</code>, <code className="bg-gray-100 px-1 rounded">delivered</code>. If blank, defaults to <code className="bg-gray-100 px-1 rounded">delivered</code> for past dates and <code className="bg-gray-100 px-1 rounded">new</code> for future dates.</li>
           <li>Wrap any field in double quotes if it contains a comma: <code className="bg-gray-100 px-1 rounded">"Buddy, Jr."</code></li>
           <li>Run Preview first — no data is written until you click Import.</li>
         </ul>

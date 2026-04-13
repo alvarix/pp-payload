@@ -5,23 +5,28 @@ import config from "@/payload.config";
 import type { Lead } from "@/payload-types";
 
 /**
- * Status columns: confirmed = current partners, then active pipeline.
- * Excludes meeting_scheduled, declined, no_response.
+ * Virtual column keys — not all map 1:1 to lead status.
+ * "current" = confirmed with upcoming event, "past" = confirmed without.
  */
-const PIPELINE = [
-  { value: "confirmed",  label: "Current",   color: "green"  },
-  { value: "researched", label: "Prospects",  color: "gray"   },
-  { value: "contacted",  label: "Contacted",  color: "blue"   },
-  { value: "responded",  label: "Responded",  color: "yellow" },
+const COLUMNS = [
+  { key: "current",    label: "Current",          color: "green"  },
+  { key: "past",       label: "Past Collaborators", color: "teal"  },
+  { key: "researched", label: "Prospects",         color: "gray"   },
+  { key: "contacted",  label: "Contacted",         color: "blue"   },
+  { key: "responded",  label: "Responded",         color: "yellow" },
 ] as const;
 
 const BORDER: Record<string, string> = {
-  green: "border-green-400", gray: "border-gray-300",
-  blue: "border-blue-400",   yellow: "border-yellow-400",
+  green:  "border-green-400",
+  teal:   "border-teal-400",
+  gray:   "border-gray-300",
+  blue:   "border-blue-400",
+  yellow: "border-yellow-400",
 };
 
 const BADGE: Record<string, string> = {
   green:  "bg-green-100 text-green-700",
+  teal:   "bg-teal-100 text-teal-700",
   gray:   "bg-gray-100 text-gray-600",
   blue:   "bg-blue-100 text-blue-700",
   yellow: "bg-yellow-100 text-yellow-700",
@@ -37,21 +42,36 @@ export default async function LeadsDashboardPage() {
   const { user } = await payload.auth({ headers });
   if (!user) redirect("/admin/login");
 
-  const { docs: leads } = await payload.find({
-    collection: "leads",
-    limit: 500,
-    depth: 0,
-    sort: "name",
-  });
+  const [{ docs: leads }, { docs: upcomingEvents }] = await Promise.all([
+    payload.find({ collection: "leads", limit: 500, depth: 0, sort: "name" }),
+    payload.find({
+      collection: "events",
+      where: { startAt: { greater_than_equal: new Date().toISOString() } },
+      limit: 100,
+      depth: 0,
+    }),
+  ]);
 
-  const byStatus: Record<string, Lead[]> = {};
-  for (const s of PIPELINE) byStatus[s.value] = [];
+  // Set of lead IDs that have at least one upcoming event
+  const leadsWithUpcomingEvents = new Set(
+    upcomingEvents
+      .map((e) => (typeof e.lead === "object" ? e.lead?.id : e.lead))
+      .filter(Boolean)
+  );
+
+  const byCol: Record<string, Lead[]> = {};
+  for (const c of COLUMNS) byCol[c.key] = [];
+
   for (const lead of leads as Lead[]) {
     const s = lead.status as string;
-    if (byStatus[s]) byStatus[s].push(lead);
+    if (s === "confirmed") {
+      byCol[leadsWithUpcomingEvents.has(lead.id) ? "current" : "past"].push(lead);
+    } else if (byCol[s]) {
+      byCol[s].push(lead);
+    }
   }
 
-  byStatus["researched"].sort(
+  byCol["researched"].sort(
     (a, b) => (FIT_ORDER[b.fitScore ?? ""] ?? 0) - (FIT_ORDER[a.fitScore ?? ""] ?? 0)
   );
 
@@ -66,9 +86,15 @@ export default async function LeadsDashboardPage() {
         </a>
       </div>
 
+      <p className="text-xs text-gray-400 mb-4">
+        To move a lead between columns, open it in admin and change its Status.
+        Confirmed leads with an upcoming linked event appear in Current; others go to Past Collaborators.
+      </p>
+
       <div className="flex gap-4 overflow-x-auto pb-4">
-        {PIPELINE.map(({ value, label, color }) => {
-          const items = byStatus[value];
+        {COLUMNS.map(({ key, label, color }) => {
+          const items = byCol[key];
+          const value = key;
           return (
             <div key={value} className="flex-shrink-0 w-60">
               <div className="flex items-center justify-between mb-2">
@@ -83,7 +109,7 @@ export default async function LeadsDashboardPage() {
                   const overdue =
                     lead.followUpDate &&
                     lead.followUpDate.slice(0, 10) <= today &&
-                    lead.status !== "confirmed";
+                    !["current", "past"].includes(value);
                   return (
                     <a
                       key={lead.id}
@@ -100,7 +126,7 @@ export default async function LeadsDashboardPage() {
                       {lead.instagram && (
                         <p className="text-xs text-blue-500 mt-0.5">@{lead.instagram}</p>
                       )}
-                      {value === "researched" && lead.fitScore && (
+                      {key === "researched" && lead.fitScore && (
                         <p className="text-xs text-gray-400 mt-0.5 capitalize">
                           {lead.fitScore.replace(/_/g, " ")}
                         </p>

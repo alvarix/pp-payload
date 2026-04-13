@@ -10,6 +10,7 @@ Handles client intake, job tracking, portfolio management, and events. The publi
 
 **Jobs** - the main work unit. Each job belongs to a client and tracks:
 - One or more pets (name, sex, breed, personality, social handle, reference photos)
+- Job type: `street` (5-10 days to ship) or `studio` (1-2 weeks to ship)
 - Status through a 7-stage workflow: `new → intake_received → in_progress → awaiting_pics_or_payment → ready_to_ship → delivered → portfolio_ready`
 - Payment records (method, amount, date) and Stripe IDs
 - Shipping address
@@ -22,6 +23,14 @@ Handles client intake, job tracking, portfolio management, and events. The publi
 **Media** - image uploads with sharp resizing. Alt text is auto-generated from filename on upload.
 
 **Users** - admin authentication.
+
+## Dashboard
+
+`/dashboard` — job workflow board grouped by status, with stats and quick actions.
+
+`/dashboard/leads` — leads pipeline. Columns: Current (confirmed + upcoming event), Past Collaborators (confirmed, no upcoming event), Prospects (researched, sorted by fit score), Contacted, Responded. Move a lead between columns by changing its Status in admin; Current vs Past is determined automatically by whether a linked Event exists with a future date.
+
+`/dashboard/import` — CSV importer for post-event client intake. Columns: `First, Last, Email, Pet, Breed, Date, Event, Type, Status`. Due date is calculated from event date plus shipping window (street +7 days, studio +10 days).
 
 ## API routes
 
