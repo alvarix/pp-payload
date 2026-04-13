@@ -41,7 +41,7 @@ export function ImportForm() {
 
   async function submit(dryRun: boolean) {
     if (!csvText.trim()) {
-      setError("Please select a CSV file first.");
+      setError("Please select a file or paste CSV content first.");
       return;
     }
     setError("");
