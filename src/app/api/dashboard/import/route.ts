@@ -104,13 +104,13 @@ export async function POST(request: Request) {
     // Determine job status based on date
     let jobStatus = "new";
     let parsedDate: string | undefined;
-    if (dateStr) {
-      const d = new Date(dateStr);
-      if (!isNaN(d.getTime())) {
-        parsedDate = d.toISOString();
-        jobStatus = d < new Date() ? "delivered" : "new";
-      }
+
+    const d = new Date(dateStr || new Date().toDateString());
+    if (!isNaN(d.getTime())) {
+      parsedDate = d.toISOString();
+      jobStatus = d < new Date() ? "delivered" : "new";
     }
+
 
     // Match event by title (case-insensitive, partial)
     let matchedEventName = "";
