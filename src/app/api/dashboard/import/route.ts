@@ -93,6 +93,8 @@ export async function POST(request: Request) {
     const dateStr = row["Date"] || row["date"] || "";
     const eventName = row["Event"] || row["event"] || "";
     const email = row["Email"] || row["email"] || "";
+    const jobTypeRaw = (row["Type"] || row["type"] || "street").toLowerCase().trim();
+    const jobType = jobTypeRaw === "studio" ? "studio" : "street";
 
     // Skip rows missing both name and pet
     if (!first && !last && !pet) {
@@ -106,10 +108,14 @@ export async function POST(request: Request) {
     let jobStatus = "new";
     let parsedDate: string | undefined;
 
-    const d = new Date(dateStr || new Date().toDateString());
-    if (!isNaN(d.getTime())) {
-      parsedDate = d.toISOString();
-      jobStatus = d < new Date() ? "delivered" : "new";
+    const eventDate = new Date(dateStr || new Date().toDateString());
+    if (!isNaN(eventDate.getTime())) {
+      // Add shipping window to event date: street = 7 days, studio = 10 days
+      const shippingDays = jobType === "studio" ? 10 : 7;
+      const due = new Date(eventDate);
+      due.setDate(due.getDate() + shippingDays);
+      parsedDate = due.toISOString();
+      jobStatus = eventDate < new Date() ? "delivered" : "new";
     }
 
 
@@ -194,6 +200,7 @@ export async function POST(request: Request) {
         data: {
           client: clientId,
           status: jobStatus as any,
+          job_type: jobType as any,
           due_date: parsedDate,
           notes: eventName ? `Event: ${eventName}` : undefined,
           pets: [{ name: pet || "Unknown", breed: breed || "" }],

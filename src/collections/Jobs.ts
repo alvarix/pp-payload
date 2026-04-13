@@ -4,7 +4,7 @@ export const Jobs: CollectionConfig = {
   slug: "jobs",
   admin: {
     useAsTitle: "id",
-    defaultColumns: ["client", "status", "due_date", "pics_received"],
+    defaultColumns: ["client", "job_type", "status", "due_date", "pics_received"],
   },
   access: {
     read: () => true,
@@ -31,6 +31,18 @@ export const Jobs: CollectionConfig = {
       hasMany: false,
       admin: {
         description: "Link to a venue Lead for event/bulk orders",
+      },
+    },
+    {
+      name: "job_type",
+      type: "select",
+      label: "Job Type",
+      options: [
+        { label: "Street", value: "street" },
+        { label: "Studio", value: "studio" },
+      ],
+      admin: {
+        description: "Street: 5-10 days to ship. Studio: 1-2 weeks to ship.",
       },
     },
     {

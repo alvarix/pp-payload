@@ -313,6 +313,10 @@ export interface Job {
    * Link to a venue Lead for event/bulk orders
    */
   lead?: (number | null) | Lead;
+  /**
+   * Street: 5-10 days to ship. Studio: 1-2 weeks to ship.
+   */
+  job_type?: ('street' | 'studio') | null;
   due_date?: string | null;
   notes?: string | null;
   /**
@@ -638,6 +642,7 @@ export interface ClientsSelect<T extends boolean = true> {
 export interface JobsSelect<T extends boolean = true> {
   client?: T;
   lead?: T;
+  job_type?: T;
   due_date?: T;
   notes?: T;
   pets?:
