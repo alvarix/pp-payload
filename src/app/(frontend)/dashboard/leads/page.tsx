@@ -4,26 +4,31 @@ import { getPayload } from "payload";
 import config from "@/payload.config";
 import type { Lead } from "@/payload-types";
 
+/**
+ * Status columns: confirmed = current partners, then active pipeline.
+ * Excludes meeting_scheduled, declined, no_response.
+ */
 const PIPELINE = [
-  { value: "researched",        label: "Researched",        color: "gray"   },
-  { value: "contacted",         label: "Contacted",         color: "blue"   },
-  { value: "responded",         label: "Responded",         color: "yellow" },
-  { value: "meeting_scheduled", label: "Meeting Scheduled", color: "purple" },
-  { value: "confirmed",         label: "Confirmed",         color: "green"  },
-  { value: "declined",          label: "Declined",          color: "red"    },
-  { value: "no_response",       label: "No Response",       color: "orange" },
+  { value: "confirmed",  label: "Current",   color: "green"  },
+  { value: "researched", label: "Prospects",  color: "gray"   },
+  { value: "contacted",  label: "Contacted",  color: "blue"   },
+  { value: "responded",  label: "Responded",  color: "yellow" },
 ] as const;
 
 const BORDER: Record<string, string> = {
-  gray: "border-gray-300", blue: "border-blue-400", yellow: "border-yellow-400",
-  purple: "border-purple-400", green: "border-green-400", red: "border-red-400", orange: "border-orange-400",
+  green: "border-green-400", gray: "border-gray-300",
+  blue: "border-blue-400",   yellow: "border-yellow-400",
 };
+
 const BADGE: Record<string, string> = {
-  gray: "bg-gray-100 text-gray-600", blue: "bg-blue-100 text-blue-700",
-  yellow: "bg-yellow-100 text-yellow-700", purple: "bg-purple-100 text-purple-700",
-  green: "bg-green-100 text-green-700", red: "bg-red-100 text-red-700",
-  orange: "bg-orange-100 text-orange-700",
+  green:  "bg-green-100 text-green-700",
+  gray:   "bg-gray-100 text-gray-600",
+  blue:   "bg-blue-100 text-blue-700",
+  yellow: "bg-yellow-100 text-yellow-700",
 };
+
+/** Sort prospects by fit score: top_tier first */
+const FIT_ORDER: Record<string, number> = { top_tier: 3, strong: 2, worth_trying: 1 };
 
 export default async function LeadsDashboardPage() {
   const headers = await getHeaders();
@@ -41,15 +46,19 @@ export default async function LeadsDashboardPage() {
 
   const byStatus: Record<string, Lead[]> = {};
   for (const s of PIPELINE) byStatus[s.value] = [];
-  for (const lead of leads) {
+  for (const lead of leads as Lead[]) {
     const s = lead.status as string;
-    if (byStatus[s]) byStatus[s].push(lead as Lead);
+    if (byStatus[s]) byStatus[s].push(lead);
   }
+
+  byStatus["researched"].sort(
+    (a, b) => (FIT_ORDER[b.fitScore ?? ""] ?? 0) - (FIT_ORDER[a.fitScore ?? ""] ?? 0)
+  );
 
   const today = new Date().toISOString().split("T")[0];
 
   return (
-    <div className="p-6 max-w-[1400px] mx-auto">
+    <div className="p-6 max-w-[1200px] mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Leads</h1>
         <a href="/dashboard" className="text-sm text-gray-500 hover:underline">
@@ -61,19 +70,20 @@ export default async function LeadsDashboardPage() {
         {PIPELINE.map(({ value, label, color }) => {
           const items = byStatus[value];
           return (
-            <div key={value} className="flex-shrink-0 w-56">
+            <div key={value} className="flex-shrink-0 w-60">
               <div className="flex items-center justify-between mb-2">
                 <span className={`text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded ${BADGE[color]}`}>
                   {label}
                 </span>
                 <span className="text-xs text-gray-400">{items.length}</span>
               </div>
+
               <div className="space-y-2">
                 {items.map((lead) => {
                   const overdue =
                     lead.followUpDate &&
                     lead.followUpDate.slice(0, 10) <= today &&
-                    !["confirmed", "declined"].includes(lead.status as string);
+                    lead.status !== "confirmed";
                   return (
                     <a
                       key={lead.id}
@@ -84,20 +94,20 @@ export default async function LeadsDashboardPage() {
                     >
                       <p className="text-sm font-medium text-gray-900 leading-tight">{lead.name}</p>
                       <p className="text-xs text-gray-400 mt-0.5 capitalize">
-                        {lead.type?.replace("_", " ")}
+                        {lead.type?.replace(/_/g, " ")}
                         {lead.neighborhood ? ` · ${lead.neighborhood}` : ""}
                       </p>
                       {lead.instagram && (
                         <p className="text-xs text-blue-500 mt-0.5">@{lead.instagram}</p>
                       )}
+                      {value === "researched" && lead.fitScore && (
+                        <p className="text-xs text-gray-400 mt-0.5 capitalize">
+                          {lead.fitScore.replace(/_/g, " ")}
+                        </p>
+                      )}
                       {lead.followUpDate && (
                         <p className={`text-xs mt-1 ${overdue ? "text-red-600 font-semibold" : "text-gray-400"}`}>
                           Follow-up: {lead.followUpDate.slice(0, 10)}
-                        </p>
-                      )}
-                      {lead.fitScore && (
-                        <p className="text-xs text-gray-400 mt-0.5 capitalize">
-                          {lead.fitScore.replace("_", " ")}
                         </p>
                       )}
                     </a>

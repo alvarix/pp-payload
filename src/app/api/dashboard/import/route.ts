@@ -92,6 +92,7 @@ export async function POST(request: Request) {
     const breed = row["Breed"] || row["breed"] || "";
     const dateStr = row["Date"] || row["date"] || "";
     const eventName = row["Event"] || row["event"] || "";
+    const email = row["Email"] || row["email"] || "";
 
     // Skip rows missing both name and pet
     if (!first && !last && !pet) {
@@ -175,7 +176,7 @@ export async function POST(request: Request) {
             data: {
               first_name: first,
               last_name: last,
-              email: `import-${Date.now()}-${Math.random().toString(36).slice(2)}@placeholder.local`,
+              email: email || `import-${Date.now()}-${Math.random().toString(36).slice(2)}@placeholder.local`,
             },
           });
           clientId = created.id;
