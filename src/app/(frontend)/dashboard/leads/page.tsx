@@ -78,7 +78,7 @@ export default async function LeadsDashboardPage() {
   const today = new Date().toISOString().split("T")[0];
 
   return (
-    <div className="p-6 max-w-[1200px] mx-auto">
+    <div className="p-6 max-w-[1200px] mx-auto bg-gray-50 min-h-screen">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Leads</h1>
         <a href="/dashboard" className="text-sm text-gray-500 hover:underline">
