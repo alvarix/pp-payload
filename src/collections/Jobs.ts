@@ -53,7 +53,7 @@ export const Jobs: CollectionConfig = {
     {
       name: "notes",
       type: "textarea",
-      label: "Notes",
+      label: "Job Notes",
     },
     {
       name: "pets",
