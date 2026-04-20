@@ -30,7 +30,7 @@ Handles client intake, job tracking, portfolio management, and events. The publi
 
 `/dashboard/leads` — leads pipeline. Columns: Current (confirmed + upcoming event), Past Collaborators (confirmed, no upcoming event), Prospects (researched, sorted by fit score), Contacted, Responded. Move a lead between columns by changing its Status in admin; Current vs Past is determined automatically by whether a linked Event exists with a future date.
 
-`/dashboard/import` — CSV importer for post-event client intake. Columns: `First, Last, Email, Pet, Breed, Date, Event, Type, Status`. Due date is calculated from event date plus shipping window (street +7 days, studio +10 days).
+`/dashboard/client-import` — CSV importer for post-event client intake. Columns: `Email, First, Last, Pet, Breed, Event, Type, Status, Job Notes, Client Notes, Referral`. Supports paste/file or a per-field form. Column chips are shown before upload — hover for per-field notes, click × to exclude. Due date is today + shipping window (street +7 days, studio +10 days).
 
 ## API routes
 

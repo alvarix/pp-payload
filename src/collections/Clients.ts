@@ -42,7 +42,7 @@ export const Clients: CollectionConfig = {
     {
       name: "notes",
       type: "textarea",
-      label: "Notes",
+      label: "Client Notes",
     },
     {
       name: "phone",

@@ -41,7 +41,7 @@ function splitCSVLine(line: string): string[] {
 }
 
 /**
- * POST /api/dashboard/import
+ * POST /api/dashboard/client-import
  * Body: { csv: string, dryRun: boolean }
  * Processes a CSV with columns: First, Last, Email, Pet, Breed, Date, Event, Type, Status
  * Creates/matches Clients and creates Jobs.
@@ -90,14 +90,15 @@ export async function POST(request: Request) {
     const last = row["Last"] || row["last"] || "";
     const pet = row["Pet"] || row["pet"] || "";
     const breed = row["Breed"] || row["breed"] || "";
-    const dateStr = row["Date"] || row["date"] || "";
     const eventName = row["Event"] || row["event"] || "";
     const email = row["Email"] || row["email"] || "";
     const jobTypeRaw = (row["Type"] || row["type"] || "street").toLowerCase().trim();
     const jobType = jobTypeRaw === "studio" ? "studio" : "street";
     const statusOverride = (row["Status"] || row["status"] || "").toLowerCase().trim();
+    const jobNotes = row["Job Notes"] || row["job notes"] || "";
+    const clientNotes = row["Client Notes"] || row["client notes"] || "";
+    const referral = row["Referral"] || row["referral"] || "";
 
-    // Skip rows missing both name and pet
     if (!first && !last && !pet) {
       stats.skipped++;
       continue;
@@ -105,27 +106,18 @@ export async function POST(request: Request) {
 
     const fullName = [first, last].filter(Boolean).join(" ");
 
-    // Determine job status based on date
-    let jobStatus = "new";
-    let parsedDate: string | undefined;
-
-    const eventDate = new Date(dateStr || new Date().toDateString());
-    if (!isNaN(eventDate.getTime())) {
-      // Add shipping window to event date: street = 7 days, studio = 10 days
-      const shippingDays = jobType === "studio" ? 10 : 7;
-      const due = new Date(eventDate);
-      due.setDate(due.getDate() + shippingDays);
-      parsedDate = due.toISOString();
-      jobStatus = eventDate < new Date() ? "delivered" : "new";
-    }
+    // Due date = today + shipping window
+    const shippingDays = jobType === "studio" ? 10 : 7;
+    const due = new Date();
+    due.setDate(due.getDate() + shippingDays);
+    const parsedDate = due.toISOString();
 
     const VALID_STATUSES = ["new", "intake_received", "in_progress", "awaiting_pics_or_payment", "ready_to_ship", "delivered"];
+    let jobStatus = "new";
     if (statusOverride && VALID_STATUSES.includes(statusOverride)) {
       jobStatus = statusOverride;
     }
 
-
-    // Match event by title (case-insensitive, partial)
     let matchedEventName = "";
     if (eventName) {
       const match = events.find((e) =>
@@ -156,7 +148,6 @@ export async function POST(request: Request) {
     }
 
     try {
-      // Find or create client by first+last name
       let clientId: number;
 
       if (first || last) {
@@ -189,6 +180,7 @@ export async function POST(request: Request) {
               first_name: first,
               last_name: last,
               email: email || `import-${Date.now()}-${Math.random().toString(36).slice(2)}@placeholder.local`,
+              notes: clientNotes || undefined,
             },
           });
           clientId = created.id;
@@ -200,7 +192,6 @@ export async function POST(request: Request) {
         continue;
       }
 
-      // Create job
       await payload.create({
         collection: "jobs",
         data: {
@@ -208,7 +199,8 @@ export async function POST(request: Request) {
           status: jobStatus as any,
           job_type: jobType as any,
           due_date: parsedDate,
-          notes: eventName ? `Event: ${eventName}` : undefined,
+          notes: jobNotes || (eventName ? `Event: ${eventName}` : undefined),
+          referral: referral || undefined,
           pets: [{ name: pet || "Unknown", breed: breed || "" }],
         },
       });
