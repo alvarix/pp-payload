@@ -51,8 +51,16 @@ export const Clients: CollectionConfig = {
     },
     {
       name: "address",
-      type: "text",
+      type: "group",
       label: "Address",
+      fields: [
+        { name: "street1", type: "text", label: "Street" },
+        { name: "street2", type: "text", label: "Apt / Suite" },
+        { name: "city",    type: "text", label: "City" },
+        { name: "state",   type: "text", label: "State" },
+        { name: "zip",     type: "text", label: "Zip" },
+        { name: "country", type: "text", label: "Country" },
+      ],
     },
     {
       name: "company",
