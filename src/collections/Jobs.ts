@@ -51,6 +51,26 @@ export const Jobs: CollectionConfig = {
       label: "Due Date",
     },
     {
+      name: "urgency",
+      type: "select",
+      label: "Urgency",
+      options: [
+        { label: "Low", value: "low" },
+        { label: "Medium", value: "medium" },
+        { label: "High", value: "high" },
+      ],
+    },
+    {
+      name: "delivery_method",
+      type: "select",
+      label: "Delivery Method",
+      options: [
+        { label: "Pickup", value: "pickup" },
+        { label: "Delivery", value: "delivery" },
+        { label: "Other", value: "other" },
+      ],
+    },
+    {
       name: "notes",
       type: "textarea",
       label: "Job Notes",

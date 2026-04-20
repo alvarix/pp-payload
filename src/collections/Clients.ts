@@ -50,6 +50,11 @@ export const Clients: CollectionConfig = {
       label: "Phone",
     },
     {
+      name: "address",
+      type: "text",
+      label: "Address",
+    },
+    {
       name: "company",
       type: "text",
       label: "Company",
