@@ -93,8 +93,10 @@ export function ImportForm({
 
   function parseExtraHeaders(text: string): string[] {
     const firstLine = text.trim().split(/\r?\n/)[0] || "";
-    const detected = firstLine.split(",").map((c) => c.trim().replace(/^"|"$/g, "")).filter(Boolean);
-    return detected.filter((h) => !predefinedNames.has(h));
+    const tokens = firstLine.split(",").map((c) => c.trim().replace(/^"|"$/g, "")).filter(Boolean);
+    const hasHeaders = tokens.some((t) => predefinedNames.has(t));
+    if (!hasHeaders) return [];
+    return tokens.filter((h) => !predefinedNames.has(h));
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -136,7 +138,17 @@ export function ImportForm({
   }
 
   function resolvedCSV(): string {
-    return inputMode === "form" ? formToCSV() : csvText;
+    if (inputMode === "form") return formToCSV();
+
+    const text = csvText.trim();
+    const firstLineTokens = text.split(/\r?\n/)[0].split(",").map((t) => t.trim().toLowerCase());
+    const hasHeaders = columnDefs.some((c) => firstLineTokens.includes(c.name.toLowerCase()));
+
+    if (!hasHeaders) {
+      const headers = columnDefs.filter((c) => !excludedColumns.has(c.name)).map((c) => c.name).join(",");
+      return `${headers}\n${text}`;
+    }
+    return text;
   }
 
   function hasInput(): boolean {

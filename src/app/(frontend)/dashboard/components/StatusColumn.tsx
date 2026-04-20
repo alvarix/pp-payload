@@ -8,13 +8,13 @@ interface StatusColumnProps {
   color: string;
 }
 
-/** Color classes for each status column header. */
+/** Color classes for each status column header. Text is always dark for contrast. */
 const COLOR_MAP: Record<string, string> = {
-  gray: "bg-gray-100 text-gray-800",
-  blue: "bg-blue-100 text-blue-800",
-  yellow: "bg-yellow-100 text-yellow-800",
-  orange: "bg-orange-100 text-orange-800",
-  purple: "bg-purple-100 text-purple-800",
+  gray:   "bg-gray-200 text-gray-900",
+  blue:   "bg-blue-200 text-gray-900",
+  yellow: "bg-yellow-200 text-gray-900",
+  orange: "bg-orange-200 text-gray-900",
+  purple: "bg-purple-200 text-gray-900",
 };
 
 /**
@@ -27,7 +27,7 @@ export function StatusColumn({ status, label, jobs, color }: StatusColumnProps) 
     <div className="flex-shrink-0 w-72">
       <div className={`rounded-t-lg px-3 py-2 ${colorClasses} flex items-center gap-2`}>
         <span className="font-semibold text-sm">{label}</span>
-        <span className="text-xs bg-white/60 rounded-full px-2 py-0.5">
+        <span className="text-xs bg-white text-gray-700 rounded-full px-2 py-0.5">
           {jobs.length}
         </span>
       </div>

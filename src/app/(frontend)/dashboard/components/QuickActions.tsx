@@ -61,7 +61,7 @@ export function QuickActions({ jobId, currentStatus }: QuickActionsProps) {
           key={btn.action}
           onClick={() => handleAction(btn.action)}
           disabled={isPending}
-          className="text-xs px-2 py-1 rounded border border-gray-300 bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-wait"
+          className="text-xs px-2 py-1 rounded border border-gray-300 bg-gray-50 text-gray-800 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-wait"
         >
           {btn.label}
         </button>

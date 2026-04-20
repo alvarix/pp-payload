@@ -60,7 +60,16 @@ export function JobCard({ job }: { job: Job }) {
         ) : (
           <span className="text-gray-400" title="No pics yet">&#10007; Pics</span>
         )}
+        {job.job_type && (
+          <span className="text-gray-500 capitalize">{job.job_type}</span>
+        )}
       </div>
+
+      {job.notes && (
+        <p className="text-xs text-gray-500 mt-1 truncate" title={job.notes}>
+          {job.notes}
+        </p>
+      )}
 
       <QuickActions jobId={job.id} currentStatus={job.status as string} />
     </div>

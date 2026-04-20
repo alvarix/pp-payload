@@ -73,7 +73,7 @@ p {
   }
 }
 
-a {
+.home a {
   color: currentColor;
 
   &:focus {
