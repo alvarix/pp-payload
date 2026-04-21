@@ -25,8 +25,7 @@ export default async function IntakePage({ searchParams }: IntakePageProps) {
     sessionData !== null && !sessionData.ok && sessionData.reason === 'unexpected'
 
   const prefill = sessionData?.ok ? sessionData.prefill : undefined
-  const stripeData = sessionData?.ok ? sessionData.stripe : undefined
-  const jobAutoFill = sessionData?.ok ? sessionData.jobAutoFill : undefined
+  const verifiedSessionId = sessionData?.ok ? sessionData.stripe.sessionId : undefined
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
@@ -54,11 +53,7 @@ export default async function IntakePage({ searchParams }: IntakePageProps) {
               photos. This helps us create the perfect portrait!
             </p>
           )}
-          <IntakeForm
-            prefill={prefill}
-            stripeData={stripeData}
-            jobAutoFill={jobAutoFill}
-          />
+          <IntakeForm prefill={prefill} stripeSessionId={verifiedSessionId} />
         </>
       )}
     </div>
