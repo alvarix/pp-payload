@@ -1,15 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import type { Prefill, StripeData, JobAutoFill } from "@/lib/stripe";
+import type { Prefill } from "@/lib/stripe";
 
 interface IntakeFormProps {
   prefill?: Prefill;
-  stripeData?: StripeData;
-  jobAutoFill?: JobAutoFill;
+  stripeSessionId?: string;
 }
 
-export function IntakeForm({ prefill, stripeData, jobAutoFill }: IntakeFormProps) {
+export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
   const [photoInputs, setPhotoInputs] = useState([0]);
@@ -54,49 +53,10 @@ export function IntakeForm({ prefill, stripeData, jobAutoFill }: IntakeFormProps
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
 
-      {/* Hidden Stripe fields — carried through to /api/intake */}
-      {stripeData && (
-        <>
-          <input type="hidden" name="stripe_checkout_session_id" value={stripeData.sessionId} />
-          <input type="hidden" name="stripe_payment_link_id" value={stripeData.paymentLinkId ?? ""} />
-          <input type="hidden" name="stripe_payment_intent_id" value={stripeData.paymentIntentId ?? ""} />
-          <input type="hidden" name="stripe_customer_id" value={stripeData.customerId ?? ""} />
-          <input type="hidden" name="stripe_amount_paid_cents" value={stripeData.amountPaidCents} />
-          <input type="hidden" name="stripe_currency" value={stripeData.currency} />
-          <input type="hidden" name="stripe_payment_status" value={stripeData.paymentStatus} />
-          <input type="hidden" name="stripe_amount_discount_cents" value={stripeData.amountDiscountCents} />
-          <input type="hidden" name="stripe_discount_codes" value={stripeData.discountCodes.join(",")} />
-        </>
-      )}
-
-      {/* Hidden address fields — carried from Stripe prefill to /api/intake */}
-      {prefill?.billingAddress && (
-        <>
-          <input type="hidden" name="billing_street1" value={prefill.billingAddress.street1} />
-          <input type="hidden" name="billing_street2" value={prefill.billingAddress.street2} />
-          <input type="hidden" name="billing_city" value={prefill.billingAddress.city} />
-          <input type="hidden" name="billing_state" value={prefill.billingAddress.state} />
-          <input type="hidden" name="billing_zip" value={prefill.billingAddress.zip} />
-          <input type="hidden" name="billing_country" value={prefill.billingAddress.country} />
-        </>
-      )}
-      {prefill?.shippingAddress && (
-        <>
-          <input type="hidden" name="shipping_line1" value={prefill.shippingAddress.street1} />
-          <input type="hidden" name="shipping_line2" value={prefill.shippingAddress.street2} />
-          <input type="hidden" name="shipping_city" value={prefill.shippingAddress.city} />
-          <input type="hidden" name="shipping_state" value={prefill.shippingAddress.state} />
-          <input type="hidden" name="shipping_postal_code" value={prefill.shippingAddress.zip} />
-          <input type="hidden" name="shipping_country" value={prefill.shippingAddress.country} />
-        </>
-      )}
-
-      {/* Hidden job auto-fill fields */}
-      {jobAutoFill?.jobType && (
-        <input type="hidden" name="job_type" value={jobAutoFill.jobType} />
-      )}
-      {jobAutoFill?.deliveryMethod && (
-        <input type="hidden" name="delivery_method" value={jobAutoFill.deliveryMethod} />
+      {/* Only the session ID is trusted by the server; all other Stripe data
+          is re-fetched server-side in /api/intake to prevent client forgery. */}
+      {stripeSessionId && (
+        <input type="hidden" name="stripe_checkout_session_id" value={stripeSessionId} />
       )}
 
       {/* Contact Information */}

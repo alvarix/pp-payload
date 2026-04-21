@@ -20,8 +20,8 @@ export function StripeError({ type, message }: StripeErrorProps) {
       <p className="text-sm">{message}</p>
       <p className="text-sm mt-2">
         Email us at{' '}
-        <a href="mailto:hello@example.com" className="underline font-medium">
-          hello@example.com
+        <a href="mailto:alvar@petportraits.ink" className="underline font-medium">
+          alvar@petportraits.ink
         </a>{' '}
         and we&apos;ll get you sorted.
       </p>

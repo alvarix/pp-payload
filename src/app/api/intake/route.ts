@@ -1,26 +1,14 @@
 import { getPayload } from "payload";
 import configPromise from "@payload-config";
 import { NextRequest, NextResponse } from "next/server";
-
-/** Parse a comma-separated hidden field into an array, filtering empty strings. */
-function parseCsvField(value: string | null): string[] {
-  if (!value) return [];
-  return value.split(",").map((s) => s.trim()).filter(Boolean);
-}
-
-/** Coerce a form value to a number; returns undefined if missing or NaN. */
-function parseIntField(value: string | null): number | undefined {
-  if (!value) return undefined;
-  const n = parseInt(value, 10);
-  return isNaN(n) ? undefined : n;
-}
+import { getSessionPrefill } from "@/lib/stripe";
 
 export async function POST(request: NextRequest) {
   try {
     const payload = await getPayload({ config: configPromise });
     const formData = await request.formData();
 
-    // -- Client data ----------------------------------------------------------
+    // -- Client data (editable by user; trust the form) -----------------------
     const clientData = {
       first_name: (formData.get("first_name") as string) || undefined,
       last_name: (formData.get("last_name") as string) || undefined,
@@ -28,28 +16,35 @@ export async function POST(request: NextRequest) {
       phone: (formData.get("phone") as string) || undefined,
     };
 
-    // -- Stripe hidden fields -------------------------------------------------
-    const stripeSessionId = (formData.get("stripe_checkout_session_id") as string) || undefined;
-    const stripeLinkId = (formData.get("stripe_payment_link_id") as string) || undefined;
-    const stripeIntentId = (formData.get("stripe_payment_intent_id") as string) || undefined;
-    const stripeCustomerId = (formData.get("stripe_customer_id") as string) || undefined;
-    const stripeAmountCents = parseIntField(formData.get("stripe_amount_paid_cents") as string);
-    const stripeCurrency = (formData.get("stripe_currency") as string) || "usd";
-    const stripeStatus = (formData.get("stripe_payment_status") as string) || undefined;
-    const stripeDiscountCents = parseIntField(formData.get("stripe_amount_discount_cents") as string) ?? 0;
-    const stripeDiscountCodes = parseCsvField(formData.get("stripe_discount_codes") as string);
+    // -- Stripe verification (trust only the session ID from the form) -------
+    // Re-fetch the session server-side so an attacker can't forge stripe_* or
+    // payment fields by submitting arbitrary values to this public endpoint.
+    const stripeSessionId =
+      (formData.get("stripe_checkout_session_id") as string) || undefined;
 
-    // -- Job auto-fills from Payment Link metadata ---------------------------
-    const rawJobType = formData.get("job_type") as string;
-    const jobType =
-      rawJobType === "street" || rawJobType === "studio" ? rawJobType : undefined;
-    const rawDelivery = formData.get("delivery_method") as string;
-    const deliveryMethod =
-      rawDelivery === "pickup" || rawDelivery === "delivery" || rawDelivery === "other"
-        ? rawDelivery
-        : undefined;
+    const verified = stripeSessionId
+      ? await getSessionPrefill(stripeSessionId)
+      : null;
+
+    if (verified && !verified.ok) {
+      // Session was claimed but couldn't be verified — reject rather than
+      // silently create a Job without the payment context it implied.
+      return NextResponse.json(
+        { error: "Stripe session verification failed" },
+        { status: 400 },
+      );
+    }
+
+    const stripe = verified?.ok ? verified.stripe : undefined;
+    const stripePrefill = verified?.ok ? verified.prefill : undefined;
+    const stripeAutoFill = verified?.ok ? verified.jobAutoFill : undefined;
 
     // -- Find or create client ------------------------------------------------
+    const billingForClient = stripePrefill?.billingAddress;
+    const clientAddressPayload = billingForClient
+      ? { address: billingForClient }
+      : {};
+
     const existingClients = await payload.find({
       collection: "clients",
       where: { email: { equals: clientData.email } },
@@ -59,10 +54,7 @@ export async function POST(request: NextRequest) {
     if (existingClients.docs.length > 0) {
       const existing = existingClients.docs[0];
       // Only back-fill address when the client has none
-      const addressUpdate =
-        existing.address?.street1
-          ? {}
-          : buildAddressFromForm(formData);
+      const addressUpdate = existing.address?.street1 ? {} : clientAddressPayload;
       client = await payload.update({
         collection: "clients",
         id: existing.id,
@@ -71,7 +63,7 @@ export async function POST(request: NextRequest) {
     } else {
       client = await payload.create({
         collection: "clients",
-        data: { ...clientData, ...buildAddressFromForm(formData) },
+        data: { ...clientData, ...clientAddressPayload },
       });
     }
 
@@ -97,17 +89,30 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // -- Build payment_methods entry if Stripe amount is present -------------
+    // -- Build payment_methods entry if Stripe confirmed a paid amount -------
     const paymentMethods =
-      stripeAmountCents && stripeAmountCents > 0
+      stripe && stripe.amountPaidCents > 0
         ? [
             {
               method: "website" as const,
-              amount: stripeAmountCents / 100,
+              amount: stripe.amountPaidCents / 100,
               date: new Date().toISOString(),
             },
           ]
         : [];
+
+    // -- Shipping address from verified Stripe data --------------------------
+    const shipping = stripePrefill?.shippingAddress;
+    const shippingAddress = shipping
+      ? {
+          line1: shipping.street1,
+          line2: shipping.street2,
+          city: shipping.city,
+          state: shipping.state,
+          postal_code: shipping.zip,
+          country: shipping.country,
+        }
+      : undefined;
 
     // -- Create job -----------------------------------------------------------
     const petSex = formData.get("pet_sex") as string;
@@ -116,27 +121,34 @@ export async function POST(request: NextRequest) {
         ? petSex
         : "unknown";
 
+    const isStripePaymentStatus = (
+      s: string | undefined,
+    ): s is "paid" | "unpaid" | "no_payment_required" =>
+      s === "paid" || s === "unpaid" || s === "no_payment_required";
+
     const job = await payload.create({
       collection: "jobs",
       data: {
         client: client.id,
         status: "intake_received",
-        job_type: jobType,
-        delivery_method: deliveryMethod,
+        job_type: stripeAutoFill?.jobType,
+        delivery_method: stripeAutoFill?.deliveryMethod,
         referral: (formData.get("referral") as string) || undefined,
         notes: (formData.get("notes") as string) || undefined,
-        // Stripe identifiers
-        stripe_checkout_session_id: stripeSessionId,
-        stripe_payment_link_id: stripeLinkId,
-        stripe_payment_intent_id: stripeIntentId,
-        stripe_customer_id: stripeCustomerId,
-        stripe_amount_paid_cents: stripeAmountCents,
-        stripe_currency: stripeCurrency,
-        stripe_payment_status: stripeStatus as "paid" | "unpaid" | "no_payment_required" | undefined,
-        stripe_amount_discount_cents: stripeDiscountCents,
-        stripe_discount_codes: stripeDiscountCodes.map((code) => ({ code })),
+        // Stripe identifiers — source-of-truth is the server-verified session
+        stripe_checkout_session_id: stripe?.sessionId,
+        stripe_payment_link_id: stripe?.paymentLinkId ?? undefined,
+        stripe_payment_intent_id: stripe?.paymentIntentId ?? undefined,
+        stripe_customer_id: stripe?.customerId ?? undefined,
+        stripe_amount_paid_cents: stripe?.amountPaidCents,
+        stripe_currency: stripe?.currency,
+        stripe_payment_status: isStripePaymentStatus(stripe?.paymentStatus)
+          ? stripe?.paymentStatus
+          : undefined,
+        stripe_amount_discount_cents: stripe?.amountDiscountCents ?? 0,
+        stripe_discount_codes: stripe?.discountCodes.map((code) => ({ code })) ?? [],
         payment_methods: paymentMethods,
-        shipping_address: buildShippingFromForm(formData),
+        shipping_address: shippingAddress,
         pets: [
           {
             name: (formData.get("pet_name") as string) || "",
@@ -158,34 +170,4 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-}
-
-/** Build client address from Stripe billing address fields carried in the form. */
-function buildAddressFromForm(formData: FormData) {
-  const street1 = formData.get("billing_street1") as string;
-  if (!street1) return {};
-  return {
-    address: {
-      street1,
-      street2: (formData.get("billing_street2") as string) || "",
-      city: (formData.get("billing_city") as string) || "",
-      state: (formData.get("billing_state") as string) || "",
-      zip: (formData.get("billing_zip") as string) || "",
-      country: (formData.get("billing_country") as string) || "",
-    },
-  };
-}
-
-/** Build job shipping address from Stripe shipping address fields carried in the form. */
-function buildShippingFromForm(formData: FormData) {
-  const line1 = formData.get("shipping_line1") as string;
-  if (!line1) return undefined;
-  return {
-    line1,
-    line2: (formData.get("shipping_line2") as string) || "",
-    city: (formData.get("shipping_city") as string) || "",
-    state: (formData.get("shipping_state") as string) || "",
-    postal_code: (formData.get("shipping_postal_code") as string) || "",
-    country: (formData.get("shipping_country") as string) || "",
-  };
 }
