@@ -277,6 +277,14 @@ export interface Client {
   email: string;
   notes?: string | null;
   phone?: string | null;
+  address?: {
+    street1?: string | null;
+    street2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
+    country?: string | null;
+  };
   company?: string | null;
   price?: number | null;
   /**
@@ -318,6 +326,8 @@ export interface Job {
    */
   job_type?: ('street' | 'studio') | null;
   due_date?: string | null;
+  urgency?: ('low' | 'medium' | 'high') | null;
+  delivery_method?: ('pickup' | 'delivery' | 'other') | null;
   notes?: string | null;
   /**
    * Pet information from intake form
@@ -622,6 +632,16 @@ export interface ClientsSelect<T extends boolean = true> {
   email?: T;
   notes?: T;
   phone?: T;
+  address?:
+    | T
+    | {
+        street1?: T;
+        street2?: T;
+        city?: T;
+        state?: T;
+        zip?: T;
+        country?: T;
+      };
   company?: T;
   price?: T;
   marketing_consent?: T;
@@ -644,6 +664,8 @@ export interface JobsSelect<T extends boolean = true> {
   lead?: T;
   job_type?: T;
   due_date?: T;
+  urgency?: T;
+  delivery_method?: T;
   notes?: T;
   pets?:
     | T
