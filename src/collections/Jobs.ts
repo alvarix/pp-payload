@@ -199,11 +199,29 @@ export const Jobs: CollectionConfig = {
       ],
     },
     {
+      name: "stripe_checkout_session_id",
+      type: "text",
+      label: "Stripe Checkout Session ID",
+      index: true,
+      admin: {
+        description: "cs_... — captured from /intake?session=... on submit",
+      },
+    },
+    {
+      name: "stripe_payment_link_id",
+      type: "text",
+      label: "Stripe Payment Link ID",
+      index: true,
+      admin: {
+        description: "plink_... — which Payment Link the customer used",
+      },
+    },
+    {
       name: "stripe_payment_intent_id",
       type: "text",
       label: "Stripe Payment Intent ID",
       admin: {
-        description: "From Stripe webhook",
+        description: "pi_... — reconciliation key for refunds / disputes",
       },
     },
     {
@@ -211,7 +229,59 @@ export const Jobs: CollectionConfig = {
       type: "text",
       label: "Stripe Customer ID",
       admin: {
-        description: "From Stripe webhook",
+        description: "cus_... — matches returning customers",
+      },
+    },
+    {
+      name: "stripe_amount_paid_cents",
+      type: "number",
+      label: "Stripe Amount Paid (cents)",
+      min: 0,
+      admin: {
+        description: "session.amount_total in smallest currency unit",
+      },
+    },
+    {
+      name: "stripe_currency",
+      type: "text",
+      label: "Stripe Currency",
+      defaultValue: "usd",
+      admin: {
+        description: "ISO currency code, lowercase (e.g. usd)",
+      },
+    },
+    {
+      name: "stripe_payment_status",
+      type: "select",
+      label: "Stripe Payment Status",
+      options: [
+        { label: "Paid", value: "paid" },
+        { label: "Unpaid", value: "unpaid" },
+        { label: "No payment required", value: "no_payment_required" },
+      ],
+      admin: {
+        description: "session.payment_status at time of intake",
+      },
+    },
+    {
+      name: "stripe_amount_discount_cents",
+      type: "number",
+      label: "Stripe Discount (cents)",
+      min: 0,
+      defaultValue: 0,
+      admin: {
+        description: "Total coupon savings applied to this session",
+      },
+    },
+    {
+      name: "stripe_discount_codes",
+      type: "array",
+      label: "Stripe Discount Codes",
+      fields: [
+        { name: "code", type: "text", label: "Coupon / Promo Code" },
+      ],
+      admin: {
+        description: "Names of coupons or promo codes applied",
       },
     },
     {

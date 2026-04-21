@@ -33,6 +33,7 @@
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "sharp": "0.34.2",
+    "stripe": "^22.0.2",
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {

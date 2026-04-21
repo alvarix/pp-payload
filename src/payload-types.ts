@@ -374,13 +374,46 @@ export interface Job {
       }[]
     | null;
   /**
-   * From Stripe webhook
+   * cs_... — captured from /intake?session=... on submit
+   */
+  stripe_checkout_session_id?: string | null;
+  /**
+   * plink_... — which Payment Link the customer used
+   */
+  stripe_payment_link_id?: string | null;
+  /**
+   * pi_... — reconciliation key for refunds / disputes
    */
   stripe_payment_intent_id?: string | null;
   /**
-   * From Stripe webhook
+   * cus_... — matches returning customers
    */
   stripe_customer_id?: string | null;
+  /**
+   * session.amount_total in smallest currency unit
+   */
+  stripe_amount_paid_cents?: number | null;
+  /**
+   * ISO currency code, lowercase (e.g. usd)
+   */
+  stripe_currency?: string | null;
+  /**
+   * session.payment_status at time of intake
+   */
+  stripe_payment_status?: ('paid' | 'unpaid' | 'no_payment_required') | null;
+  /**
+   * Total coupon savings applied to this session
+   */
+  stripe_amount_discount_cents?: number | null;
+  /**
+   * Names of coupons or promo codes applied
+   */
+  stripe_discount_codes?:
+    | {
+        code?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   /**
    * Mirrored from Stripe at checkout
    */
@@ -688,8 +721,20 @@ export interface JobsSelect<T extends boolean = true> {
         date?: T;
         id?: T;
       };
+  stripe_checkout_session_id?: T;
+  stripe_payment_link_id?: T;
   stripe_payment_intent_id?: T;
   stripe_customer_id?: T;
+  stripe_amount_paid_cents?: T;
+  stripe_currency?: T;
+  stripe_payment_status?: T;
+  stripe_amount_discount_cents?: T;
+  stripe_discount_codes?:
+    | T
+    | {
+        code?: T;
+        id?: T;
+      };
   shipping_address?:
     | T
     | {
