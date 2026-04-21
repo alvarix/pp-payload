@@ -55,24 +55,20 @@ Handles client intake, job tracking, portfolio management, and events. The publi
 
 - Node >= 20.9.0
 - pnpm >= 9
-- Docker (for Postgres)
+- A Supabase project (free tier is fine). Postgres runs there — no local DB / Docker needed.
 
 ### Environment
 
-Create a `.env` file in the project root:
+Copy `.env.example` to `.env` and fill in the values. At minimum:
 
 ```env
-DATABASE_URL=postgresql://payload:payload@127.0.0.1:5432/payload
+DATABASE_URL=postgres://postgres:<password>@db.<project>.supabase.co:5432/postgres
 PAYLOAD_SECRET=your-secret-here
+PAYLOAD_ADMIN_EMAIL=admin@example.com
+PAYLOAD_ADMIN_PASSWORD=your-admin-password
 ```
 
-### Start Postgres
-
-```bash
-docker-compose up -d
-```
-
-Runs Postgres 16 on port `5432`. Credentials: `payload / payload`, database: `payload`. Data persists in the `pgdata` Docker volume.
+Get `DATABASE_URL` from the Supabase dashboard: Settings → Database → Connection string.
 
 ### Install and run
 
