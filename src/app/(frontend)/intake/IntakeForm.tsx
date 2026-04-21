@@ -1,13 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import type { Prefill, StripeData, JobAutoFill } from "@/lib/stripe";
 
-export function IntakeForm() {
+interface IntakeFormProps {
+  prefill?: Prefill;
+  stripeData?: StripeData;
+  jobAutoFill?: JobAutoFill;
+}
+
+export function IntakeForm({ prefill, stripeData, jobAutoFill }: IntakeFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<
-    "idle" | "success" | "error"
-  >("idle");
-  const [photoInputs, setPhotoInputs] = useState([0]); // Track multiple file input groups
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
+  const [photoInputs, setPhotoInputs] = useState([0]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -38,12 +43,9 @@ export function IntakeForm() {
   if (submitStatus === "success") {
     return (
       <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-        <h2 className="text-2xl font-semibold text-green-900 mb-2">
-          Thank you!
-        </h2>
+        <h2 className="text-2xl font-semibold text-green-900 mb-2">Thank you!</h2>
         <p className="text-green-800">
-          Your intake form has been submitted successfully. We'll be in touch
-          soon!
+          Your intake form has been submitted successfully. We&apos;ll be in touch soon!
         </p>
       </div>
     );
@@ -51,16 +53,59 @@ export function IntakeForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+
+      {/* Hidden Stripe fields — carried through to /api/intake */}
+      {stripeData && (
+        <>
+          <input type="hidden" name="stripe_checkout_session_id" value={stripeData.sessionId} />
+          <input type="hidden" name="stripe_payment_link_id" value={stripeData.paymentLinkId ?? ""} />
+          <input type="hidden" name="stripe_payment_intent_id" value={stripeData.paymentIntentId ?? ""} />
+          <input type="hidden" name="stripe_customer_id" value={stripeData.customerId ?? ""} />
+          <input type="hidden" name="stripe_amount_paid_cents" value={stripeData.amountPaidCents} />
+          <input type="hidden" name="stripe_currency" value={stripeData.currency} />
+          <input type="hidden" name="stripe_payment_status" value={stripeData.paymentStatus} />
+          <input type="hidden" name="stripe_amount_discount_cents" value={stripeData.amountDiscountCents} />
+          <input type="hidden" name="stripe_discount_codes" value={stripeData.discountCodes.join(",")} />
+        </>
+      )}
+
+      {/* Hidden address fields — carried from Stripe prefill to /api/intake */}
+      {prefill?.billingAddress && (
+        <>
+          <input type="hidden" name="billing_street1" value={prefill.billingAddress.street1} />
+          <input type="hidden" name="billing_street2" value={prefill.billingAddress.street2} />
+          <input type="hidden" name="billing_city" value={prefill.billingAddress.city} />
+          <input type="hidden" name="billing_state" value={prefill.billingAddress.state} />
+          <input type="hidden" name="billing_zip" value={prefill.billingAddress.zip} />
+          <input type="hidden" name="billing_country" value={prefill.billingAddress.country} />
+        </>
+      )}
+      {prefill?.shippingAddress && (
+        <>
+          <input type="hidden" name="shipping_line1" value={prefill.shippingAddress.street1} />
+          <input type="hidden" name="shipping_line2" value={prefill.shippingAddress.street2} />
+          <input type="hidden" name="shipping_city" value={prefill.shippingAddress.city} />
+          <input type="hidden" name="shipping_state" value={prefill.shippingAddress.state} />
+          <input type="hidden" name="shipping_postal_code" value={prefill.shippingAddress.zip} />
+          <input type="hidden" name="shipping_country" value={prefill.shippingAddress.country} />
+        </>
+      )}
+
+      {/* Hidden job auto-fill fields */}
+      {jobAutoFill?.jobType && (
+        <input type="hidden" name="job_type" value={jobAutoFill.jobType} />
+      )}
+      {jobAutoFill?.deliveryMethod && (
+        <input type="hidden" name="delivery_method" value={jobAutoFill.deliveryMethod} />
+      )}
+
       {/* Contact Information */}
       <div className="border rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-4">Your Information</h2>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label
-              htmlFor="first_name"
-              className="block text-sm font-medium mb-1"
-            >
+            <label htmlFor="first_name" className="block text-sm font-medium mb-1">
               First Name *
             </label>
             <input
@@ -68,15 +113,12 @@ export function IntakeForm() {
               id="first_name"
               name="first_name"
               required
+              defaultValue={prefill?.firstName ?? ""}
               className="w-full px-3 py-2 border rounded-md"
             />
           </div>
-
           <div>
-            <label
-              htmlFor="last_name"
-              className="block text-sm font-medium mb-1"
-            >
+            <label htmlFor="last_name" className="block text-sm font-medium mb-1">
               Last Name *
             </label>
             <input
@@ -84,6 +126,7 @@ export function IntakeForm() {
               id="last_name"
               name="last_name"
               required
+              defaultValue={prefill?.lastName ?? ""}
               className="w-full px-3 py-2 border rounded-md"
             />
           </div>
@@ -98,6 +141,7 @@ export function IntakeForm() {
             id="email"
             name="email"
             required
+            defaultValue={prefill?.email ?? ""}
             className="w-full px-3 py-2 border rounded-md"
           />
         </div>
@@ -110,6 +154,7 @@ export function IntakeForm() {
             type="tel"
             id="phone"
             name="phone"
+            defaultValue={prefill?.phone ?? ""}
             className="w-full px-3 py-2 border rounded-md"
           />
         </div>
@@ -133,7 +178,7 @@ export function IntakeForm() {
 
         <div className="mt-4">
           <label htmlFor="pet_name" className="block text-sm font-medium mb-1">
-            Pet's Name *
+            Pet&apos;s Name *
           </label>
           <input
             type="text"
@@ -148,11 +193,7 @@ export function IntakeForm() {
           <label htmlFor="pet_sex" className="block text-sm font-medium mb-1">
             Sex
           </label>
-          <select
-            id="pet_sex"
-            name="pet_sex"
-            className="w-full px-3 py-2 border rounded-md"
-          >
+          <select id="pet_sex" name="pet_sex" className="w-full px-3 py-2 border rounded-md">
             <option value="">Select...</option>
             <option value="male">Male</option>
             <option value="female">Female</option>
@@ -162,7 +203,7 @@ export function IntakeForm() {
 
         <div className="mt-4">
           <label htmlFor="pet_breed" className="block text-sm font-medium mb-1">
-            Breed & Markings
+            Breed &amp; Markings
           </label>
           <input
             type="text"
@@ -173,10 +214,7 @@ export function IntakeForm() {
         </div>
 
         <div className="mt-4">
-          <label
-            htmlFor="pet_personality"
-            className="block text-sm font-medium mb-1"
-          >
+          <label htmlFor="pet_personality" className="block text-sm font-medium mb-1">
             Personality (helps us capture their essence!)
           </label>
           <textarea
@@ -188,11 +226,8 @@ export function IntakeForm() {
         </div>
 
         <div className="mt-4">
-          <label
-            htmlFor="pet_social_media"
-            className="block text-sm font-medium mb-1"
-          >
-            Pet's Social Media (optional)
+          <label htmlFor="pet_social_media" className="block text-sm font-medium mb-1">
+            Pet&apos;s Social Media (optional)
           </label>
           <input
             type="text"
@@ -205,8 +240,7 @@ export function IntakeForm() {
 
         <div className="mt-4">
           <label htmlFor="pet_pics" className="block text-sm font-medium mb-1">
-            Photos * (upload 2-5 clear photos, use CMD or CTRL to select
-            multiple )
+            Photos * (upload 2–5 clear photos)
           </label>
           {photoInputs.map((inputId, index) => (
             <div key={inputId} className="mb-3">
@@ -222,9 +256,7 @@ export function IntakeForm() {
                 {index > 0 && (
                   <button
                     type="button"
-                    onClick={() =>
-                      setPhotoInputs(photoInputs.filter((_, i) => i !== index))
-                    }
+                    onClick={() => setPhotoInputs(photoInputs.filter((_, i) => i !== index))}
                     className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md"
                   >
                     Remove
@@ -233,7 +265,6 @@ export function IntakeForm() {
               </div>
             </div>
           ))}
-
           <button
             type="button"
             onClick={() => setPhotoInputs([...photoInputs, Date.now()])}
@@ -241,10 +272,8 @@ export function IntakeForm() {
           >
             + Add more photos
           </button>
-
           <p className="text-sm text-gray-500 mt-2">
-            Upload multiple photos showing different angles and expressions. Use
-            CMD/CTRL to select multiple files.
+            Upload photos showing different angles and expressions.
           </p>
         </div>
       </div>
@@ -265,7 +294,7 @@ export function IntakeForm() {
 
       {submitStatus === "error" && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
-          There was an error submitting your form. Please try again.
+          There was an error submitting your form. Please try again or contact us directly.
         </div>
       )}
 
@@ -274,7 +303,7 @@ export function IntakeForm() {
         disabled={isSubmitting}
         className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
       >
-        {isSubmitting ? "Submitting..." : "Submit Intake Form"}
+        {isSubmitting ? "Submitting…" : "Submit Intake Form"}
       </button>
     </form>
   );
