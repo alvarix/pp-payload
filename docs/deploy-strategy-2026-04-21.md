@@ -15,6 +15,25 @@ This doc layers on top of `docs/project-review-2026-04-20.md` — specifically u
 
 Non-goal for this pass: RBAC, full Stripe webhook reconciliation (review item B), dashboard UX rework (review item C).
 
+## Rollup estimate — full deploy project
+
+Order from user 2026-04-21: **C → A → B → deploy**. Per-step estimates live in each sub-plan; this table is the big-picture sum.
+
+| Phase | Sub-plan | AI active time | User active time | Tokens (K) |
+|---|---|---|---|---|
+| C. Stripe prefill | `docs/stripe-prefill-plan-2026-04-21.md` | ~77 min | ~90–120 min | ~185 |
+| A. Supabase Storage (signed-URL uploads, Payload plugin, media-library ops) | TBD — plan doc after C lands | ~180–240 min | ~60–120 min | ~300 |
+| B. Multi-pet intake form | TBD — plan doc after A lands | ~90 min | ~30 min | ~100 |
+| Production deploy | TBD — includes Vercel project config, env promotion, DNS if applicable, WP form cutover | ~60 min | ~120 min (DNS, Stripe live-mode switch, WP cutover) | ~50 |
+| **Total** | | **~7–10 hours AI active** | **~5–6 hours user active** | **~635** |
+
+Interpretation:
+- Your time is concentrated in: Stripe link configuration (step 0 of phase C), Supabase bucket + IAM setup (phase A), end-to-end walkthroughs, and DNS / WP cutover.
+- My time is concentrated in: phase A (storage architecture has the most moving parts — signed URLs, orphan pruning, bucket layout, Payload plugin config).
+- Tokens are rough order-of-magnitude; real cost depends on how many rounds of review/iteration we go through per step.
+
+If you want me to trim, the biggest lever is phase A: we could defer orphan pruning + media-library extensions to a later pass and just wire the plugin for uploads. That would halve phase A.
+
 ---
 
 ## Decision 1 — Where to deploy — **LOCKED: Vercel + Supabase**
