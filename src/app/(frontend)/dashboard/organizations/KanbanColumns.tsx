@@ -105,43 +105,44 @@ export function KanbanColumns({ columns, today }: { columns: OrgColumnData[]; to
 
   const sorted = order.map((key) => columns.find((c) => c.key === key)!).filter(Boolean);
 
+  const topTier = sorted.find((c) => c.isTopTier);
+  const regularCols = sorted.filter((c) => !c.isTopTier);
+
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
-      {sorted.map((col) => {
+    <div className="space-y-4">
+      {topTier && (
+        <details open>
+          <summary className="flex items-center gap-2 mb-2 cursor-pointer list-none select-none">
+            <span className={`text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded ${BADGE.amber} ring-1 ring-amber-300`}>
+              Top Tier
+            </span>
+            <span className="text-xs text-gray-400">{topTier.orgs.length}</span>
+          </summary>
+          <div className="flex flex-wrap gap-2">
+            {topTier.orgs.map((org) => (
+              <div key={org.id} className={`flex items-center gap-2 bg-white border ${BORDER.amber} rounded-lg px-3 py-1.5 shadow-sm`}>
+                <a
+                  href={`/admin/collections/organizations/${org.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-medium text-gray-900 hover:text-blue-700 whitespace-nowrap"
+                >
+                  {org.name}
+                </a>
+                <OrgStatusSelect orgId={org.id} currentStatus={org.status} compact />
+              </div>
+            ))}
+            {topTier.orgs.length === 0 && (
+              <p className="text-xs text-gray-400 italic">None</p>
+            )}
+          </div>
+        </details>
+      )}
+
+      <div className="flex gap-4 overflow-x-auto pb-4">
+        {regularCols.map((col) => {
         const isDragging = dragging === col.key;
         const isOver = dragOver === col.key;
-
-        if (col.isTopTier) {
-          return (
-            <details
-              key={col.key}
-              open
-              className={`flex-shrink-0 w-60 transition-opacity ${isDragging ? "opacity-40" : ""}`}
-            >
-              <summary
-                draggable
-                onDragStart={() => handleDragStart(col.key)}
-                onDragOver={(e) => handleDragOver(e, col.key)}
-                onDrop={() => handleDrop(col.key)}
-                onDragEnd={() => { setDragging(null); setDragOver(null); }}
-                className={`flex items-center justify-between mb-2 cursor-grab active:cursor-grabbing list-none select-none rounded px-1 -mx-1 ${isOver ? "ring-2 ring-blue-400" : ""}`}
-              >
-                <span className={`text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded ${BADGE.amber} ring-1 ring-amber-300`}>
-                  {col.label}
-                </span>
-                <span className="text-xs text-gray-400">{col.orgs.length}</span>
-              </summary>
-              <div className="space-y-2">
-                {col.orgs.map((org) => (
-                  <OrgCard key={org.id} org={org} today={today} borderColor={BORDER.amber} />
-                ))}
-                {col.orgs.length === 0 && (
-                  <p className="text-xs text-gray-400 italic text-center pt-4">None</p>
-                )}
-              </div>
-            </details>
-          );
-        }
 
         return (
           <div
@@ -171,7 +172,8 @@ export function KanbanColumns({ columns, today }: { columns: OrgColumnData[]; to
             </div>
           </div>
         );
-      })}
+        })}
+      </div>
     </div>
   );
 }
