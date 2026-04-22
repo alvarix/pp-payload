@@ -19,8 +19,8 @@ interface ImportResult {
 }
 
 const STATUS_OPTIONS = [
-  { value: "", label: "Auto (past → delivered, future → new)" },
-  { value: "new", label: "New" },
+  { value: "", label: "Auto (past → delivered, future → inquiry)" },
+  { value: "inquiry", label: "Inquiry" },
   { value: "intake_received", label: "Intake Received" },
   { value: "in_progress", label: "In Progress" },
   { value: "awaiting_pics_or_payment", label: "Awaiting Pics / Payment" },

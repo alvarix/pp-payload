@@ -72,7 +72,7 @@ export interface Config {
     events: Event;
     clients: Client;
     jobs: Job;
-    leads: Lead;
+    organizations: Organization;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -82,7 +82,7 @@ export interface Config {
     clients: {
       jobs: 'jobs';
     };
-    leads: {
+    organizations: {
       events: 'events';
     };
   };
@@ -92,7 +92,7 @@ export interface Config {
     events: EventsSelect<false> | EventsSelect<true>;
     clients: ClientsSelect<false> | ClientsSelect<true>;
     jobs: JobsSelect<false> | JobsSelect<true>;
-    leads: LeadsSelect<false> | LeadsSelect<true>;
+    organizations: OrganizationsSelect<false> | OrganizationsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -210,17 +210,17 @@ export interface Event {
   status: 'draft' | 'published';
   featured?: boolean | null;
   /**
-   * Link to the venue Lead record for this event
+   * Link to the venue Organization record for this event
    */
-  lead?: (number | null) | Lead;
+  organization?: (number | null) | Organization;
   updatedAt: string;
   createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "leads".
+ * via the `definition` "organizations".
  */
-export interface Lead {
+export interface Organization {
   id: number;
   name: string;
   type: 'brewery' | 'pet_store' | 'gift_shop' | 'gallery' | 'cafe' | 'venue' | 'other';
@@ -318,9 +318,9 @@ export interface Job {
    */
   client: number | Client;
   /**
-   * Link to a venue Lead for event/bulk orders
+   * Link to a venue Organization for event/bulk orders
    */
-  lead?: (number | null) | Lead;
+  organization?: (number | null) | Organization;
   /**
    * Street: 5-10 days to ship. Studio: 1-2 weeks to ship.
    */
@@ -354,7 +354,7 @@ export interface Job {
     id?: string | null;
   }[];
   status:
-    | 'new'
+    | 'inquiry'
     | 'intake_received'
     | 'in_progress'
     | 'awaiting_pics_or_payment'
@@ -551,8 +551,8 @@ export interface PayloadLockedDocument {
         value: number | Job;
       } | null)
     | ({
-        relationTo: 'leads';
-        value: number | Lead;
+        relationTo: 'organizations';
+        value: number | Organization;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -650,7 +650,7 @@ export interface EventsSelect<T extends boolean = true> {
   image?: T;
   status?: T;
   featured?: T;
-  lead?: T;
+  organization?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -694,7 +694,7 @@ export interface ClientsSelect<T extends boolean = true> {
  */
 export interface JobsSelect<T extends boolean = true> {
   client?: T;
-  lead?: T;
+  organization?: T;
   job_type?: T;
   due_date?: T;
   urgency?: T;
@@ -780,9 +780,9 @@ export interface JobsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "leads_select".
+ * via the `definition` "organizations_select".
  */
-export interface LeadsSelect<T extends boolean = true> {
+export interface OrganizationsSelect<T extends boolean = true> {
   name?: T;
   type?: T;
   address?: T;
