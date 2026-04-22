@@ -4,10 +4,15 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
 const ORG_STATUSES = [
-  { value: "researched", label: "Researched" },
-  { value: "contacted", label: "Contacted" },
-  { value: "responded", label: "Responded" },
-  { value: "confirmed", label: "Confirmed" },
+  { value: "researched",           label: "Researched" },
+  { value: "contacted",            label: "Contacted" },
+  { value: "responded",            label: "Responded" },
+  { value: "meeting_scheduled",    label: "Meeting Scheduled" },
+  { value: "upcoming_event",       label: "Upcoming Event" },
+  { value: "ongoing_relationship", label: "Ongoing Relationship" },
+  { value: "past_collaborator",    label: "Past Collaborator" },
+  { value: "declined",             label: "Declined" },
+  { value: "no_response",          label: "No Response" },
 ];
 
 /**
