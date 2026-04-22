@@ -19,7 +19,7 @@ const ORG_STATUSES = [
  * Inline select for changing an organization's status from the dashboard.
  * POSTs to /api/dashboard/org-actions and refreshes on success.
  */
-export function OrgStatusSelect({ orgId, currentStatus }: { orgId: number; currentStatus: string }) {
+export function OrgStatusSelect({ orgId, currentStatus, compact }: { orgId: number; currentStatus: string; compact?: boolean }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -48,7 +48,7 @@ export function OrgStatusSelect({ orgId, currentStatus }: { orgId: number; curre
       onChange={(e) => handleChange(e.target.value)}
       disabled={isPending}
       onClick={(e) => e.preventDefault()}
-      className="mt-2 w-full text-xs px-2 py-1 rounded border border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-wait"
+      className={`text-xs px-2 py-1 rounded border border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-wait ${compact ? "" : "mt-2 w-full"}`}
     >
       {ORG_STATUSES.map((s) => (
         <option key={s.value} value={s.value}>
