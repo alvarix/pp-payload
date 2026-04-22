@@ -117,12 +117,14 @@ function StatCard({
           : "border-gray-200";
 
   const inner = (
-    <div className={`border ${borderColor} rounded-lg p-4 bg-white shadow-sm h-full`}>
-      <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">{label}</p>
-      <p className="text-3xl font-bold mt-1 text-gray-900">{value}</p>
-      {description && (
-        <p className="text-xs text-gray-400 mt-1">{description}</p>
-      )}
+    <div className={`border ${borderColor} rounded px-3 py-1.5 bg-white shadow-sm flex items-center gap-2`}>
+      <span className="text-lg font-bold text-gray-900 leading-none">{value}</span>
+      <div className="min-w-0">
+        <p className="!m-1 text-xs text-gray-600 font-medium leading-none truncate">{label}</p>
+        {description && (
+          <p className="!m-1 text-xs text-gray-400 leading-none truncate mt-0.5">{description}</p>
+        )}
+      </div>
     </div>
   );
 

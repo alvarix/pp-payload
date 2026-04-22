@@ -8,64 +8,59 @@ interface QuickActionsProps {
   currentStatus: string;
 }
 
-/** Button definitions per status. */
-const BUTTONS: Record<string, { label: string; action: string }[]> = {
-  new: [{ label: "Mark Intake Received", action: "mark_intake_received" }],
-  intake_received: [{ label: "Start Work", action: "start_work" }],
-  in_progress: [
-    { label: "Mark Awaiting", action: "mark_awaiting" },
-    { label: "Ready to Ship", action: "mark_ready_to_ship" },
-  ],
-  awaiting_pics_or_payment: [
-    { label: "Pics Received", action: "toggle_pics_received" },
-    { label: "Ready to Ship", action: "mark_ready_to_ship" },
-  ],
-  ready_to_ship: [{ label: "Mark Delivered", action: "mark_delivered" }],
-};
+const ALL_STATUSES = [
+  { value: "inquiry", label: "Inquiry" },
+  { value: "intake_received", label: "Intake Received" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "awaiting_pics_or_payment", label: "Awaiting Pics/Payment" },
+  { value: "ready_to_ship", label: "Ready to Ship" },
+  { value: "delivered", label: "Delivered" },
+  { value: "portfolio_ready", label: "Portfolio Ready" },
+];
 
 /**
- * Client component for quick status transitions on job cards.
- * POSTs to /api/dashboard/actions and refreshes the page on success.
+ * Client component for changing job status via a select dropdown.
+ * POSTs set_status to /api/dashboard/actions and refreshes on success.
  */
 export function QuickActions({ jobId, currentStatus }: QuickActionsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const buttons = BUTTONS[currentStatus] || [];
-  if (buttons.length === 0) return null;
-
-  async function handleAction(action: string) {
+  async function handleChange(newStatus: string) {
+    if (newStatus === currentStatus) return;
     try {
       const res = await fetch("/api/dashboard/actions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobId, action }),
+        body: JSON.stringify({ jobId, action: "set_status", status: newStatus }),
       });
       if (!res.ok) {
         const data = await res.json();
-        console.error("Action failed:", data);
+        console.error("Status change failed:", data);
         return;
       }
       startTransition(() => {
         router.refresh();
       });
     } catch (e) {
-      console.error("Action error:", e);
+      console.error("Status change error:", e);
     }
   }
 
   return (
-    <div className="flex gap-1 mt-2 flex-wrap">
-      {buttons.map((btn) => (
-        <button
-          key={btn.action}
-          onClick={() => handleAction(btn.action)}
-          disabled={isPending}
-          className="text-xs px-2 py-1 rounded border border-gray-300 bg-gray-50 text-gray-800 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-wait"
-        >
-          {btn.label}
-        </button>
-      ))}
+    <div className="mt-2">
+      <select
+        value={currentStatus}
+        onChange={(e) => handleChange(e.target.value)}
+        disabled={isPending}
+        className="w-full text-xs px-2 py-1 rounded border border-gray-300 bg-gray-50 text-gray-800 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-wait"
+      >
+        {ALL_STATUSES.map((s) => (
+          <option key={s.value} value={s.value}>
+            {s.label}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

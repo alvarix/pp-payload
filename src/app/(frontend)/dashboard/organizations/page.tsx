@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getPayload } from "payload";
 import config from "@/payload.config";
 import type { Organization } from "@/payload-types";
+import { OrgStatusSelect } from "./OrgStatusSelect";
 
 /**
  * Virtual column keys — not all map 1:1 to organization status.
@@ -81,9 +82,19 @@ export default async function OrganizationsDashboardPage() {
     <div className="p-6 max-w-[1200px] mx-auto bg-gray-50 min-h-screen">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Organizations</h1>
-        <a href="/dashboard" className="text-sm text-gray-500 hover:underline">
-          &larr; Dashboard
-        </a>
+        <div className="flex items-center gap-2">
+          <a
+            href="/admin/collections/organizations/create"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 text-gray-700"
+          >
+            + Organization
+          </a>
+          <a href="/dashboard" className="text-sm text-gray-500 hover:underline">
+            &larr; Dashboard
+          </a>
+        </div>
       </div>
 
       <p className="text-xs text-gray-400 mb-4">
@@ -136,6 +147,7 @@ export default async function OrganizationsDashboardPage() {
                           Follow-up: {org.followUpDate.slice(0, 10)}
                         </p>
                       )}
+                      <OrgStatusSelect orgId={org.id} currentStatus={org.status as string} />
                     </a>
                   );
                 })}
