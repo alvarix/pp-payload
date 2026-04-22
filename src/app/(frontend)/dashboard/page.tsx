@@ -165,6 +165,22 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         <div className="flex items-center gap-2">
           <a
+            href="/admin/collections/jobs/create"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 text-gray-700"
+          >
+            + Job
+          </a>
+          <a
+            href="/admin/collections/clients/create"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 text-gray-700"
+          >
+            + Client
+          </a>
+          <a
             href="/dashboard/client-import"
             className="text-sm px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 text-gray-700"
           >

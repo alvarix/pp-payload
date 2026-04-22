@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { jobId: number; action: string };
+  let body: { jobId: number; action: string; status?: string };
   try {
     body = await request.json();
   } catch {
@@ -45,6 +45,23 @@ export async function POST(request: Request) {
       { error: "Missing jobId or action" },
       { status: 400 }
     );
+  }
+
+  // Direct status assignment from the column select
+  if (action === "set_status") {
+    const VALID_STATUSES = [
+      "inquiry", "intake_received", "in_progress",
+      "awaiting_pics_or_payment", "ready_to_ship", "delivered", "portfolio_ready",
+    ];
+    if (!body.status || !VALID_STATUSES.includes(body.status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+    try {
+      await payload.update({ collection: "jobs", id: jobId, data: { status: body.status } });
+      return NextResponse.json({ success: true });
+    } catch (e: any) {
+      return NextResponse.json({ error: e.message }, { status: 500 });
+    }
   }
 
   // Handle toggle_pics_received separately (read-then-update)
