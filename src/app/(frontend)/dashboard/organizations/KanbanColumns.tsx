@@ -29,7 +29,7 @@ export type OrgColumnData = {
   key: string;
   label: string;
   color: string;
-  isTopTier?: boolean;
+  isBand?: boolean;
   orgs: OrgForCard[];
 };
 
@@ -51,6 +51,11 @@ const BADGE: Record<string, string> = {
   yellow: "bg-yellow-100 text-yellow-700",
   purple: "bg-purple-100 text-purple-700",
   amber:  "bg-amber-100 text-amber-800",
+};
+
+const BAND_RING: Record<string, string> = {
+  amber:  "ring-amber-300",
+  purple: "ring-purple-300",
 };
 
 const LS_KEY = "org-dashboard-col-order";
@@ -105,22 +110,22 @@ export function KanbanColumns({ columns, today }: { columns: OrgColumnData[]; to
 
   const sorted = order.map((key) => columns.find((c) => c.key === key)!).filter(Boolean);
 
-  const topTier = sorted.find((c) => c.isTopTier);
-  const regularCols = sorted.filter((c) => !c.isTopTier);
+  const bands = sorted.filter((c) => c.isBand);
+  const regularCols = sorted.filter((c) => !c.isBand);
 
   return (
     <div className="space-y-4">
-      {topTier && (
-        <details open>
+      {bands.map((band) => (
+        <details key={band.key} open>
           <summary className="flex items-center gap-2 mb-2 cursor-pointer list-none select-none">
-            <span className={`text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded ${BADGE.amber} ring-1 ring-amber-300`}>
-              Top Tier
+            <span className={`text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded ${BADGE[band.color]} ring-1 ${BAND_RING[band.color] ?? "ring-gray-300"}`}>
+              {band.label}
             </span>
-            <span className="text-xs text-gray-400">{topTier.orgs.length}</span>
+            <span className="text-xs text-gray-400">{band.orgs.length}</span>
           </summary>
           <div className="flex flex-wrap gap-2">
-            {topTier.orgs.map((org) => (
-              <div key={org.id} className={`flex items-center gap-2 bg-white border ${BORDER.amber} rounded-lg px-3 py-1.5 shadow-sm`}>
+            {band.orgs.map((org) => (
+              <div key={org.id} className={`flex items-center gap-2 bg-white border ${BORDER[band.color]} rounded-lg px-3 py-1.5 shadow-sm`}>
                 <a
                   href={`/admin/collections/organizations/${org.id}`}
                   target="_blank"
@@ -132,12 +137,12 @@ export function KanbanColumns({ columns, today }: { columns: OrgColumnData[]; to
                 <OrgStatusSelect orgId={org.id} currentStatus={org.status} compact />
               </div>
             ))}
-            {topTier.orgs.length === 0 && (
+            {band.orgs.length === 0 && (
               <p className="text-xs text-gray-400 italic">None</p>
             )}
           </div>
         </details>
-      )}
+      ))}
 
       <div className="flex gap-4 overflow-x-auto pb-4">
         {regularCols.map((col) => {
