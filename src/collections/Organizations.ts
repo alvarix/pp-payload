@@ -48,6 +48,11 @@ export const Organizations: CollectionConfig = {
               label: "Neighborhood",
             },
             {
+              name: "notes",
+              type: "textarea",
+              label: "Notes",
+            },
+            {
               name: "city",
               type: "text",
               label: "City",
@@ -94,6 +99,11 @@ export const Organizations: CollectionConfig = {
               },
             },
             {
+              name: "website",
+              type: "text",
+              label: "Website",
+            },
+            {
               name: "email",
               type: "email",
               label: "Email",
@@ -104,20 +114,26 @@ export const Organizations: CollectionConfig = {
               label: "Phone",
             },
             {
-              name: "website",
-              type: "text",
-              label: "Website",
-            },
-            {
-              name: "preferredContactMethod",
-              type: "select",
-              label: "Preferred Contact Method",
-              options: [
-                { label: "Email", value: "email" },
-                { label: "Instagram DM", value: "instagram_dm" },
-                { label: "Contact Form", value: "contact_form" },
-                { label: "Phone", value: "phone" },
-                { label: "In Person", value: "in_person" },
+              name: "contacts",
+              type: "array",
+              label: "Contacts",
+              fields: [
+                { name: "contactName", type: "text", label: "Name" },
+                { name: "role", type: "text", label: "Role / Title" },
+                { name: "email", type: "email", label: "Email" },
+                { name: "phone", type: "text", label: "Phone" },
+                {
+                  name: "preferredContactMethod",
+                  type: "select",
+                  label: "Preferred Contact",
+                  options: [
+                    { label: "Email", value: "email" },
+                    { label: "Instagram DM", value: "instagram_dm" },
+                    { label: "Contact Form", value: "contact_form" },
+                    { label: "Phone", value: "phone" },
+                    { label: "In Person", value: "in_person" },
+                  ],
+                },
               ],
             },
           ],

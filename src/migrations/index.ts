@@ -4,6 +4,7 @@ import * as migration_20260421_183835 from './20260421_183835';
 import * as migration_20260422_rename_status_new_to_inquiry from './20260422_rename_status_new_to_inquiry';
 import * as migration_20260422_rename_leads_to_organizations from './20260422_rename_leads_to_organizations';
 import * as migration_20260422_200000_org_status_refactor from './20260422_200000_org_status_refactor';
+import * as migration_20260422_210000_org_contacts_array from './20260422_210000_org_contacts_array';
 
 export const migrations = [
   {
@@ -35,5 +36,10 @@ export const migrations = [
     up: migration_20260422_200000_org_status_refactor.up,
     down: migration_20260422_200000_org_status_refactor.down,
     name: '20260422_200000_org_status_refactor',
+  },
+  {
+    up: migration_20260422_210000_org_contacts_array.up,
+    down: migration_20260422_210000_org_contacts_array.down,
+    name: '20260422_210000_org_contacts_array',
   },
 ];

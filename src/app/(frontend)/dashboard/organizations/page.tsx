@@ -48,8 +48,17 @@ export default async function OrganizationsDashboardPage() {
     type: org.type ?? null,
     neighborhood: org.neighborhood ?? null,
     instagram: org.instagram ?? null,
-    email: org.email ?? null,
     website: org.website ?? null,
+    email: org.email ?? null,
+    phone: org.phone ?? null,
+    contacts: Array.isArray(org.contacts)
+      ? org.contacts.map((c) => ({
+          contactName: c.contactName ?? null,
+          role: c.role ?? null,
+          email: c.email ?? null,
+          phone: c.phone ?? null,
+        }))
+      : null,
     fitScore: org.fitScore ?? null,
     followUpDate: org.followUpDate ?? null,
     status: org.status as string,

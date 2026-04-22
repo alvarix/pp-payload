@@ -3,14 +3,23 @@
 import { useLayoutEffect, useState } from "react";
 import { OrgStatusSelect } from "./OrgStatusSelect";
 
+export type OrgContact = {
+  contactName?: string | null;
+  role?: string | null;
+  email?: string | null;
+  phone?: string | null;
+};
+
 export type OrgForCard = {
   id: number;
   name: string;
   type?: string | null;
   neighborhood?: string | null;
   instagram?: string | null;
-  email?: string | null;
   website?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  contacts?: OrgContact[] | null;
   fitScore?: string | null;
   followUpDate?: string | null;
   status: string;
@@ -196,11 +205,26 @@ function OrgCard({
       {org.instagram && (
         <p className="text-xs text-blue-500 mt-0.5">@{org.instagram}</p>
       )}
+      {org.website && (
+        <p className="text-xs text-gray-400 mt-0.5 truncate">{org.website}</p>
+      )}
       {org.email && (
         <p className="text-xs text-gray-500 mt-0.5 truncate">{org.email}</p>
       )}
-      {org.website && (
-        <p className="text-xs text-gray-400 mt-0.5 truncate">{org.website}</p>
+      {org.phone && (
+        <p className="text-xs text-gray-400 mt-0.5">{org.phone}</p>
+      )}
+      {org.contacts && org.contacts.length > 0 && (
+        <div className="mt-1 space-y-0.5">
+          {org.contacts.map((c, i) => (
+            <div key={i} className="text-xs text-gray-500 truncate">
+              {c.contactName && <span className="font-medium">{c.contactName}</span>}
+              {c.role && <span className="text-gray-400"> · {c.role}</span>}
+              {c.email && <span className="block truncate">{c.email}</span>}
+              {c.phone && <span className="block text-gray-400">{c.phone}</span>}
+            </div>
+          ))}
+        </div>
       )}
       {org.fitScore && org.fitScore !== "top_tier" && (
         <p className="text-xs text-gray-400 mt-0.5 capitalize">
