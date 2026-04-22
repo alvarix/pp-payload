@@ -247,7 +247,16 @@ export interface Organization {
   rating?: number | null;
   fitScore?: ('top_tier' | 'strong' | 'worth_trying') | null;
   fitNotes?: string | null;
-  status: 'researched' | 'contacted' | 'responded' | 'meeting_scheduled' | 'confirmed' | 'declined' | 'no_response';
+  status:
+    | 'researched'
+    | 'contacted'
+    | 'responded'
+    | 'meeting_scheduled'
+    | 'upcoming_event'
+    | 'ongoing_relationship'
+    | 'past_collaborator'
+    | 'declined'
+    | 'no_response';
   dateContacted?: string | null;
   followUpDate?: string | null;
   responseNotes?: string | null;

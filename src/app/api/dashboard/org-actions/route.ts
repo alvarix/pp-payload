@@ -3,7 +3,11 @@ import { getPayload } from "payload";
 import config from "@/payload.config";
 import { NextResponse } from "next/server";
 
-const VALID_STATUSES = ["researched", "contacted", "responded", "confirmed"];
+const VALID_STATUSES = [
+  "researched", "contacted", "responded", "meeting_scheduled",
+  "upcoming_event", "ongoing_relationship", "past_collaborator",
+  "declined", "no_response",
+];
 
 /**
  * POST handler for organization status changes from the dashboard.
