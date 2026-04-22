@@ -1,4 +1,9 @@
 # ------------------------------
+# Database backups
+# ------------------------------
+backup_*.sql
+
+# ------------------------------
 # Environment / secrets
 # ------------------------------
 .env
@@ -30,10 +35,8 @@ out/
 media/
 
 # ------------------------------
-# Docker
+# Logs
 # ------------------------------
-pgdata/
-docker-data/
 *.log
 
 # ------------------------------
@@ -44,9 +47,19 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+data_import/
 
 # ------------------------------
 # Testing / tooling
 # ------------------------------
 playwright-report/
-coverage/
+coverage/._-/
+.claude/
+#._-/
+.claude/
+._-/
+.claude/
+._-/
+.claude/
+pp-wp
+pp-wp.pub
