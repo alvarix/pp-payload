@@ -112,8 +112,8 @@ export async function POST(request: Request) {
     due.setDate(due.getDate() + shippingDays);
     const parsedDate = due.toISOString();
 
-    const VALID_STATUSES = ["new", "intake_received", "in_progress", "awaiting_pics_or_payment", "ready_to_ship", "delivered"];
-    let jobStatus = "new";
+    const VALID_STATUSES = ["inquiry", "intake_received", "in_progress", "awaiting_pics_or_payment", "ready_to_ship", "delivered"];
+    let jobStatus = "inquiry";
     if (statusOverride && VALID_STATUSES.includes(statusOverride)) {
       jobStatus = statusOverride;
     }

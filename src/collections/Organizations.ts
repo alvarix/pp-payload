@@ -1,7 +1,7 @@
 import type { CollectionConfig } from "payload";
 
-export const Leads: CollectionConfig = {
-  slug: "leads",
+export const Organizations: CollectionConfig = {
+  slug: "organizations",
   admin: {
     useAsTitle: "name",
     defaultColumns: ["name", "type", "city", "status", "fitScore", "dateContacted"],
@@ -222,7 +222,7 @@ export const Leads: CollectionConfig = {
               type: "join",
               label: "Events",
               collection: "events",
-              on: "lead",
+              on: "organization",
               admin: {
                 defaultColumns: ["title", "startAt", "status"],
               },

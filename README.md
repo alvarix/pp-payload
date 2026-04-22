@@ -11,12 +11,12 @@ Handles client intake, job tracking, portfolio management, and events. The publi
 **Jobs** - the main work unit. Each job belongs to a client and tracks:
 - One or more pets (name, sex, breed, personality, social handle, reference photos)
 - Job type: `street` (5-10 days to ship) or `studio` (1-2 weeks to ship)
-- Status through a 7-stage workflow: `new → intake_received → in_progress → awaiting_pics_or_payment → ready_to_ship → delivered → portfolio_ready`
+- Status through a 7-stage workflow: `inquiry → intake_received → in_progress → ready_to_ship → awaiting_pics_or_payment → delivered → portfolio_ready`
 - Payment records (method, amount, date) and Stripe IDs
 - Shipping address
 - A portfolio group with images (tagged by role), testimonial, portfolio status, and featured flag
 
-**Leads** - outreach pipeline for pop-up event collaborations. Tracks business info, contact details, qualification (dog-friendly, event space, pop-up history), fit scoring, and outreach status through a 7-stage workflow: `researched → contacted → responded → meeting_scheduled → confirmed → declined → no_response`. Organized in tabs: Business Info, Contact, Qualification, Outreach.
+**Organizations** - outreach pipeline for pop-up event collaborations. Tracks business info, contact details, qualification (dog-friendly, event space, pop-up history), fit scoring, and outreach status through a 7-stage workflow: `researched → contacted → responded → meeting_scheduled → confirmed → declined → no_response`. Organized in tabs: Business Info, Contact, Qualification, Outreach.
 
 **Events** - calendar/marketing events with slug, dates, location, rich text description, image, and publish status.
 
@@ -28,7 +28,7 @@ Handles client intake, job tracking, portfolio management, and events. The publi
 
 `/dashboard` — job workflow board grouped by status, with stats and quick actions.
 
-`/dashboard/leads` — leads pipeline. Columns: Current (confirmed + upcoming event), Past Collaborators (confirmed, no upcoming event), Prospects (researched, sorted by fit score), Contacted, Responded. Move a lead between columns by changing its Status in admin; Current vs Past is determined automatically by whether a linked Event exists with a future date.
+`/dashboard/organizations` — organizations pipeline. Columns: Current (confirmed + upcoming event), Past Collaborators (confirmed, no upcoming event), Prospects (researched, sorted by fit score), Contacted, Responded. Move an organization between columns by changing its Status in admin; Current vs Past is determined automatically by whether a linked Event exists with a future date.
 
 `/dashboard/client-import` — CSV importer for post-event client intake. Columns: `Email, First, Last, Pet, Breed, Event, Type, Status, Job Notes, Client Notes, Referral`. Supports paste/file or a per-field form. Column chips are shown before upload — hover for per-field notes, click × to exclude. Due date is today + shipping window (street +7 days, studio +10 days).
 
@@ -84,6 +84,7 @@ Admin panel: [http://localhost:3000/admin](http://localhost:3000/admin)
 ### Scripts
 
 ```bash
+./db-backup.sh        # pg_dump to timestamped .sql file (run before migrations)
 pnpm dev              # start dev server
 pnpm devsafe          # clear .next cache and start
 pnpm build            # production build
@@ -104,7 +105,7 @@ Import scripts live in `data_import/`. All require the dev server to be running.
 PAYLOAD_EMAIL=admin@example.com PAYLOAD_PASSWORD=yourpassword \
   node data_import/import-leads.mjs
 
-# Import all leads (past collaborators + prospects) into the Leads collection
+# Import all organizations (past collaborators + prospects) into the Organizations collection
 PAYLOAD_EMAIL=admin@example.com PAYLOAD_PASSWORD=yourpassword \
   node data_import/import-all-leads.mjs
 
@@ -116,7 +117,7 @@ DRY_RUN=1 PAYLOAD_EMAIL=admin@example.com PAYLOAD_PASSWORD=yourpassword \
 | Script | Target collection | Data file | Deduplicates on |
 |---|---|---|---|
 | `import-leads.mjs` | Clients | `leads.json` | email |
-| `import-all-leads.mjs` | Leads | `all-leads-seed.json` | name |
+| `import-all-leads.mjs` | Organizations | `all-leads-seed.json` | name |
 
 ## Project structure
 

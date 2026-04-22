@@ -91,14 +91,14 @@ export const Events: CollectionConfig = {
       defaultValue: false,
     },
     {
-      name: "lead",
+      name: "organization",
       type: "relationship",
-      label: "Venue (Lead)",
-      relationTo: "leads",
+      label: "Venue (Organization)",
+      relationTo: "organizations",
       required: false,
       hasMany: false,
       admin: {
-        description: "Link to the venue Lead record for this event",
+        description: "Link to the venue Organization record for this event",
         position: "sidebar",
       },
     },

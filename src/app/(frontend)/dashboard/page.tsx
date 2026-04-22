@@ -10,16 +10,16 @@ import { StatusColumn } from "./components/StatusColumn";
 
 /** Status values shown as columns (not delivered or archived). */
 const ACTIVE_STATUSES = [
-  "new",
   "intake_received",
   "in_progress",
-  "awaiting_pics_or_payment",
   "ready_to_ship",
+  "awaiting_pics_or_payment",
+  "inquiry",
 ] as const;
 
 /** Labels and colors for each active status column. */
 const STATUS_META: Record<string, { label: string; color: string }> = {
-  new: { label: "New", color: "gray" },
+  inquiry: { label: "Inquiry", color: "gray" },
   intake_received: { label: "Intake Received", color: "blue" },
   in_progress: { label: "In Progress", color: "yellow" },
   awaiting_pics_or_payment: { label: "Awaiting Pics/Payment", color: "orange" },
@@ -31,7 +31,7 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
  * A job is considered stale if updatedAt exceeds this threshold.
  */
 export const STALE_THRESHOLDS: Record<string, number> = {
-  new: 3,
+  inquiry: 3,
   intake_received: 5,
   awaiting_pics_or_payment: 7,
 };
@@ -124,10 +124,10 @@ export default async function DashboardPage() {
     .slice(0, 5)
     .map((c) => ({ name: c.name, jobCount: c.count, id: c.id }));
 
-  // Leads with follow-up due today or earlier
+  // Organizations with follow-up due today or earlier
   const today = new Date().toISOString().split("T")[0];
-  const { totalDocs: leadsNeedingFollowUp } = await payload.find({
-    collection: "leads",
+  const { totalDocs: orgsNeedingFollowUp } = await payload.find({
+    collection: "organizations",
     where: { followUpDate: { less_than_equal: today } },
     limit: 0,
   });
@@ -171,13 +171,13 @@ export default async function DashboardPage() {
             Import CSV
           </a>
           <a
-            href="/dashboard/leads"
+            href="/dashboard/organizations"
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
           >
-            Leads
-            {leadsNeedingFollowUp > 0 && (
+            Organizations
+            {orgsNeedingFollowUp > 0 && (
               <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
-                {leadsNeedingFollowUp}
+                {orgsNeedingFollowUp}
               </span>
             )}
           </a>
@@ -191,7 +191,7 @@ export default async function DashboardPage() {
         feedbackCount={feedbackCount}
         totalClients={totalClients}
         overdueCount={staleJobs.length}
-        leadsNeedingFollowUp={leadsNeedingFollowUp}
+        leadsNeedingFollowUp={orgsNeedingFollowUp}
         topClients={topClients}
       />
 

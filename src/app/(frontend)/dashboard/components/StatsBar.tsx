@@ -11,7 +11,7 @@ interface StatsBarProps {
   feedbackCount: number;
   totalClients: number;
   overdueCount: number;
-  leadsNeedingFollowUp: number;
+  orgsNeedingFollowUp: number;
   topClients: TopClient[];
 }
 
@@ -26,7 +26,7 @@ export function StatsBar({
   feedbackCount,
   totalClients,
   overdueCount,
-  leadsNeedingFollowUp,
+  orgsNeedingFollowUp,
   topClients,
 }: StatsBarProps) {
   return (
@@ -66,9 +66,9 @@ export function StatsBar({
         {overdueCount > 0 && (
           <StatPill label="Stale" value={overdueCount} color="red" />
         )}
-        {leadsNeedingFollowUp > 0 && (
-          <a href="/admin/collections/leads" target="_blank" rel="noopener noreferrer">
-            <StatPill label="Follow-ups due" value={leadsNeedingFollowUp} color="amber" />
+        {orgsNeedingFollowUp > 0 && (
+          <a href="/admin/collections/organizations" target="_blank" rel="noopener noreferrer">
+            <StatPill label="Follow-ups due" value={orgsNeedingFollowUp} color="amber" />
           </a>
         )}
 

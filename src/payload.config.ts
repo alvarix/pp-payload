@@ -1,7 +1,7 @@
 import { Jobs } from "./collections/Jobs";
 import { Clients } from "./collections/Clients";
 import { Events } from "./collections/Events";
-import { Leads } from "./collections/Leads";
+import { Organizations } from "./collections/Organizations";
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import path from "path";
@@ -22,7 +22,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Events, Clients, Jobs, Leads],
+  collections: [Users, Media, Events, Clients, Jobs, Organizations],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "",
   typescript: {

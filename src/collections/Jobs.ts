@@ -23,14 +23,14 @@ export const Jobs: CollectionConfig = {
       },
     },
     {
-      name: "lead",
+      name: "organization",
       type: "relationship",
-      label: "Venue / Lead",
-      relationTo: "leads",
+      label: "Venue / Organization",
+      relationTo: "organizations",
       required: false,
       hasMany: false,
       admin: {
-        description: "Link to a venue Lead for event/bulk orders",
+        description: "Link to a venue Organization for event/bulk orders",
       },
     },
     {
@@ -142,10 +142,10 @@ export const Jobs: CollectionConfig = {
       type: "select",
       label: "Status",
       required: true,
-      defaultValue: "new",
+      defaultValue: "inquiry",
       index: true,
       options: [
-        { label: "New (intake pending)", value: "new" },
+        { label: "Inquiry", value: "inquiry" },
         { label: "Intake received", value: "intake_received" },
         { label: "In progress", value: "in_progress" },
         {
