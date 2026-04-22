@@ -6,7 +6,7 @@ import type { Job, Client } from "@/payload-types";
 
 import { StatsBar } from "./components/StatsBar";
 import { OverdueAlert } from "./components/OverdueAlert";
-import { StatusColumn } from "./components/StatusColumn";
+import { JobsKanbanBoard, type JobColumnData, type JobForCard } from "./components/JobsKanbanBoard";
 
 /** Status values shown as columns (not delivered or archived). */
 const ACTIVE_STATUSES = [
@@ -132,17 +132,36 @@ export default async function DashboardPage() {
     limit: 0,
   });
 
-  // Group active jobs by status for column rendering
-  const jobsByStatus: Record<string, Job[]> = {};
-  for (const status of ACTIVE_STATUSES) {
-    jobsByStatus[status] = [];
-  }
+  // Group active jobs by status and build serializable column data
+  const jobsByStatus: Record<string, JobForCard[]> = {};
+  for (const status of ACTIVE_STATUSES) jobsByStatus[status] = [];
+
   for (const job of activeJobs) {
     const s = job.status as string;
-    if (jobsByStatus[s]) {
-      jobsByStatus[s].push(job as Job);
-    }
+    if (!jobsByStatus[s]) continue;
+    const client = job.client as Client | null;
+    const clientName =
+      client && typeof client === "object"
+        ? [client.first_name, client.last_name].filter(Boolean).join(" ") || client.email
+        : "Unknown";
+    jobsByStatus[s].push({
+      id: job.id,
+      clientName,
+      petNames: job.pets?.map((p) => p.name).join(", ") || "No pets listed",
+      due_date: job.due_date ?? null,
+      pics_received: job.pics_received ?? null,
+      job_type: job.job_type ?? null,
+      notes: job.notes ?? null,
+      status: s,
+    });
   }
+
+  const columnData: JobColumnData[] = ACTIVE_STATUSES.map((status) => ({
+    key: status,
+    label: STATUS_META[status].label,
+    color: STATUS_META[status].color,
+    jobs: jobsByStatus[status],
+  }));
 
   // Detect stale/overdue jobs
   const staleJobs: { id: number; clientName: string; status: string; daysStale: number }[] = [];
@@ -207,22 +226,14 @@ export default async function DashboardPage() {
         feedbackCount={feedbackCount}
         totalClients={totalClients}
         overdueCount={staleJobs.length}
-        leadsNeedingFollowUp={orgsNeedingFollowUp}
+        orgsNeedingFollowUp={orgsNeedingFollowUp}
         topClients={topClients}
       />
 
       <OverdueAlert staleJobs={staleJobs} />
 
-      <div className="flex gap-4 overflow-x-auto pb-4 mt-6">
-        {ACTIVE_STATUSES.map((status) => (
-          <StatusColumn
-            key={status}
-            status={status}
-            label={STATUS_META[status].label}
-            jobs={jobsByStatus[status]}
-            color={STATUS_META[status].color}
-          />
-        ))}
+      <div className="mt-6">
+        <JobsKanbanBoard columns={columnData} />
       </div>
     </div>
   );
