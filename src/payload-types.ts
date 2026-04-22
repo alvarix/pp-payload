@@ -226,6 +226,7 @@ export interface Organization {
   type: 'brewery' | 'pet_store' | 'gift_shop' | 'gallery' | 'cafe' | 'venue' | 'other';
   address?: string | null;
   neighborhood?: string | null;
+  notes?: string | null;
   city?: string | null;
   state?: string | null;
   country?: string | null;
@@ -236,10 +237,19 @@ export interface Organization {
    * Handle only, no @
    */
   instagram?: string | null;
+  website?: string | null;
   email?: string | null;
   phone?: string | null;
-  website?: string | null;
-  preferredContactMethod?: ('email' | 'instagram_dm' | 'contact_form' | 'phone' | 'in_person') | null;
+  contacts?:
+    | {
+        contactName?: string | null;
+        role?: string | null;
+        email?: string | null;
+        phone?: string | null;
+        preferredContactMethod?: ('email' | 'instagram_dm' | 'contact_form' | 'phone' | 'in_person') | null;
+        id?: string | null;
+      }[]
+    | null;
   dogFriendly?: boolean | null;
   hasEventSpace?: boolean | null;
   popUpHistory?: boolean | null;
@@ -796,6 +806,7 @@ export interface OrganizationsSelect<T extends boolean = true> {
   type?: T;
   address?: T;
   neighborhood?: T;
+  notes?: T;
   city?: T;
   state?: T;
   country?: T;
@@ -803,10 +814,19 @@ export interface OrganizationsSelect<T extends boolean = true> {
   longitude?: T;
   placeId?: T;
   instagram?: T;
+  website?: T;
   email?: T;
   phone?: T;
-  website?: T;
-  preferredContactMethod?: T;
+  contacts?:
+    | T
+    | {
+        contactName?: T;
+        role?: T;
+        email?: T;
+        phone?: T;
+        preferredContactMethod?: T;
+        id?: T;
+      };
   dogFriendly?: T;
   hasEventSpace?: T;
   popUpHistory?: T;
