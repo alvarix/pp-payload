@@ -51,6 +51,7 @@ export type StripeData = {
   currency: string
   paymentStatus: string
   amountDiscountCents: number
+  amountTaxCents: number
   discountCodes: string[]
 }
 
@@ -207,6 +208,7 @@ export async function getSessionPrefill(sessionId: string): Promise<SessionPrefi
         currency: session.currency ?? 'usd',
         paymentStatus: session.payment_status,
         amountDiscountCents: session.total_details?.amount_discount ?? 0,
+        amountTaxCents: session.total_details?.amount_tax ?? 0,
         discountCodes,
       },
       jobAutoFill: { jobType, deliveryMethod },

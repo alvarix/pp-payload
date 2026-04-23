@@ -274,6 +274,16 @@ export const Jobs: CollectionConfig = {
       },
     },
     {
+      name: "stripe_amount_tax_cents",
+      type: "number",
+      label: "Stripe Tax (cents)",
+      min: 0,
+      defaultValue: 0,
+      admin: {
+        description: "Tax collected by Stripe at checkout (session.total_details.amount_tax)",
+      },
+    },
+    {
       name: "stripe_discount_codes",
       type: "array",
       label: "Stripe Discount Codes",
