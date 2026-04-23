@@ -146,6 +146,7 @@ export async function POST(request: NextRequest) {
           ? stripe?.paymentStatus
           : undefined,
         stripe_amount_discount_cents: stripe?.amountDiscountCents ?? 0,
+        stripe_amount_tax_cents: stripe?.amountTaxCents ?? 0,
         stripe_discount_codes: stripe?.discountCodes.map((code) => ({ code })) ?? [],
         payment_methods: paymentMethods,
         shipping_address: shippingAddress,
