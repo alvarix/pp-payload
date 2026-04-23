@@ -7,7 +7,8 @@ const VALID_STATUSES = [
   "researched", "contacted", "responded", "meeting_scheduled",
   "upcoming_event", "ongoing_relationship", "past_collaborator",
   "declined", "no_response",
-];
+] as const;
+type OrgStatus = (typeof VALID_STATUSES)[number];
 
 /**
  * POST handler for organization status changes from the dashboard.
@@ -32,12 +33,12 @@ export async function POST(request: Request) {
 
   const { orgId, status } = body;
 
-  if (!orgId || !status || !VALID_STATUSES.includes(status)) {
+  if (!orgId || !status || !VALID_STATUSES.includes(status as OrgStatus)) {
     return NextResponse.json({ error: "Invalid orgId or status" }, { status: 400 });
   }
 
   try {
-    await payload.update({ collection: "organizations", id: orgId, data: { status } });
+    await payload.update({ collection: "organizations", id: orgId, data: { status: status as OrgStatus } });
     return NextResponse.json({ success: true });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });

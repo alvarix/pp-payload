@@ -460,7 +460,7 @@ export const Jobs: CollectionConfig = {
     beforeRead: [
       ({ doc }) => {
         if (doc?.pets?.length) {
-          doc.pet_names = doc.pets.map((p) => p.name).join(", ");
+          doc.pet_names = doc.pets.map((p: { name: string }) => p.name).join(", ");
         }
         return doc;
       },
