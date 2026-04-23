@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
  * Maps action names to the field update they produce.
  * Used by the dashboard quick-action buttons.
  */
-export const ACTION_MAP: Record<string, Record<string, unknown>> = {
+const ACTION_MAP: Record<string, Record<string, unknown>> = {
   mark_intake_received: { status: "intake_received" },
   start_work: { status: "in_progress" },
   mark_awaiting: { status: "awaiting_pics_or_payment" },
@@ -52,12 +52,13 @@ export async function POST(request: Request) {
     const VALID_STATUSES = [
       "inquiry", "intake_received", "in_progress",
       "awaiting_pics_or_payment", "ready_to_ship", "delivered", "portfolio_ready",
-    ];
-    if (!body.status || !VALID_STATUSES.includes(body.status)) {
+    ] as const;
+    type JobStatus = (typeof VALID_STATUSES)[number];
+    if (!body.status || !VALID_STATUSES.includes(body.status as JobStatus)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
     try {
-      await payload.update({ collection: "jobs", id: jobId, data: { status: body.status } });
+      await payload.update({ collection: "jobs", id: jobId, data: { status: body.status as JobStatus } });
       return NextResponse.json({ success: true });
     } catch (e: any) {
       return NextResponse.json({ error: e.message }, { status: 500 });

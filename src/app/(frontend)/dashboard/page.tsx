@@ -30,7 +30,7 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
  * Stale thresholds in days, keyed by job status.
  * A job is considered stale if updatedAt exceeds this threshold.
  */
-export const STALE_THRESHOLDS: Record<string, number> = {
+const STALE_THRESHOLDS: Record<string, number> = {
   inquiry: 3,
   intake_received: 5,
   awaiting_pics_or_payment: 7,
@@ -41,7 +41,7 @@ export const STALE_THRESHOLDS: Record<string, number> = {
  * @param status - current job status
  * @param updatedAt - ISO date string of last update
  */
-export function getDaysStale(status: string, updatedAt: string | undefined): number {
+function getDaysStale(status: string, updatedAt: string | undefined): number {
   if (!updatedAt) return 0;
   const threshold = STALE_THRESHOLDS[status];
   if (!threshold) return 0;

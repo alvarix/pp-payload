@@ -63,8 +63,8 @@ export default async function EventsPage() {
               )}
             </div>
 
-            {event.location?.address && (
-              <p className="text-gray-600">📍 {event.location.address}</p>
+            {event.location && (
+              <p className="text-gray-600">📍 {event.location}</p>
             )}
 
             {event.featured && (
