@@ -51,7 +51,13 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form
+      onSubmit={handleSubmit}
+      method="post"
+      action="/api/intake"
+      encType="multipart/form-data"
+      className="space-y-6"
+    >
 
       {/* Only the session ID is trusted by the server; all other Stripe data
           is re-fetched server-side in /api/intake to prevent client forgery. */}
@@ -200,8 +206,9 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
 
         <div className="mt-4">
           <label htmlFor="pet_pics" className="block text-sm font-medium mb-1">
-            Photos * (upload 2–5 clear photos)
-          </label>
+            <strong>Photos</strong>: DM me photos on instagram <a href='https://instagram.com/alvar.nyc' target='_blank'>@alvar.nyc</a> or upload below.
+            <br/>(2–5 clearly lit photos: not resting or with clothes or toys).
+            </label>
           {photoInputs.map((inputId, index) => (
             <div key={inputId} className="mb-3">
               <div className="flex gap-2 items-center">
@@ -210,7 +217,6 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
                   name="pet_pics"
                   accept="image/*"
                   multiple
-                  required={index === 0}
                   className="flex-1 px-3 py-2 border rounded-md"
                 />
                 {index > 0 && (

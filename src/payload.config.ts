@@ -4,6 +4,7 @@ import { Events } from "./collections/Events";
 import { Organizations } from "./collections/Organizations";
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
+import { s3Storage } from "@payloadcms/storage-s3";
 import path from "path";
 import { buildConfig } from "payload";
 import { fileURLToPath } from "url";
@@ -34,5 +35,21 @@ export default buildConfig({
     },
   }),
   sharp,
-  plugins: [],
+  plugins: [
+    s3Storage({
+      collections: {
+        media: true,
+      },
+      bucket: process.env.SUPABASE_S3_BUCKET || "",
+      config: {
+        endpoint: process.env.SUPABASE_S3_ENDPOINT,
+        region: process.env.SUPABASE_S3_REGION,
+        credentials: {
+          accessKeyId: process.env.SUPABASE_S3_ACCESS_KEY_ID || "",
+          secretAccessKey: process.env.SUPABASE_S3_SECRET_ACCESS_KEY || "",
+        },
+        forcePathStyle: true,
+      },
+    }),
+  ],
 });
