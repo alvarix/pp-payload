@@ -216,6 +216,18 @@ export const Organizations: CollectionConfig = {
               label: "Date Contacted",
             },
             {
+              name: "contactMethod",
+              type: "select",
+              label: "Contact Method",
+              options: [
+                { label: "Eblast", value: "eblast" },
+                { label: "Personal email", value: "personal_email" },
+                { label: "Instagram", value: "instagram" },
+                { label: "Website form", value: "website_form" },
+                { label: "Other", value: "other" },
+              ],
+            },
+            {
               name: "followUpDate",
               type: "date",
               label: "Follow-Up Date",

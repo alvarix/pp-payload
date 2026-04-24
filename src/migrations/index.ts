@@ -7,6 +7,7 @@ import * as migration_20260422_200000_org_status_refactor from './20260422_20000
 import * as migration_20260422_210000_org_contacts_array from './20260422_210000_org_contacts_array';
 import * as migration_20260423_230427_add_stripe_tax from './20260423_230427_add_stripe_tax';
 import * as migration_20260424_140000_add_media_tags from './20260424_140000_add_media_tags';
+import * as migration_20260424_220000_add_org_contact_method from './20260424_220000_add_org_contact_method';
 
 export const migrations = [
   {
@@ -53,5 +54,10 @@ export const migrations = [
     up: migration_20260424_140000_add_media_tags.up,
     down: migration_20260424_140000_add_media_tags.down,
     name: '20260424_140000_add_media_tags',
+  },
+  {
+    up: migration_20260424_220000_add_org_contact_method.up,
+    down: migration_20260424_220000_add_org_contact_method.down,
+    name: '20260424_220000_add_org_contact_method',
   },
 ];

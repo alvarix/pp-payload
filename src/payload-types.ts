@@ -276,6 +276,7 @@ export interface Organization {
     | 'declined'
     | 'no_response';
   dateContacted?: string | null;
+  contactMethod?: ('eblast' | 'personal_email' | 'instagram' | 'website_form' | 'other') | null;
   followUpDate?: string | null;
   responseNotes?: string | null;
   eventDate?: string | null;
@@ -851,6 +852,7 @@ export interface OrganizationsSelect<T extends boolean = true> {
   fitNotes?: T;
   status?: T;
   dateContacted?: T;
+  contactMethod?: T;
   followUpDate?: T;
   responseNotes?: T;
   eventDate?: T;
