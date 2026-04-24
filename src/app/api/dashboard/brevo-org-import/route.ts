@@ -30,6 +30,19 @@ function rowSignalStrength(row: Record<string, string>): number {
 }
 
 /**
+ * Parse Brevo's DD-MM-YYYY HH:MM:SS date format into ISO YYYY-MM-DD.
+ * Returns null if the input isn't in the expected format.
+ */
+function brevoDateToISO(raw: string): string | null {
+  if (!raw) return null;
+  const [day, month, yearTime] = raw.split("-");
+  if (!day || !month || !yearTime) return null;
+  const [year] = yearTime.split(" ");
+  if (!year) return null;
+  return `${year}-${month}-${day}`;
+}
+
+/**
  * Deduplicate rows by Email_ID, keeping the row with the strongest signal.
  * If two rows tie, keep the one with more total opens.
  */
@@ -147,9 +160,9 @@ export async function POST(request: Request) {
   const { unique: rows, dupeEmails } = deduplicateRows(rawRows);
 
   const stats = {
+    created: 0,
     updated: 0,
     skipped: 0,
-    notFound: 0,
     csvDupes: dupeEmails.size,
     dbDupes: 0,
     errors: [] as string[],
@@ -180,15 +193,41 @@ export async function POST(request: Request) {
       });
 
       if (docs.length === 0) {
-        stats.notFound++;
-        stats.rows.push({
+        // Create a new org with email as placeholder name — user fills in details later
+        const { status: newStatus, note } = deriveStatus(row, "researched");
+        const rowSummary = {
           email,
-          orgName: "",
+          orgName: email,
           oldStatus: "",
-          newStatus: "",
-          note: "",
-          action: "not found",
+          newStatus,
+          note,
+          action: "",
+        };
+
+        if (dryRun) {
+          rowSummary.action = `would create → ${newStatus}`;
+          stats.created++;
+          stats.rows.push(rowSummary);
+          continue;
+        }
+
+        const createData: Record<string, unknown> = {
+          name: email,
+          type: "other",
+          email,
+          status: newStatus,
+        };
+        const isoDate = brevoDateToISO(sendDate);
+        if (isoDate) createData.dateContacted = isoDate;
+        if (note) createData.responseNotes = note;
+
+        await payload.create({
+          collection: "organizations",
+          data: createData as any,
         });
+        rowSummary.action = `created → ${newStatus}`;
+        stats.created++;
+        stats.rows.push(rowSummary);
         continue;
       }
 
@@ -234,12 +273,9 @@ export async function POST(request: Request) {
       }
 
       // Set dateContacted from Send_Date if not already set
-      if (!org.dateContacted && sendDate) {
-        const [day, month, yearTime] = sendDate.split("-");
-        if (day && month && yearTime) {
-          const [year] = yearTime.split(" ");
-          updateData.dateContacted = `${year}-${month}-${day}`;
-        }
+      if (!org.dateContacted) {
+        const isoDate = brevoDateToISO(sendDate);
+        if (isoDate) updateData.dateContacted = isoDate;
       }
 
       // Append note to responseNotes if there's something to add
@@ -268,9 +304,9 @@ export async function POST(request: Request) {
   }
 
   return Response.json({
+    created: stats.created,
     updated: stats.updated,
     skipped: stats.skipped,
-    notFound: stats.notFound,
     csvDupes: stats.csvDupes,
     dbDupes: stats.dbDupes,
     errors: stats.errors,

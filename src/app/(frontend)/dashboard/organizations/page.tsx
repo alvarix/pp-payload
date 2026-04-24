@@ -89,6 +89,12 @@ export default async function OrganizationsDashboardPage() {
           >
             + Organization
           </a>
+          <a
+            href="/dashboard/brevo-org-import"
+            className="text-sm px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 text-gray-700"
+          >
+            Import Brevo CSV
+          </a>
           <a href="/dashboard" className="text-sm text-gray-500 hover:underline">
             &larr; Dashboard
           </a>
