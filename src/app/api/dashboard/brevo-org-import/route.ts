@@ -216,6 +216,7 @@ export async function POST(request: Request) {
           type: "other",
           email,
           status: newStatus,
+          contactMethod: "eblast",
         };
         const isoDate = brevoDateToISO(sendDate);
         if (isoDate) createData.dateContacted = isoDate;
@@ -270,6 +271,11 @@ export async function POST(request: Request) {
 
       if (statusChanged) {
         updateData.status = newStatus;
+      }
+
+      // Brevo import always implies eblast contact method
+      if ((org as any).contactMethod !== "eblast") {
+        updateData.contactMethod = "eblast";
       }
 
       // Set dateContacted from Send_Date if not already set
