@@ -3,9 +3,9 @@
 import { useState, useRef } from "react";
 
 interface ImportResult {
+  created: number;
   updated: number;
   skipped: number;
-  notFound: number;
   csvDupes: number;
   dbDupes: number;
   errors: string[];
@@ -20,13 +20,14 @@ interface ImportResult {
 }
 
 const ACTION_COLOR: Record<string, string> = {
-  "not found": "text-amber-600",
   "no change": "text-gray-400",
   error: "text-red-600",
 };
 
 function actionColor(action: string) {
   if (action.startsWith("updated") || action.startsWith("would update")) return "text-green-700";
+  if (action.startsWith("created") || action.startsWith("would create")) return "text-blue-700";
+  if (action.startsWith("db duplicate")) return "text-amber-600";
   return ACTION_COLOR[action] ?? "text-gray-500";
 }
 
@@ -147,13 +148,13 @@ export function ImportForm() {
         <div className="space-y-4">
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-sm space-y-1">
             <p className="font-semibold text-green-800 mb-2">
-              {result.updated > 0
-                ? `${result.updated} org${result.updated > 1 ? "s" : ""} updated`
-                : "No status changes"}
+              {result.created + result.updated > 0
+                ? `${result.created} created, ${result.updated} updated`
+                : "No changes"}
             </p>
+            <p>Created: <strong>{result.created}</strong> <span className="text-gray-500">(placeholder name = email; fill in business name/type manually)</span></p>
             <p>Updated: <strong>{result.updated}</strong></p>
             <p>No change: <strong>{result.skipped}</strong></p>
-            <p>Not found in DB: <strong>{result.notFound}</strong></p>
             {result.csvDupes > 0 && (
               <p className="text-amber-700">
                 Duplicate emails in CSV (best signal kept): <strong>{result.csvDupes}</strong>
