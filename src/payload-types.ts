@@ -425,6 +425,10 @@ export interface Job {
    */
   stripe_amount_discount_cents?: number | null;
   /**
+   * Tax collected by Stripe at checkout (session.total_details.amount_tax)
+   */
+  stripe_amount_tax_cents?: number | null;
+  /**
    * Names of coupons or promo codes applied
    */
   stripe_discount_codes?:
@@ -748,6 +752,7 @@ export interface JobsSelect<T extends boolean = true> {
   stripe_currency?: T;
   stripe_payment_status?: T;
   stripe_amount_discount_cents?: T;
+  stripe_amount_tax_cents?: T;
   stripe_discount_codes?:
     | T
     | {
