@@ -165,6 +165,14 @@ export interface Media {
    * Auto-generated from filename. Edit if needed.
    */
   alt: string;
+  /**
+   * Auto-tagged: PNG files get 'drawing', video files get 'video'.
+   */
+  tags?: ('portrait' | 'outtake' | 'promo' | 'client' | 'video' | 'drawing')[] | null;
+  /**
+   * Auto-detected from file type.
+   */
+  is_video?: boolean | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -647,6 +655,8 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  tags?: T;
+  is_video?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
