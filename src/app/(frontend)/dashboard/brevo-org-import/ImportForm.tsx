@@ -6,6 +6,8 @@ interface ImportResult {
   updated: number;
   skipped: number;
   notFound: number;
+  csvDupes: number;
+  dbDupes: number;
   errors: string[];
   rows: {
     email: string;
@@ -152,6 +154,16 @@ export function ImportForm() {
             <p>Updated: <strong>{result.updated}</strong></p>
             <p>No change: <strong>{result.skipped}</strong></p>
             <p>Not found in DB: <strong>{result.notFound}</strong></p>
+            {result.csvDupes > 0 && (
+              <p className="text-amber-700">
+                Duplicate emails in CSV (best signal kept): <strong>{result.csvDupes}</strong>
+              </p>
+            )}
+            {result.dbDupes > 0 && (
+              <p className="text-amber-700">
+                DB duplicates skipped (manual merge needed): <strong>{result.dbDupes}</strong>
+              </p>
+            )}
           </div>
 
           {result.errors.length > 0 && (

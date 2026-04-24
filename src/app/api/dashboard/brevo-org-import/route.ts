@@ -17,6 +17,53 @@ function parseBrevoCSV(text: string): Record<string, string>[] {
   });
 }
 
+/**
+ * Signal strength for deduplicating multiple Brevo rows for the same email.
+ * Higher = stronger signal; keep the row with the highest score.
+ */
+function rowSignalStrength(row: Record<string, string>): number {
+  if (row["Unsubscribe_Date"]) return 4;
+  if (row["Hard_Bounce_Date"]) return 3;
+  if (parseInt(row["Total Opens"] ?? "0", 10) > 0) return 2;
+  if (row["Delivered_Date"]) return 1;
+  return 0;
+}
+
+/**
+ * Deduplicate rows by Email_ID, keeping the row with the strongest signal.
+ * If two rows tie, keep the one with more total opens.
+ */
+function deduplicateRows(rows: Record<string, string>[]): {
+  unique: Record<string, string>[];
+  dupeEmails: Set<string>;
+} {
+  const map = new Map<string, Record<string, string>>();
+  const dupeEmails = new Set<string>();
+
+  for (const row of rows) {
+    const email = row["Email_ID"] || "";
+    if (!email) continue;
+    if (!map.has(email)) {
+      map.set(email, row);
+    } else {
+      dupeEmails.add(email);
+      const existing = map.get(email)!;
+      const existingStrength = rowSignalStrength(existing);
+      const newStrength = rowSignalStrength(row);
+      if (
+        newStrength > existingStrength ||
+        (newStrength === existingStrength &&
+          parseInt(row["Total Opens"] ?? "0", 10) >
+            parseInt(existing["Total Opens"] ?? "0", 10))
+      ) {
+        map.set(email, row);
+      }
+    }
+  }
+
+  return { unique: Array.from(map.values()), dupeEmails };
+}
+
 const STATUS_RANK: Record<string, number> = {
   researched: 0,
   contacted: 1,
@@ -92,15 +139,19 @@ export async function POST(request: Request) {
     return Response.json({ error: "No CSV content provided" }, { status: 400 });
   }
 
-  const rows = parseBrevoCSV(csv);
-  if (rows.length === 0) {
+  const rawRows = parseBrevoCSV(csv);
+  if (rawRows.length === 0) {
     return Response.json({ error: "CSV has no data rows" }, { status: 400 });
   }
+
+  const { unique: rows, dupeEmails } = deduplicateRows(rawRows);
 
   const stats = {
     updated: 0,
     skipped: 0,
     notFound: 0,
+    csvDupes: dupeEmails.size,
+    dbDupes: 0,
     errors: [] as string[],
     rows: [] as {
       email: string;
@@ -125,7 +176,7 @@ export async function POST(request: Request) {
       const { docs } = await payload.find({
         collection: "organizations",
         where: { email: { equals: email } },
-        limit: 1,
+        limit: 10,
       });
 
       if (docs.length === 0) {
@@ -137,6 +188,20 @@ export async function POST(request: Request) {
           newStatus: "",
           note: "",
           action: "not found",
+        });
+        continue;
+      }
+
+      // Multiple DB records share this email — flag for manual merge, skip update
+      if (docs.length > 1) {
+        stats.dbDupes++;
+        stats.rows.push({
+          email,
+          orgName: docs.map((d) => d.name as string).join(", "),
+          oldStatus: "",
+          newStatus: "",
+          note: `${docs.length} orgs share this email`,
+          action: "db duplicate — needs manual merge",
         });
         continue;
       }
@@ -206,6 +271,8 @@ export async function POST(request: Request) {
     updated: stats.updated,
     skipped: stats.skipped,
     notFound: stats.notFound,
+    csvDupes: stats.csvDupes,
+    dbDupes: stats.dbDupes,
     errors: stats.errors,
     rows: stats.rows,
   });
