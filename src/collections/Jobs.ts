@@ -125,7 +125,7 @@ export const Jobs: CollectionConfig = {
         {
           name: "pics",
           type: "upload",
-          label: "Reference Photos",
+          label: "Photos",
           relationTo: "media",
           hasMany: true,
           admin: {
