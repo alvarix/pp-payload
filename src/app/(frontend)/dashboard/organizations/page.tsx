@@ -7,6 +7,7 @@ import { KanbanColumns, type OrgColumnData } from "./KanbanColumns";
 
 const COLUMNS: { key: string; label: string; color: string }[] = [
   { key: "contacted",            label: "Contacted",            color: "blue"   },
+  { key: "opened_email",         label: "Opened Email",         color: "orange" },
   { key: "responded",            label: "Responded",            color: "yellow" },
   { key: "researched",           label: "Researched",           color: "gray"   },
   { key: "upcoming_event",       label: "Upcoming Event",       color: "green"  },

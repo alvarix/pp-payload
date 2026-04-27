@@ -206,6 +206,7 @@ export const Organizations: CollectionConfig = {
               options: [
                 { label: "Researched", value: "researched" },
                 { label: "Contacted", value: "contacted" },
+                { label: "Opened Email", value: "opened_email" },
                 { label: "Responded", value: "responded" },
                 { label: "Meeting Scheduled", value: "meeting_scheduled" },
                 { label: "Upcoming Event", value: "upcoming_event" },

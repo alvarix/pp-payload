@@ -40,6 +40,7 @@ const BORDER: Record<string, string> = {
   gray:   "border-gray-300",
   blue:   "border-blue-400",
   yellow: "border-yellow-400",
+  orange: "border-orange-400",
   purple: "border-purple-400",
   amber:  "border-amber-400",
 };
@@ -50,6 +51,7 @@ const BADGE: Record<string, string> = {
   gray:   "bg-gray-100 text-gray-600",
   blue:   "bg-blue-100 text-blue-700",
   yellow: "bg-yellow-100 text-yellow-700",
+  orange: "bg-orange-100 text-orange-700",
   purple: "bg-purple-100 text-purple-700",
   amber:  "bg-amber-100 text-amber-800",
 };

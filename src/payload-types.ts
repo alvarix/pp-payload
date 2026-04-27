@@ -269,6 +269,7 @@ export interface Organization {
   status:
     | 'researched'
     | 'contacted'
+    | 'opened_email'
     | 'responded'
     | 'meeting_scheduled'
     | 'upcoming_event'
