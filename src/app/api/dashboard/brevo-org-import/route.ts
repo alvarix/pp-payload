@@ -80,13 +80,14 @@ function deduplicateRows(rows: Record<string, string>[]): {
 const STATUS_RANK: Record<string, number> = {
   researched: 0,
   contacted: 1,
-  responded: 2,
-  meeting_scheduled: 3,
-  upcoming_event: 4,
-  ongoing_relationship: 5,
-  past_collaborator: 6,
-  no_response: 7,
-  declined: 8,
+  opened_email: 2,
+  responded: 3,
+  meeting_scheduled: 4,
+  upcoming_event: 5,
+  ongoing_relationship: 6,
+  past_collaborator: 7,
+  no_response: 8,
+  declined: 9,
 };
 
 /** Returns the status an org should be set to based on Brevo row data. */
@@ -110,7 +111,7 @@ function deriveStatus(
     };
   }
   if (opens > 0) {
-    const candidate = "responded";
+    const candidate = "opened_email";
     const shouldUpgrade =
       (STATUS_RANK[candidate] ?? 0) > (STATUS_RANK[currentStatus] ?? 0);
     return {
