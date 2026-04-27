@@ -65,3 +65,5 @@ pp-wp
 pp-wp.pub
 tsconfig.tsbuildinfo
 .vercel
+docs/.obsidian/
+docs/.obsidian/*
