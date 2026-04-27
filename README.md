@@ -134,11 +134,26 @@ docs/                   Internal documentation
 tests/                  Vitest integration + Playwright e2e
 ```
 
+## Production deployment
+
+Deployed to Vercel at `portal.petportraits.ink`, backed by Supabase Postgres + Supabase S3. Required env vars on Vercel (Production scope):
+
+| Var | Notes |
+|---|---|
+| `DATABASE_URL` | Supabase pooler URL, port 5432 |
+| `PAYLOAD_SECRET` | Session signing key |
+| `STRIPE_SECRET_KEY` | LIVE mode key. Use a dedicated key (separate from any other Stripe consumer like WordPress) so blast radius is contained on rotation. |
+| `SUPABASE_S3_ENDPOINT`, `SUPABASE_S3_REGION`, `SUPABASE_S3_BUCKET` | S3-compatible storage config |
+| `SUPABASE_S3_ACCESS_KEY_ID`, `SUPABASE_S3_SECRET_ACCESS_KEY` | S3 credentials |
+
+For the full pre/post-launch checklist and known risks, see [`docs/launch-checklist-2026-04-24.md`](docs/launch-checklist-2026-04-24.md).
+
 ## Security notes
 
 - `pp-wp` and `pp-wp.pub` in the project root are SSH keys used for server communication. **These must not be committed to version control.** Add them to `.gitignore` and store securely.
-- All collections currently have open read access (`() => true`). Role-based access control should be implemented before exposing the API publicly.
-- The intake endpoint is unauthenticated - consider adding an API key check for production.
+- **Collection read access is open** (`() => true`) on Clients, Jobs, Organizations, and Media. Payload's auto-generated REST/GraphQL endpoints make this PII queryable by unauthenticated visitors. Lock down before public launch — see launch checklist risk #1.
+- `/api/intake` is unauthenticated by design (it's the public form endpoint), but trusts only the Stripe session ID and re-verifies server-side. There is no rate limit or server-side file-size cap yet — see launch checklist risks #3 and #6.
+- Stripe secret keys must never appear in chat transcripts, screenshots, or commit messages. If exposed, roll the key in Stripe immediately and update Vercel + any other consumer.
 
 ## WordPress integration
 
