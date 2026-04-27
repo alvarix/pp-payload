@@ -57,6 +57,7 @@ export default async function OrganizationsDashboardPage() {
     fitScore: org.fitScore ?? null,
     followUpDate: org.followUpDate ?? null,
     status: org.status as string,
+    state: org.state ?? null,
   });
 
   const columnData: OrgColumnData[] = [

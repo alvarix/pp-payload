@@ -23,6 +23,7 @@ export type OrgForCard = {
   fitScore?: string | null;
   followUpDate?: string | null;
   status: string;
+  state?: string | null;
 };
 
 export type OrgColumnData = {
@@ -68,6 +69,7 @@ export function KanbanColumns({ columns, today }: { columns: OrgColumnData[]; to
   const [order, setOrder] = useState<string[]>(() => columns.map((c) => c.key));
   const [dragging, setDragging] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
+  const [topTierTab, setTopTierTab] = useState("NY");
 
   // Read saved order before first paint to avoid flash
   useLayoutEffect(() => {
@@ -115,34 +117,95 @@ export function KanbanColumns({ columns, today }: { columns: OrgColumnData[]; to
 
   return (
     <div className="space-y-4">
-      {bands.map((band) => (
-        <details key={band.key} open>
-          <summary className="flex items-center gap-2 mb-2 cursor-pointer list-none select-none">
-            <span className={`text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded ${BADGE[band.color]} ring-1 ${BAND_RING[band.color] ?? "ring-gray-300"}`}>
-              {band.label}
-            </span>
-            <span className="text-xs text-gray-400">{band.orgs.length}</span>
-          </summary>
-          <div className="flex flex-wrap gap-2">
-            {band.orgs.map((org) => (
-              <div key={org.id} className={`flex items-center gap-2 bg-white border ${BORDER[band.color]} rounded-lg px-3 py-1.5 shadow-sm`}>
-                <a
-                  href={`/admin/collections/organizations/${org.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm font-medium text-gray-900 hover:text-blue-700 whitespace-nowrap"
-                >
-                  {org.name}
-                </a>
-                <OrgStatusSelect orgId={org.id} currentStatus={org.status} compact />
+      {bands.map((band) => {
+        if (band.key === "top_tier") {
+          const byState: Record<string, OrgForCard[]> = {};
+          for (const org of band.orgs) {
+            const s = org.state ?? "NY";
+            if (!byState[s]) byState[s] = [];
+            byState[s].push(org);
+          }
+          const tabs = Object.keys(byState).sort((a, b) =>
+            a === "NY" ? -1 : b === "NY" ? 1 : a.localeCompare(b)
+          );
+          const activeTab = tabs.includes(topTierTab) ? topTierTab : (tabs[0] ?? "NY");
+          const stateLabel = (s: string) => s === "NY" ? "NYC" : s;
+
+          return (
+            <details key={band.key} open>
+              <summary className="flex items-center gap-2 mb-2 cursor-pointer list-none select-none">
+                <span className={`text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded ${BADGE[band.color]} ring-1 ${BAND_RING[band.color] ?? "ring-gray-300"}`}>
+                  {band.label}
+                </span>
+                <span className="text-xs text-gray-400">{band.orgs.length}</span>
+              </summary>
+              <div className="flex gap-2 mb-2">
+                {tabs.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setTopTierTab(s)}
+                    className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                      activeTab === s
+                        ? "bg-amber-100 border-amber-400 text-amber-800 font-semibold"
+                        : "bg-white border-gray-200 text-gray-500 hover:border-amber-300"
+                    }`}
+                  >
+                    {stateLabel(s)}
+                    <span className="ml-1 text-gray-400">{byState[s].length}</span>
+                  </button>
+                ))}
               </div>
-            ))}
-            {band.orgs.length === 0 && (
-              <p className="text-xs text-gray-400 italic">None</p>
-            )}
-          </div>
-        </details>
-      ))}
+              <div className="flex flex-wrap gap-2">
+                {(byState[activeTab] ?? []).map((org) => (
+                  <div key={org.id} className={`flex items-center gap-2 bg-white border ${BORDER[band.color]} rounded-lg px-3 py-1.5 shadow-sm`}>
+                    <a
+                      href={`/admin/collections/organizations/${org.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium text-gray-900 hover:text-blue-700 whitespace-nowrap"
+                    >
+                      {org.name}
+                    </a>
+                    <OrgStatusSelect orgId={org.id} currentStatus={org.status} compact />
+                  </div>
+                ))}
+                {(byState[activeTab] ?? []).length === 0 && (
+                  <p className="text-xs text-gray-400 italic">None</p>
+                )}
+              </div>
+            </details>
+          );
+        }
+
+        return (
+          <details key={band.key} open>
+            <summary className="flex items-center gap-2 mb-2 cursor-pointer list-none select-none">
+              <span className={`text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded ${BADGE[band.color]} ring-1 ${BAND_RING[band.color] ?? "ring-gray-300"}`}>
+                {band.label}
+              </span>
+              <span className="text-xs text-gray-400">{band.orgs.length}</span>
+            </summary>
+            <div className="flex flex-wrap gap-2">
+              {band.orgs.map((org) => (
+                <div key={org.id} className={`flex items-center gap-2 bg-white border ${BORDER[band.color]} rounded-lg px-3 py-1.5 shadow-sm`}>
+                  <a
+                    href={`/admin/collections/organizations/${org.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium text-gray-900 hover:text-blue-700 whitespace-nowrap"
+                  >
+                    {org.name}
+                  </a>
+                  <OrgStatusSelect orgId={org.id} currentStatus={org.status} compact />
+                </div>
+              ))}
+              {band.orgs.length === 0 && (
+                <p className="text-xs text-gray-400 italic">None</p>
+              )}
+            </div>
+          </details>
+        );
+      })}
 
       <div className="flex gap-4 overflow-x-auto pb-4">
         {regularCols.map((col) => {

@@ -234,6 +234,7 @@ export interface Organization {
   type: 'brewery' | 'pet_store' | 'gift_shop' | 'gallery' | 'cafe' | 'venue' | 'other';
   address?: string | null;
   neighborhood?: string | null;
+  location?: string | null;
   notes?: string | null;
   city?: string | null;
   state?: string | null;
@@ -822,6 +823,7 @@ export interface OrganizationsSelect<T extends boolean = true> {
   type?: T;
   address?: T;
   neighborhood?: T;
+  location?: T;
   notes?: T;
   city?: T;
   state?: T;

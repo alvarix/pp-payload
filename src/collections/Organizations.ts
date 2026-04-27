@@ -48,6 +48,11 @@ export const Organizations: CollectionConfig = {
               label: "Neighborhood",
             },
             {
+              name: "location",
+              type: "text",
+              label: "Location",
+            },
+            {
               name: "notes",
               type: "textarea",
               label: "Notes",
