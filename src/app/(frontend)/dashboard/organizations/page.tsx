@@ -5,8 +5,6 @@ import config from "@/payload.config";
 import type { Organization } from "@/payload-types";
 import { KanbanColumns, type OrgColumnData } from "./KanbanColumns";
 
-const PROSPECT_STATUSES = new Set(["researched", "contacted", "responded", "meeting_scheduled"]);
-
 const COLUMNS: { key: string; label: string; color: string }[] = [
   { key: "contacted",            label: "Contacted",            color: "blue"   },
   { key: "responded",            label: "Responded",            color: "yellow" },
@@ -34,9 +32,7 @@ export default async function OrganizationsDashboardPage() {
 
   for (const org of organizations as Organization[]) {
     const s = org.status as string;
-    if (org.fitScore === "top_tier" && PROSPECT_STATUSES.has(s)) {
-      byCol["top_tier"].push(org);
-    }
+    if (org.fitScore === "top_tier") byCol["top_tier"].push(org);
     if (byCol[s] !== undefined) byCol[s].push(org);
   }
 
