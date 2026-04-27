@@ -11,6 +11,7 @@ const COLUMNS: { key: string; label: string; color: string }[] = [
   { key: "researched",           label: "Researched",           color: "gray"   },
   { key: "upcoming_event",       label: "Upcoming Event",       color: "green"  },
   { key: "ongoing_relationship", label: "Ongoing Relationship", color: "teal"   },
+  { key: "past_collaborator",    label: "Past Collaborators",   color: "purple" },
 ];
 
 export default async function OrganizationsDashboardPage() {
@@ -27,7 +28,7 @@ export default async function OrganizationsDashboardPage() {
     sort: "name",
   });
 
-  const byCol: Record<string, Organization[]> = { top_tier: [], past_collaborator: [] };
+  const byCol: Record<string, Organization[]> = { top_tier: [] };
   for (const c of COLUMNS) byCol[c.key] = [];
 
   for (const org of organizations as Organization[]) {
@@ -59,8 +60,7 @@ export default async function OrganizationsDashboardPage() {
   });
 
   const columnData: OrgColumnData[] = [
-    { key: "top_tier",         label: "Top Tier",          color: "amber",  isBand: true, orgs: byCol["top_tier"].map(pickFields) },
-    { key: "past_collaborator",label: "Past Collaborators", color: "purple", isBand: true, orgs: byCol["past_collaborator"].map(pickFields) },
+    { key: "top_tier", label: "Top Tier", color: "amber", isBand: true, orgs: byCol["top_tier"].map(pickFields) },
     ...COLUMNS.map((c) => ({
       key: c.key,
       label: c.label,
