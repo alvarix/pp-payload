@@ -36,7 +36,6 @@ export default async function OrganizationsDashboardPage() {
     const s = org.status as string;
     if (org.fitScore === "top_tier" && PROSPECT_STATUSES.has(s)) {
       byCol["top_tier"].push(org);
-      continue;
     }
     if (byCol[s] !== undefined) byCol[s].push(org);
   }
