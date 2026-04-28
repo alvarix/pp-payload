@@ -8,7 +8,7 @@ export const Clients: CollectionConfig = {
     defaultColumns: ["first_name", "last_name", "email", "phone"],
   },
   access: {
-    read: () => true,
+    read: ({ req }) => Boolean(req.user)
   },
   fields: [
     {
