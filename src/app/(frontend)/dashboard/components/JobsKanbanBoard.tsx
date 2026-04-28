@@ -47,9 +47,12 @@ export function JobsKanbanBoard({ columns }: { columns: JobColumnData[] }) {
       const saved = JSON.parse(localStorage.getItem(LS_KEY) ?? "null") as string[] | null;
       if (!saved) return;
       const keys = columns.map((c) => c.key);
-      if (saved.length === keys.length && keys.every((k) => saved.includes(k))) {
-        setOrder(saved);
-      }
+      const keySet = new Set(keys);
+      const merged = [
+        ...saved.filter((k) => keySet.has(k)),
+        ...keys.filter((k) => !saved.includes(k)),
+      ];
+      setOrder(merged);
     } catch {}
   }, []);
 
