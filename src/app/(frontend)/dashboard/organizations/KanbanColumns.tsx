@@ -3,6 +3,7 @@
 import { useLayoutEffect, useState } from "react";
 import { OrgStatusSelect } from "./OrgStatusSelect";
 import { OrgFitScoreSelect } from "./OrgFitScoreSelect";
+import { NotesPreview } from "./NotesPreview";
 import { CardActions } from "../components/CardActions";
 
 export type OrgContact = {
@@ -22,6 +23,7 @@ export type OrgForCard = {
   website?: string | null;
   email?: string | null;
   phone?: string | null;
+  notes?: string | null;
   contactNotes?: string | null;
   contacts?: OrgContact[] | null;
   fitScore?: string | null;
@@ -335,6 +337,7 @@ function OrgCard({
           ))}
         </div>
       )}
+      {org.notes && <NotesPreview notes={org.notes} />}
       <div className="mt-1">
         <OrgFitScoreSelect orgId={org.id} currentFitScore={org.fitScore ?? null} />
       </div>
