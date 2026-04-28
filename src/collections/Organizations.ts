@@ -7,7 +7,7 @@ export const Organizations: CollectionConfig = {
     defaultColumns: ["name", "type", "city", "status", "fitScore", "dateContacted"],
   },
   access: {
-    read: () => true,
+    read: ({ req }) => Boolean(req.user),
   },
   fields: [
     {

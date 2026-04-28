@@ -7,7 +7,7 @@ export const Jobs: CollectionConfig = {
     defaultColumns: ["client", "job_type", "status", "due_date", "pics_received"],
   },
   access: {
-    read: () => true,
+    read: ({ req }) => Boolean(req.user),
   },
   fields: [
     {
