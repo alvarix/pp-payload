@@ -54,6 +54,7 @@ export default async function OrganizationsDashboardPage() {
     website: org.website ?? null,
     email: org.email ?? null,
     phone: org.phone ?? null,
+    notes: org.notes ?? null,
     contactNotes: org.contactNotes ?? null,
     contacts: Array.isArray(org.contacts)
       ? org.contacts.map((c) => ({
