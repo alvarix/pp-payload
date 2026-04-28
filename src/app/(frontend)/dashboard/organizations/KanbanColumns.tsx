@@ -2,6 +2,8 @@
 
 import { useLayoutEffect, useState } from "react";
 import { OrgStatusSelect } from "./OrgStatusSelect";
+import { OrgFitScoreSelect } from "./OrgFitScoreSelect";
+import { CardActions } from "../components/CardActions";
 
 export type OrgContact = {
   contactName?: string | null;
@@ -177,6 +179,13 @@ export function KanbanColumns({ columns, today }: { columns: OrgColumnData[]; to
                       {org.name}
                     </a>
                     <OrgStatusSelect orgId={org.id} currentStatus={org.status} compact />
+                    <CardActions
+                      endpoint="/api/dashboard/org-actions"
+                      idField="orgId"
+                      id={org.id}
+                      pinned={org.pinned ?? false}
+                      label={org.name}
+                    />
                   </div>
                 ))}
                 {(byState[activeTab] ?? []).length === 0 && (
@@ -207,6 +216,13 @@ export function KanbanColumns({ columns, today }: { columns: OrgColumnData[]; to
                     {org.name}
                   </a>
                   <OrgStatusSelect orgId={org.id} currentStatus={org.status} compact />
+                  <CardActions
+                    endpoint="/api/dashboard/org-actions"
+                    idField="orgId"
+                    id={org.id}
+                    pinned={org.pinned ?? false}
+                    label={org.name}
+                  />
                 </div>
               ))}
               {band.orgs.length === 0 && (
@@ -277,7 +293,16 @@ function OrgCard({
       rel="noopener noreferrer"
       className={`block bg-white border ${borderColor} rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow`}
     >
-      <p className="text-sm font-medium text-gray-900 leading-tight">{org.name}</p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-sm font-medium text-gray-900 leading-tight min-w-0 flex-1">{org.name}</p>
+        <CardActions
+          endpoint="/api/dashboard/org-actions"
+          idField="orgId"
+          id={org.id}
+          pinned={org.pinned ?? false}
+          label={org.name}
+        />
+      </div>
       <p className="text-xs text-gray-400 mt-0.5 capitalize">
         {org.type?.replace(/_/g, " ")}
         {org.neighborhood ? ` · ${org.neighborhood}` : ""}
@@ -310,11 +335,9 @@ function OrgCard({
           ))}
         </div>
       )}
-      {org.fitScore && org.fitScore !== "top_tier" && (
-        <p className="text-xs text-gray-400 mt-0.5 capitalize">
-          {org.fitScore.replace(/_/g, " ")}
-        </p>
-      )}
+      <div className="mt-1">
+        <OrgFitScoreSelect orgId={org.id} currentFitScore={org.fitScore ?? null} />
+      </div>
       {org.followUpDate && (
         <p className={`text-xs mt-1 ${overdue ? "text-red-600 font-semibold" : "text-gray-400"}`}>
           Follow-up: {org.followUpDate.slice(0, 10)}
