@@ -7,6 +7,7 @@ import type { Job, Client } from "@/payload-types";
 import { StatsBar } from "./components/StatsBar";
 import { OverdueAlert } from "./components/OverdueAlert";
 import { JobsKanbanBoard, type JobColumnData, type JobForCard } from "./components/JobsKanbanBoard";
+import { PinnedJobsBand, type PinnedJobItem } from "./components/PinnedJobsBand";
 import { FullscreenButton } from "./components/FullscreenButton";
 
 /** Status values shown as columns (not delivered or archived). */
@@ -66,6 +67,28 @@ export default async function DashboardPage() {
     sort: "due_date",
     limit: 200,
     depth: 1,
+  });
+
+  // Pinned jobs (any status) for the Pinned ribbon
+  const { docs: pinnedJobs } = await payload.find({
+    collection: "jobs",
+    where: { pinned: { equals: true } },
+    sort: "-updatedAt",
+    limit: 100,
+    depth: 1,
+  });
+  const pinnedItems: PinnedJobItem[] = pinnedJobs.map((job) => {
+    const client = job.client as Client | null;
+    const clientName =
+      client && typeof client === "object"
+        ? [client.first_name, client.last_name].filter(Boolean).join(" ") || client.email
+        : "Unknown";
+    return {
+      id: job.id,
+      clientName,
+      petNames: job.pets?.map((p) => p.name).join(", ") || "No pets listed",
+      status: job.status as string,
+    };
   });
 
   // Jobs ready to ship ("drawn, awaiting delivery")
@@ -232,6 +255,10 @@ export default async function DashboardPage() {
           topClients={topClients}
         />
         <OverdueAlert staleJobs={staleJobs} />
+      </div>
+
+      <div className="flex-shrink-0">
+        <PinnedJobsBand jobs={pinnedItems} />
       </div>
 
       <div className="flex-1 min-h-0">
