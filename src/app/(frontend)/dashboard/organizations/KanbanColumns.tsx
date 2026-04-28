@@ -85,16 +85,19 @@ export function KanbanColumns({ columns, today }: { columns: OrgColumnData[]; to
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [topTierTab, setTopTierTab] = useState("NY");
 
-  // Read saved order before first paint to avoid flash
+  // Read saved order before first paint to avoid flash.
+  // Keep saved positions for known keys; append new keys at the end; drop removed keys.
   useLayoutEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(LS_KEY) ?? "null") as string[] | null;
       if (!saved) return;
       const keys = columns.map((c) => c.key);
-      // Only restore if saved order contains exactly the current keys
-      if (saved.length === keys.length && keys.every((k) => saved.includes(k))) {
-        setOrder(saved);
-      }
+      const keySet = new Set(keys);
+      const merged = [
+        ...saved.filter((k) => keySet.has(k)),
+        ...keys.filter((k) => !saved.includes(k)),
+      ];
+      setOrder(merged);
     } catch {}
   }, []);
 
