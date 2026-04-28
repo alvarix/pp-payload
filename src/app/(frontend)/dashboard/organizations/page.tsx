@@ -14,6 +14,7 @@ const COLUMNS: { key: string; label: string; color: string }[] = [
   { key: "upcoming_event",       label: "Upcoming Event",       color: "green"  },
   { key: "ongoing_relationship", label: "Ongoing Relationship", color: "teal"   },
   { key: "past_collaborator",    label: "Past Collaborators",   color: "purple" },
+  { key: "other",                label: "Other",                color: "slate"  },
 ];
 
 export default async function OrganizationsDashboardPage() {
@@ -37,7 +38,11 @@ export default async function OrganizationsDashboardPage() {
     const s = org.status as string;
     if (org.pinned) byCol["pinned"].push(org);
     if (org.fitScore === "top_tier") byCol["top_tier"].push(org);
-    if (byCol[s] !== undefined) byCol[s].push(org);
+    if (byCol[s] !== undefined) {
+      byCol[s].push(org);
+    } else {
+      byCol["other"].push(org);
+    }
   }
 
   const pickFields = (org: Organization) => ({
