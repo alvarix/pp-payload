@@ -118,7 +118,7 @@ export function KanbanColumns({ columns, today }: { columns: OrgColumnData[]; to
   const regularCols = sorted.filter((c) => !c.isBand);
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col flex-1 min-h-0 gap-4">
       {bands.map((band) => {
         if (band.key === "top_tier") {
           const byState: Record<string, OrgForCard[]> = {};
@@ -134,7 +134,7 @@ export function KanbanColumns({ columns, today }: { columns: OrgColumnData[]; to
           const stateLabel = (s: string) => s === "NY" ? "NYC" : s;
 
           return (
-            <details key={band.key} open>
+            <details key={band.key}>
               <summary className="flex items-center gap-2 mb-2 cursor-pointer list-none select-none">
                 <span className={`text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded ${BADGE[band.color]} ring-1 ${BAND_RING[band.color] ?? "ring-gray-300"}`}>
                   {band.label}
@@ -180,7 +180,7 @@ export function KanbanColumns({ columns, today }: { columns: OrgColumnData[]; to
         }
 
         return (
-          <details key={band.key} open>
+          <details key={band.key}>
             <summary className="flex items-center gap-2 mb-2 cursor-pointer list-none select-none">
               <span className={`text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded ${BADGE[band.color]} ring-1 ${BAND_RING[band.color] ?? "ring-gray-300"}`}>
                 {band.label}
@@ -209,7 +209,7 @@ export function KanbanColumns({ columns, today }: { columns: OrgColumnData[]; to
         );
       })}
 
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="flex gap-4 overflow-x-auto overflow-y-auto flex-1 min-h-0 pb-4 w-full min-w-0">
         {regularCols.map((col) => {
         const isDragging = dragging === col.key;
         const isOver = dragOver === col.key;

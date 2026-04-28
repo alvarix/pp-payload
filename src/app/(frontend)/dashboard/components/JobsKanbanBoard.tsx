@@ -76,7 +76,7 @@ export function JobsKanbanBoard({ columns }: { columns: JobColumnData[] }) {
   const sorted = order.map((key) => columns.find((c) => c.key === key)!).filter(Boolean);
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
+    <div className="flex gap-4 overflow-x-auto overflow-y-auto h-full w-full min-w-0 pb-4">
       {sorted.map((col) => {
         const isDragging = dragging === col.key;
         const isOver = dragOver === col.key;

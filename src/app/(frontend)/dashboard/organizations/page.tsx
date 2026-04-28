@@ -4,6 +4,7 @@ import { getPayload } from "payload";
 import config from "@/payload.config";
 import type { Organization } from "@/payload-types";
 import { KanbanColumns, type OrgColumnData } from "./KanbanColumns";
+import { FullscreenButton } from "../components/FullscreenButton";
 
 const COLUMNS: { key: string; label: string; color: string }[] = [
   { key: "contacted",            label: "Contacted",            color: "blue"   },
@@ -74,28 +75,27 @@ export default async function OrganizationsDashboardPage() {
   const today = new Date().toISOString().split("T")[0];
 
   return (
-    <div className="p-6 max-w-[1400px] mx-auto bg-gray-50 min-h-screen">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Organizations</h1>
-        <div className="flex items-center gap-2">
-          <a
-            href="/admin/collections/organizations/create"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 text-gray-700"
-          >
-            + Organization
-          </a>
-          <a
-            href="/dashboard/brevo-org-import"
-            className="text-sm px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 text-gray-700"
-          >
-            Import Brevo CSV
-          </a>
-          <a href="/dashboard" className="text-sm text-gray-500 hover:underline">
-            &larr; Dashboard
-          </a>
-        </div>
+    <div className="h-screen flex flex-col overflow-hidden bg-gray-50 px-2 pt-1">
+      <div className="flex items-center gap-2 mb-1 flex-shrink-0">
+        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Orgs</span>
+        <a
+          href="/admin/collections/organizations/create"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs px-2 py-0.5 border border-gray-200 rounded text-gray-600 hover:bg-gray-100"
+        >
+          + Org
+        </a>
+        <a
+          href="/dashboard/brevo-org-import"
+          className="text-xs px-2 py-0.5 border border-gray-200 rounded text-gray-600 hover:bg-gray-100"
+        >
+          Import CSV
+        </a>
+        <a href="/dashboard" className="text-xs text-gray-400 hover:underline ml-auto">
+          &larr; Back
+        </a>
+        <FullscreenButton />
       </div>
 
       <KanbanColumns columns={columnData} today={today} />

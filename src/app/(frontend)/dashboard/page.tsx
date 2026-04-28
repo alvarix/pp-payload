@@ -7,6 +7,7 @@ import type { Job, Client } from "@/payload-types";
 import { StatsBar } from "./components/StatsBar";
 import { OverdueAlert } from "./components/OverdueAlert";
 import { JobsKanbanBoard, type JobColumnData, type JobForCard } from "./components/JobsKanbanBoard";
+import { FullscreenButton } from "./components/FullscreenButton";
 
 /** Status values shown as columns (not delivered or archived). */
 const ACTIVE_STATUSES = [
@@ -179,60 +180,60 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="p-6 max-w-[1400px] mx-auto bg-gray-50 min-h-screen">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <div className="flex items-center gap-2">
-          <a
-            href="/admin/collections/jobs/create"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 text-gray-700"
-          >
-            + Job
-          </a>
-          <a
-            href="/admin/collections/clients/create"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 text-gray-700"
-          >
-            + Client
-          </a>
-          <a
-            href="/dashboard/client-import"
-            className="text-sm px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 text-gray-700"
-          >
-            Import CSV
-          </a>
-          <a
-            href="/dashboard/organizations"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-          >
-            Organizations
-            {orgsNeedingFollowUp > 0 && (
-              <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
-                {orgsNeedingFollowUp}
-              </span>
-            )}
-          </a>
-        </div>
+    <div className="h-screen flex flex-col overflow-hidden bg-gray-50 px-2 pt-1">
+      <div className="flex items-center gap-2 mb-1 flex-shrink-0">
+        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Jobs</span>
+        <a
+          href="/admin/collections/jobs/create"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs px-2 py-0.5 border border-gray-200 rounded text-gray-600 hover:bg-gray-100"
+        >
+          + Job
+        </a>
+        <a
+          href="/admin/collections/clients/create"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs px-2 py-0.5 border border-gray-200 rounded text-gray-600 hover:bg-gray-100"
+        >
+          + Client
+        </a>
+        <a
+          href="/dashboard/client-import"
+          className="text-xs px-2 py-0.5 border border-gray-200 rounded text-gray-600 hover:bg-gray-100"
+        >
+          Import CSV
+        </a>
+        <a
+          href="/dashboard/organizations"
+          className="text-xs px-2 py-0.5 border border-blue-300 rounded text-blue-600 hover:bg-blue-50 inline-flex items-center gap-1"
+        >
+          Orgs
+          {orgsNeedingFollowUp > 0 && (
+            <span className="bg-red-500 text-white text-xs px-1 rounded-full leading-none py-0.5">
+              {orgsNeedingFollowUp}
+            </span>
+          )}
+        </a>
+        <FullscreenButton />
       </div>
 
-      <StatsBar
-        activeJobCount={activeJobs.length}
-        needInfoCount={needInfoCount}
-        drawnCount={drawnCount}
-        feedbackCount={feedbackCount}
-        totalClients={totalClients}
-        overdueCount={staleJobs.length}
-        orgsNeedingFollowUp={orgsNeedingFollowUp}
-        topClients={topClients}
-      />
+      <div className="flex-shrink-0">
+        <StatsBar
+          activeJobCount={activeJobs.length}
+          needInfoCount={needInfoCount}
+          drawnCount={drawnCount}
+          feedbackCount={feedbackCount}
+          totalClients={totalClients}
+          overdueCount={staleJobs.length}
+          orgsNeedingFollowUp={orgsNeedingFollowUp}
+          topClients={topClients}
+        />
+        <OverdueAlert staleJobs={staleJobs} />
+      </div>
 
-      <OverdueAlert staleJobs={staleJobs} />
-
-      <div className="mt-6">
+      <div className="flex-1 min-h-0">
         <JobsKanbanBoard columns={columnData} />
       </div>
     </div>
