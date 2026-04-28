@@ -8,6 +8,7 @@ import { StatsBar } from "./components/StatsBar";
 import { OverdueAlert } from "./components/OverdueAlert";
 import { JobsKanbanBoard, type JobColumnData, type JobForCard } from "./components/JobsKanbanBoard";
 import { PinnedJobsBand, type PinnedJobItem } from "./components/PinnedJobsBand";
+import { RecentJobsBand, type RecentJobItem } from "./components/RecentJobsBand";
 import { FullscreenButton } from "./components/FullscreenButton";
 
 /** Status values shown as columns (not delivered or archived). */
@@ -88,6 +89,29 @@ export default async function DashboardPage() {
       clientName,
       petNames: job.pets?.map((p) => p.name).join(", ") || "No pets listed",
       status: job.status as string,
+    };
+  });
+
+  // Most recently updated jobs (any status) so off-board jobs stay reachable
+  const { docs: recentJobs } = await payload.find({
+    collection: "jobs",
+    sort: "-updatedAt",
+    limit: 10,
+    depth: 1,
+  });
+  const recentItems: RecentJobItem[] = recentJobs.map((job) => {
+    const client = job.client as Client | null;
+    const clientName =
+      client && typeof client === "object"
+        ? [client.first_name, client.last_name].filter(Boolean).join(" ") || client.email
+        : "Unknown";
+    return {
+      id: job.id,
+      clientName,
+      petNames: job.pets?.map((p) => p.name).join(", ") || "No pets listed",
+      status: job.status as string,
+      updatedAt: job.updatedAt,
+      pinned: job.pinned ?? null,
     };
   });
 
@@ -259,6 +283,7 @@ export default async function DashboardPage() {
 
       <div className="flex-shrink-0">
         <PinnedJobsBand jobs={pinnedItems} />
+        <RecentJobsBand jobs={recentItems} />
       </div>
 
       <div className="flex-1 min-h-0">
