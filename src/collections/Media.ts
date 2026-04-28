@@ -46,7 +46,16 @@ export const Media: CollectionConfig = {
       },
     },
   ],
-  upload: true,
+  upload: {
+    mimeTypes: [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/heic",
+      "video/mp4",
+      "video/quicktime",
+    ],
+  },
   hooks: {
     beforeChange: [
       ({ data, req }) => {
