@@ -71,8 +71,15 @@ export async function POST(request: NextRequest) {
     const petPicFiles = formData.getAll("pet_pics") as File[];
     const uploadedPicIds: number[] = [];
 
+    const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB per file
     for (const file of petPicFiles) {
       if (file.size > 0) {
+        if (file.size > MAX_UPLOAD_BYTES) {
+          return NextResponse.json(
+            { error: `File "${file.name}" exceeds 10MB limit` },
+            { status: 413 }
+          );
+        }
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
         const media = await payload.create({
