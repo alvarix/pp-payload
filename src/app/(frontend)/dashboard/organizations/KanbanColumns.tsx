@@ -8,6 +8,7 @@ export type OrgContact = {
   role?: string | null;
   email?: string | null;
   phone?: string | null;
+  notes?: string | null;
 };
 
 export type OrgForCard = {
@@ -19,8 +20,10 @@ export type OrgForCard = {
   website?: string | null;
   email?: string | null;
   phone?: string | null;
+  contactNotes?: string | null;
   contacts?: OrgContact[] | null;
   fitScore?: string | null;
+  pinned?: boolean | null;
   followUpDate?: string | null;
   status: string;
   state?: string | null;
@@ -43,6 +46,7 @@ const BORDER: Record<string, string> = {
   orange: "border-orange-400",
   purple: "border-purple-400",
   amber:  "border-amber-400",
+  rose:   "border-rose-400",
 };
 
 const BADGE: Record<string, string> = {
@@ -54,11 +58,13 @@ const BADGE: Record<string, string> = {
   orange: "bg-orange-100 text-orange-700",
   purple: "bg-purple-100 text-purple-700",
   amber:  "bg-amber-100 text-amber-800",
+  rose:   "bg-rose-100 text-rose-700",
 };
 
 const BAND_RING: Record<string, string> = {
   amber:  "ring-amber-300",
   purple: "ring-purple-300",
+  rose:   "ring-rose-300",
 };
 
 const LS_KEY = "org-dashboard-col-order";
@@ -286,6 +292,9 @@ function OrgCard({
       {org.phone && (
         <p className="text-xs text-gray-400 mt-0.5">{org.phone}</p>
       )}
+      {org.contactNotes && (
+        <p className="text-xs text-gray-500 mt-0.5 italic whitespace-pre-wrap">{org.contactNotes}</p>
+      )}
       {org.contacts && org.contacts.length > 0 && (
         <div className="mt-1 space-y-0.5">
           {org.contacts.map((c, i) => (
@@ -294,6 +303,7 @@ function OrgCard({
               {c.role && <span className="text-gray-400"> · {c.role}</span>}
               {c.email && <span className="block truncate">{c.email}</span>}
               {c.phone && <span className="block text-gray-400">{c.phone}</span>}
+              {c.notes && <span className="block text-gray-500 italic whitespace-pre-wrap">{c.notes}</span>}
             </div>
           ))}
         </div>

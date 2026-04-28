@@ -30,11 +30,12 @@ export default async function OrganizationsDashboardPage() {
     sort: "name",
   });
 
-  const byCol: Record<string, Organization[]> = { top_tier: [] };
+  const byCol: Record<string, Organization[]> = { top_tier: [], pinned: [] };
   for (const c of COLUMNS) byCol[c.key] = [];
 
   for (const org of organizations as Organization[]) {
     const s = org.status as string;
+    if (org.pinned) byCol["pinned"].push(org);
     if (org.fitScore === "top_tier") byCol["top_tier"].push(org);
     if (byCol[s] !== undefined) byCol[s].push(org);
   }
@@ -48,21 +49,25 @@ export default async function OrganizationsDashboardPage() {
     website: org.website ?? null,
     email: org.email ?? null,
     phone: org.phone ?? null,
+    contactNotes: org.contactNotes ?? null,
     contacts: Array.isArray(org.contacts)
       ? org.contacts.map((c) => ({
           contactName: c.contactName ?? null,
           role: c.role ?? null,
           email: c.email ?? null,
           phone: c.phone ?? null,
+          notes: c.notes ?? null,
         }))
       : null,
     fitScore: org.fitScore ?? null,
+    pinned: org.pinned ?? null,
     followUpDate: org.followUpDate ?? null,
     status: org.status as string,
     state: org.state ?? null,
   });
 
   const columnData: OrgColumnData[] = [
+    { key: "pinned", label: "Pinned", color: "rose", isBand: true, orgs: byCol["pinned"].map(pickFields) },
     { key: "top_tier", label: "Top Tier", color: "amber", isBand: true, orgs: byCol["top_tier"].map(pickFields) },
     ...COLUMNS.map((c) => ({
       key: c.key,
