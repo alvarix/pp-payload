@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-source "$(dirname "$0")/.env"
+source ".$(dirname "$0")/../.env"
 
 OUTFILE="backup_$(date +%Y%m%d_%H%M%S).sql"
 
