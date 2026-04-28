@@ -65,6 +65,29 @@ export async function POST(request: Request) {
     }
   }
 
+  if (action === "toggle_pinned") {
+    try {
+      const job = await payload.findByID({ collection: "jobs", id: jobId });
+      await payload.update({
+        collection: "jobs",
+        id: jobId,
+        data: { pinned: !job.pinned },
+      });
+      return NextResponse.json({ success: true });
+    } catch (e: any) {
+      return NextResponse.json({ error: e.message }, { status: 500 });
+    }
+  }
+
+  if (action === "delete") {
+    try {
+      await payload.delete({ collection: "jobs", id: jobId });
+      return NextResponse.json({ success: true });
+    } catch (e: any) {
+      return NextResponse.json({ error: e.message }, { status: 500 });
+    }
+  }
+
   // Handle toggle_pics_received separately (read-then-update)
   if (action === "toggle_pics_received") {
     try {

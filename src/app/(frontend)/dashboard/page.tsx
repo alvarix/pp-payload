@@ -153,6 +153,7 @@ export default async function DashboardPage() {
       pics_received: job.pics_received ?? null,
       job_type: job.job_type ?? null,
       notes: job.notes ?? null,
+      pinned: job.pinned ?? null,
       status: s,
     });
   }

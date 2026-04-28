@@ -76,6 +76,12 @@ export const Jobs: CollectionConfig = {
       label: "Job Notes",
     },
     {
+      name: "pinned",
+      type: "checkbox",
+      label: "Pinned",
+      defaultValue: false,
+    },
+    {
       name: "pets",
       type: "array",
       label: "Pets",

@@ -362,6 +362,7 @@ export interface Job {
   urgency?: ('low' | 'medium' | 'high') | null;
   delivery_method?: ('pickup' | 'delivery' | 'other') | null;
   notes?: string | null;
+  pinned?: boolean | null;
   /**
    * Pet information from intake form
    */
@@ -739,6 +740,7 @@ export interface JobsSelect<T extends boolean = true> {
   urgency?: T;
   delivery_method?: T;
   notes?: T;
+  pinned?: T;
   pets?:
     | T
     | {
