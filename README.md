@@ -11,30 +11,35 @@ Handles client intake, job tracking, portfolio management, and events. The publi
 **Jobs** - the main work unit. Each job belongs to a client and tracks:
 - One or more pets (name, sex, breed, personality, social handle, reference photos)
 - Job type: `street` (5-10 days to ship) or `studio` (1-2 weeks to ship)
-- Status through a 7-stage workflow: `inquiry → intake_received → in_progress → ready_to_ship → awaiting_pics_or_payment → delivered → portfolio_ready`
+- Status through a 7-stage workflow: `inquiry → intake_received → in_progress → awaiting_pics_or_payment → ready_to_ship → delivered → portfolio_ready`
+- `pinned` flag for surfacing in the dashboard's Pinned ribbon
 - Payment records (method, amount, date) and Stripe IDs
 - Shipping address
 - A portfolio group with images (tagged by role), testimonial, portfolio status, and featured flag
 
-**Organizations** - outreach pipeline for pop-up event collaborations. Tracks business info, contact details, qualification (dog-friendly, event space, pop-up history), fit scoring, and outreach status through a 7-stage workflow: `researched → contacted → responded → meeting_scheduled → confirmed → declined → no_response`. Organized in tabs: Business Info, Contact, Qualification, Outreach.
+**Organizations** - outreach pipeline for pop-up event collaborations. Tracks business info, qualification (dog-friendly, event space, pop-up history), fit scoring (`top_tier`, `strong`, `worth_trying`), a `pinned` flag, and primary + additional contacts (each with notes). Outreach status: `researched → contacted → opened_email → responded → meeting_scheduled → upcoming_event → ongoing_relationship → past_collaborator → declined → no_response`. Organized in tabs: Business Info, Contact, Qualification, Outreach.
 
 **Events** - calendar/marketing events with slug, dates, location, rich text description, image, and publish status.
 
-**Media** - image uploads with sharp resizing. Alt text is auto-generated from filename on upload.
+**Media** - image and video uploads with sharp resizing. Mime types restricted to `image/jpeg`, `image/png`, `image/webp`, `image/heic`, `video/mp4`, `video/quicktime`. Alt text is auto-generated from filename on upload.
 
 **Users** - admin authentication.
 
 ## Dashboard
 
-`/dashboard` — job workflow board grouped by status, with stats and quick actions.
+`/dashboard` — job workflow board grouped by status, with stats, quick actions, and a Pinned ribbon at the top. Each card has pin (★) and delete (×, with confirm) actions.
 
-`/dashboard/organizations` — organizations pipeline. Columns: Current (confirmed + upcoming event), Past Collaborators (confirmed, no upcoming event), Prospects (researched, sorted by fit score), Contacted, Responded. Move an organization between columns by changing its Status in admin; Current vs Past is determined automatically by whether a linked Event exists with a future date.
+`/dashboard/organizations` — organizations pipeline. Top: Pinned ribbon (any pinned org) and Top Tier band (orgs with `fitScore = top_tier`, tabbed by state). Columns by status: Contacted, Opened Email, Responded, Researched, Upcoming Event, Ongoing Relationship, Past Collaborators, plus Other (catches `meeting_scheduled`, `declined`, `no_response`). Column order is drag-reorderable and persists per browser. Each card shows status select, fit-score select, pin/delete actions, a notes preview that expands inline, and contact notes per primary + additional contact.
 
 `/dashboard/client-import` — CSV importer for post-event client intake. Columns: `Email, First, Last, Pet, Breed, Event, Type, Status, Job Notes, Client Notes, Referral`. Supports paste/file or a per-field form. Column chips are shown before upload — hover for per-field notes, click × to exclude. Due date is today + shipping window (street +7 days, studio +10 days).
 
 ## API routes
 
-`POST /api/intake` - public intake form endpoint. Accepts client contact info, pet data, and photo uploads. Creates or updates the client by email and creates a job. Used by the intake form at `/intake`.
+`POST /api/intake` - public intake form endpoint. Accepts client contact info, pet data, and photo uploads (10MB cap per file). Creates or updates the client by email and creates a job. Used by the intake form at `/intake`.
+
+`POST /api/dashboard/actions` - auth-protected. Job actions: `set_status`, `toggle_pics_received`, `toggle_pinned`, `delete`.
+
+`POST /api/dashboard/org-actions` - auth-protected. Org actions: `set_status`, `set_fit_score`, `toggle_pinned`, `delete`.
 
 ## Tech stack
 
@@ -152,7 +157,7 @@ For the full pre/post-launch checklist and known risks, see [`docs/launch-checkl
 
 - `pp-wp` and `pp-wp.pub` in the project root are SSH keys used for server communication. **These must not be committed to version control.** Add them to `.gitignore` and store securely.
 - **Collection read access is open** (`() => true`) on Clients, Jobs, Organizations, and Media. Payload's auto-generated REST/GraphQL endpoints make this PII queryable by unauthenticated visitors. Lock down before public launch — see launch checklist risk #1.
-- `/api/intake` is unauthenticated by design (it's the public form endpoint), but trusts only the Stripe session ID and re-verifies server-side. There is no rate limit or server-side file-size cap yet — see launch checklist risks #3 and #6.
+- `/api/intake` is unauthenticated by design (it's the public form endpoint), but trusts only the Stripe session ID and re-verifies server-side. Per-file upload cap is 10MB and the Media collection enforces a mime-type allowlist; there is still no rate limit — see launch checklist risk #3.
 - Stripe secret keys must never appear in chat transcripts, screenshots, or commit messages. If exposed, roll the key in Stripe immediately and update Vercel + any other consumer.
 
 ## WordPress integration
