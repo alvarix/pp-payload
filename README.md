@@ -89,7 +89,7 @@ Admin panel: [http://localhost:3000/admin](http://localhost:3000/admin)
 ### Scripts
 
 ```bash
-./db-backup.sh        # pg_dump to timestamped .sql file (run before migrations)
+./db-backups/db-backup.sh   # pg_dump to db-backups/backup_<ts>.sql (run before migrations)
 pnpm dev              # start dev server
 pnpm devsafe          # clear .next cache and start
 pnpm build            # production build

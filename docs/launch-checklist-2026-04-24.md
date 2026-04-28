@@ -22,7 +22,7 @@ Pre-launch hardening, deploy checklist, and post-launch sanity for the public in
    **Fix**: add `mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'video/mp4', 'video/quicktime']` to `Media.upload` config in `src/collections/Media.ts`.
 
 5. **Pre-launch DB snapshot**
-   Live DB is shared with WordPress data. Run `./db-backup.sh` immediately before flipping the Stripe redirect URLs. If anything explodes you have a known-good rollback point.
+   Live DB is shared with WordPress data. Run `./db-backups/db-backup.sh` immediately before flipping the Stripe redirect URLs. If anything explodes you have a known-good rollback point.
 
 ### MEDIUM — fix in first week
 
@@ -61,7 +61,7 @@ Pre-launch hardening, deploy checklist, and post-launch sanity for the public in
 - [ ] Add MIME-type allowlist on `Media` collection (risk #4)
 - [ ] Rotate the leaked `wp-config` Stripe key, update WordPress (risk #2)
 - [ ] Confirm production `STRIPE_SECRET_KEY` on Vercel = the `Payload`-labeled key (separation from WordPress)
-- [ ] Run `./db-backup.sh` and verify the dump file is non-empty
+- [ ] Run `./db-backups/db-backup.sh` and verify the dump file is non-empty
 
 ### Vercel env vars (verify all present in Production scope)
 
@@ -115,7 +115,7 @@ Pre-launch hardening, deploy checklist, and post-launch sanity for the public in
 
 ### Ongoing
 
-- [ ] Weekly `./db-backup.sh` if Supabase auto-backups aren't sufficient retention
+- [ ] Weekly `./db-backups/db-backup.sh` if Supabase auto-backups aren't sufficient retention
 - [ ] Monitor Stripe → Payments for failed/disputed transactions
 - [ ] Watch S3 bucket growth — if intake is popular, set a lifecycle policy or budget alert
 
