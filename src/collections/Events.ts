@@ -11,7 +11,7 @@ export const Events: CollectionConfig = {
     defaultColumns: ["title", "startAt", "location", "status"],
   },
   access: {
-    read: ({ req }) => Boolean(req.user),
+    read: () => true,
   },
   fields: [
     {
