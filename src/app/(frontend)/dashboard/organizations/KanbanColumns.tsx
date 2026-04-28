@@ -47,6 +47,7 @@ const BORDER: Record<string, string> = {
   purple: "border-purple-400",
   amber:  "border-amber-400",
   rose:   "border-rose-400",
+  slate:  "border-slate-300",
 };
 
 const BADGE: Record<string, string> = {
@@ -59,6 +60,7 @@ const BADGE: Record<string, string> = {
   purple: "bg-purple-100 text-purple-700",
   amber:  "bg-amber-100 text-amber-800",
   rose:   "bg-rose-100 text-rose-700",
+  slate:  "bg-slate-100 text-slate-600",
 };
 
 const BAND_RING: Record<string, string> = {
