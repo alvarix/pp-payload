@@ -249,6 +249,7 @@ export interface Organization {
   website?: string | null;
   email?: string | null;
   phone?: string | null;
+  contactNotes?: string | null;
   contacts?:
     | {
         contactName?: string | null;
@@ -256,6 +257,7 @@ export interface Organization {
         email?: string | null;
         phone?: string | null;
         preferredContactMethod?: ('email' | 'instagram_dm' | 'contact_form' | 'phone' | 'in_person') | null;
+        notes?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -265,6 +267,7 @@ export interface Organization {
   independentlyOwned?: boolean | null;
   rating?: number | null;
   fitScore?: ('top_tier' | 'strong' | 'worth_trying') | null;
+  pinned?: boolean | null;
   fitNotes?: string | null;
   status:
     | 'researched'
@@ -836,6 +839,7 @@ export interface OrganizationsSelect<T extends boolean = true> {
   website?: T;
   email?: T;
   phone?: T;
+  contactNotes?: T;
   contacts?:
     | T
     | {
@@ -844,6 +848,7 @@ export interface OrganizationsSelect<T extends boolean = true> {
         email?: T;
         phone?: T;
         preferredContactMethod?: T;
+        notes?: T;
         id?: T;
       };
   dogFriendly?: T;
@@ -852,6 +857,7 @@ export interface OrganizationsSelect<T extends boolean = true> {
   independentlyOwned?: T;
   rating?: T;
   fitScore?: T;
+  pinned?: T;
   fitNotes?: T;
   status?: T;
   dateContacted?: T;
