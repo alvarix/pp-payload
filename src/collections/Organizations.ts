@@ -119,6 +119,11 @@ export const Organizations: CollectionConfig = {
               label: "Phone",
             },
             {
+              name: "contactNotes",
+              type: "textarea",
+              label: "Contact Notes",
+            },
+            {
               name: "contacts",
               type: "array",
               label: "Contacts",
@@ -139,6 +144,7 @@ export const Organizations: CollectionConfig = {
                     { label: "In Person", value: "in_person" },
                   ],
                 },
+                { name: "notes", type: "textarea", label: "Notes" },
               ],
             },
           ],
@@ -186,6 +192,12 @@ export const Organizations: CollectionConfig = {
                 { label: "Strong", value: "strong" },
                 { label: "Worth Trying", value: "worth_trying" },
               ],
+            },
+            {
+              name: "pinned",
+              type: "checkbox",
+              label: "Pinned",
+              defaultValue: false,
             },
             {
               name: "fitNotes",
