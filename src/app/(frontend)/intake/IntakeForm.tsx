@@ -66,10 +66,10 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
       )}
 
       {/* Contact Information */}
-      <div className="border rounded-lg p-6">
+      <div className="border rounded-lg p-4 sm:p-6">
         <h2 className="text-xl font-semibold mb-4">Your Information</h2>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="first_name" className="block text-sm font-medium mb-1">
               First Name *
@@ -139,7 +139,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
       </div>
 
       {/* Pet Information */}
-      <div className="border rounded-lg p-6">
+      <div className="border rounded-lg p-4 sm:p-6">
         <h2 className="text-xl font-semibold mb-4">Pet Information</h2>
 
         <div className="mt-4">
@@ -245,7 +245,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
       </div>
 
       {/* Additional Notes */}
-      <div className="border rounded-lg p-6">
+      <div className="border rounded-lg p-4 sm:p-6">
         <label htmlFor="notes" className="block text-sm font-medium mb-1">
           Additional Notes
         </label>
