@@ -68,10 +68,14 @@ export async function POST(request: Request) {
     return Response.json({ error: "CSV has no data rows" }, { status: 400 });
   }
 
-  // Fetch all events once for matching
+  // Fetch all events and organizations once for matching
   const { docs: events } = await payload.find({
     collection: "events",
     limit: 100,
+  });
+  const { docs: organizations } = await payload.find({
+    collection: "organizations",
+    limit: 200,
   });
 
   const stats = {
@@ -90,7 +94,11 @@ export async function POST(request: Request) {
     const last = row["Last"] || row["last"] || "";
     const pet = row["Pet"] || row["pet"] || "";
     const breed = row["Breed"] || row["breed"] || "";
+    const petSexRaw = (row["Sex"] || row["sex"] || "").toLowerCase().trim();
+    const petSex = ["male", "female", "unknown"].includes(petSexRaw) ? petSexRaw : undefined;
+    const petAge = row["Age"] || row["age"] || "";
     const eventName = row["Event"] || row["event"] || "";
+    const venueName = row["Venue"] || row["venue"] || "";
     const email = row["Email"] || row["email"] || "";
     const jobTypeRaw = (row["Type"] || row["type"] || "street").toLowerCase().trim();
     const jobType = jobTypeRaw === "studio" ? "studio" : "street";
@@ -119,6 +127,7 @@ export async function POST(request: Request) {
     }
 
     let matchedEventName = "";
+    let matchedEventId: number | undefined;
     if (eventName) {
       const match = events.find((e) =>
         e.title.toLowerCase().includes(eventName.toLowerCase()) ||
@@ -126,10 +135,20 @@ export async function POST(request: Request) {
       );
       if (match) {
         matchedEventName = match.title;
+        matchedEventId = match.id;
         stats.eventsMatched.add(match.title);
       } else {
         stats.eventsMissed.add(eventName);
       }
+    }
+
+    let matchedOrgId: number | undefined;
+    if (venueName) {
+      const match = organizations.find((o) =>
+        (o.name as string).toLowerCase().includes(venueName.toLowerCase()) ||
+        venueName.toLowerCase().includes((o.name as string).toLowerCase())
+      );
+      if (match) matchedOrgId = match.id;
     }
 
     const rowSummary = {
@@ -199,9 +218,11 @@ export async function POST(request: Request) {
           status: jobStatus as any,
           job_type: jobType as any,
           due_date: parsedDate,
-          notes: jobNotes || (eventName ? `Event: ${eventName}` : undefined),
+          notes: jobNotes || undefined,
           referral: referral || undefined,
-          pets: [{ name: pet || "Unknown", breed: breed || "" }],
+          event: matchedEventId,
+          organization: matchedOrgId,
+          pets: [{ name: pet || "Unknown", breed: breed || "", sex: petSex as any, age: petAge || undefined }],
         },
       });
 

@@ -34,6 +34,17 @@ export const Jobs: CollectionConfig = {
       },
     },
     {
+      name: "event",
+      type: "relationship",
+      label: "Event",
+      relationTo: "events",
+      required: false,
+      hasMany: false,
+      admin: {
+        description: "Event this job was created at",
+      },
+    },
+    {
       name: "job_type",
       type: "select",
       label: "Job Type",
@@ -103,6 +114,14 @@ export const Jobs: CollectionConfig = {
             { label: "Female", value: "female" },
             { label: "Unknown", value: "unknown" },
           ],
+        },
+        {
+          name: "age",
+          type: "text",
+          label: "Age",
+          admin: {
+            description: "e.g. 3 years, 6 months",
+          },
         },
         {
           name: "breed",
