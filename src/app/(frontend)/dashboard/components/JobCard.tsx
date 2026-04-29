@@ -58,7 +58,7 @@ export function JobCard({ job }: { job: Job }) {
         {job.pics_received ? (
           <span className="text-green-600" title="Pics received">&#10003; Pics</span>
         ) : (
-          <span className="text-gray-400" title="No pics yet">&#10007; Pics</span>
+          <span className="text-gray-500" title="No pics yet">&#10007; Pics</span>
         )}
         {job.job_type && (
           <span className="text-gray-500 capitalize">{job.job_type}</span>
