@@ -355,6 +355,10 @@ export interface Job {
    */
   organization?: (number | null) | Organization;
   /**
+   * Event this job was created at
+   */
+  event?: (number | null) | Event;
+  /**
    * Street: 5-10 days to ship. Studio: 1-2 weeks to ship.
    */
   job_type?: ('street' | 'studio') | null;
@@ -369,6 +373,10 @@ export interface Job {
   pets: {
     name: string;
     sex?: ('male' | 'female' | 'unknown') | null;
+    /**
+     * e.g. 3 years, 6 months
+     */
+    age?: string | null;
     /**
      * Breed and markings
      */
@@ -735,6 +743,7 @@ export interface ClientsSelect<T extends boolean = true> {
 export interface JobsSelect<T extends boolean = true> {
   client?: T;
   organization?: T;
+  event?: T;
   job_type?: T;
   due_date?: T;
   urgency?: T;
@@ -746,6 +755,7 @@ export interface JobsSelect<T extends boolean = true> {
     | {
         name?: T;
         sex?: T;
+        age?: T;
         breed?: T;
         personality?: T;
         social_media?: T;
