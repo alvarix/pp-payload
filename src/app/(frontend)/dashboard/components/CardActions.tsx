@@ -58,7 +58,7 @@ export function CardActions({ endpoint, idField, id, pinned, label }: Props) {
         onClick={handlePin}
         disabled={isPending}
         title={pinned ? "Unpin" : "Pin"}
-        className={`text-xs px-1.5 py-0.5 rounded border ${
+        className={`text-xs px-2 py-1 rounded border ${
           pinned
             ? "bg-rose-100 text-rose-700 border-rose-300"
             : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
@@ -71,7 +71,7 @@ export function CardActions({ endpoint, idField, id, pinned, label }: Props) {
         onClick={handleDelete}
         disabled={isPending}
         title="Delete"
-        className="text-xs px-1.5 py-0.5 rounded border bg-white text-gray-400 border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 disabled:opacity-50"
+        className="text-xs px-2 py-1 rounded border bg-white text-gray-500 border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 disabled:opacity-50"
       >
         ×
       </button>
