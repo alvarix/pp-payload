@@ -229,7 +229,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gray-50 px-2 pt-1">
-      <div className="flex items-center gap-2 mb-1 flex-shrink-0">
+      <div className="flex flex-wrap items-center gap-2 mb-1 flex-shrink-0">
         <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Jobs</span>
         <a
           href="/admin/collections/jobs/create"
