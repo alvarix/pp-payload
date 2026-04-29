@@ -20,11 +20,11 @@ export function PinnedJobsBand({ jobs }: { jobs: PinnedJobItem[] }) {
         <span className="text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded bg-rose-100 text-rose-700 ring-1 ring-rose-300">
           Pinned
         </span>
-        <span className="text-xs text-gray-400">{jobs.length}</span>
+        <span className="text-xs text-gray-500">{jobs.length}</span>
       </summary>
       <div className="flex flex-wrap gap-2">
         {jobs.length === 0 && (
-          <p className="text-xs text-gray-400 italic">None</p>
+          <p className="text-xs text-gray-500 italic">None</p>
         )}
         {jobs.map((job) => (
           <div
@@ -39,8 +39,8 @@ export function PinnedJobsBand({ jobs }: { jobs: PinnedJobItem[] }) {
             >
               {job.clientName}
             </a>
-            <span className="text-xs text-gray-400">{job.petNames}</span>
-            <span className="text-xs text-gray-400 capitalize">· {job.status.replace(/_/g, " ")}</span>
+            <span className="text-xs text-gray-500">{job.petNames}</span>
+            <span className="text-xs text-gray-500 capitalize">· {job.status.replace(/_/g, " ")}</span>
             <CardActions
               endpoint="/api/dashboard/actions"
               idField="jobId"
