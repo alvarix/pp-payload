@@ -154,7 +154,7 @@ export function KanbanColumns({ columns, today }: { columns: OrgColumnData[]; to
                 <span className={`text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded ${BADGE[band.color]} ring-1 ${BAND_RING[band.color] ?? "ring-gray-300"}`}>
                   {band.label}
                 </span>
-                <span className="text-xs text-gray-400">{band.orgs.length}</span>
+                <span className="text-xs text-gray-500">{band.orgs.length}</span>
               </summary>
               <div className="flex gap-2 mb-2">
                 {tabs.map((s) => (
@@ -168,7 +168,7 @@ export function KanbanColumns({ columns, today }: { columns: OrgColumnData[]; to
                     }`}
                   >
                     {stateLabel(s)}
-                    <span className="ml-1 text-gray-400">{byState[s].length}</span>
+                    <span className="ml-1 text-gray-500">{byState[s].length}</span>
                   </button>
                 ))}
               </div>
@@ -194,7 +194,7 @@ export function KanbanColumns({ columns, today }: { columns: OrgColumnData[]; to
                   </div>
                 ))}
                 {(byState[activeTab] ?? []).length === 0 && (
-                  <p className="text-xs text-gray-400 italic">None</p>
+                  <p className="text-xs text-gray-500 italic">None</p>
                 )}
               </div>
             </details>
@@ -207,7 +207,7 @@ export function KanbanColumns({ columns, today }: { columns: OrgColumnData[]; to
               <span className={`text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded ${BADGE[band.color]} ring-1 ${BAND_RING[band.color] ?? "ring-gray-300"}`}>
                 {band.label}
               </span>
-              <span className="text-xs text-gray-400">{band.orgs.length}</span>
+              <span className="text-xs text-gray-500">{band.orgs.length}</span>
             </summary>
             <div className="flex flex-wrap gap-2">
               {band.orgs.map((org) => (
@@ -231,7 +231,7 @@ export function KanbanColumns({ columns, today }: { columns: OrgColumnData[]; to
                 </div>
               ))}
               {band.orgs.length === 0 && (
-                <p className="text-xs text-gray-400 italic">None</p>
+                <p className="text-xs text-gray-500 italic">None</p>
               )}
             </div>
           </details>
@@ -246,7 +246,7 @@ export function KanbanColumns({ columns, today }: { columns: OrgColumnData[]; to
         return (
           <div
             key={col.key}
-            className={`flex-shrink-0 w-60 transition-opacity ${isDragging ? "opacity-40" : ""}`}
+            className={`flex-shrink-0 w-52 sm:w-60 transition-opacity ${isDragging ? "opacity-40" : ""}`}
           >
             <div
               draggable
@@ -259,14 +259,14 @@ export function KanbanColumns({ columns, today }: { columns: OrgColumnData[]; to
               <span className={`text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded ${BADGE[col.color]}`}>
                 {col.label}
               </span>
-              <span className="text-xs text-gray-400">{col.orgs.length}</span>
+              <span className="text-xs text-gray-500">{col.orgs.length}</span>
             </div>
             <div className="space-y-2">
               {col.orgs.map((org) => (
                 <OrgCard key={org.id} org={org} today={today} borderColor={BORDER[col.color]} />
               ))}
               {col.orgs.length === 0 && (
-                <p className="text-xs text-gray-400 italic text-center pt-4">None</p>
+                <p className="text-xs text-gray-500 italic text-center pt-4">None</p>
               )}
             </div>
           </div>
@@ -308,7 +308,7 @@ function OrgCard({
           label={org.name}
         />
       </div>
-      <p className="text-xs text-gray-400 mt-0.5 capitalize">
+      <p className="text-xs text-gray-500 mt-0.5 capitalize">
         {org.type?.replace(/_/g, " ")}
         {org.neighborhood ? ` · ${org.neighborhood}` : ""}
       </p>
@@ -316,13 +316,13 @@ function OrgCard({
         <p className="text-xs text-blue-500 mt-0.5">@{org.instagram}</p>
       )}
       {org.website && (
-        <p className="text-xs text-gray-400 mt-0.5 truncate">{org.website}</p>
+        <p className="text-xs text-gray-500 mt-0.5 truncate">{org.website}</p>
       )}
       {org.email && (
         <p className="text-xs text-gray-500 mt-0.5 truncate">{org.email}</p>
       )}
       {org.phone && (
-        <p className="text-xs text-gray-400 mt-0.5">{org.phone}</p>
+        <p className="text-xs text-gray-500 mt-0.5">{org.phone}</p>
       )}
       {org.contactNotes && (
         <p className="text-xs text-gray-500 mt-0.5 italic whitespace-pre-wrap">{org.contactNotes}</p>
@@ -332,9 +332,9 @@ function OrgCard({
           {org.contacts.map((c, i) => (
             <div key={i} className="text-xs text-gray-500 truncate">
               {c.contactName && <span className="font-medium">{c.contactName}</span>}
-              {c.role && <span className="text-gray-400"> · {c.role}</span>}
+              {c.role && <span className="text-gray-500"> · {c.role}</span>}
               {c.email && <span className="block truncate">{c.email}</span>}
-              {c.phone && <span className="block text-gray-400">{c.phone}</span>}
+              {c.phone && <span className="block text-gray-500">{c.phone}</span>}
               {c.notes && <span className="block text-gray-500 italic whitespace-pre-wrap">{c.notes}</span>}
             </div>
           ))}
@@ -345,7 +345,7 @@ function OrgCard({
         <OrgFitScoreSelect orgId={org.id} currentFitScore={org.fitScore ?? null} />
       </div>
       {org.followUpDate && (
-        <p className={`text-xs mt-1 ${overdue ? "text-red-600 font-semibold" : "text-gray-400"}`}>
+        <p className={`text-xs mt-1 ${overdue ? "text-red-600 font-semibold" : "text-gray-500"}`}>
           Follow-up: {org.followUpDate.slice(0, 10)}
         </p>
       )}

@@ -90,7 +90,7 @@ export function JobsKanbanBoard({ columns }: { columns: JobColumnData[] }) {
         return (
           <div
             key={col.key}
-            className={`flex-shrink-0 w-72 transition-opacity ${isDragging ? "opacity-40" : ""}`}
+            className={`flex-shrink-0 w-64 sm:w-72 transition-opacity ${isDragging ? "opacity-40" : ""}`}
           >
             <div
               draggable
@@ -107,7 +107,7 @@ export function JobsKanbanBoard({ columns }: { columns: JobColumnData[] }) {
             </div>
             <div className="border border-t-0 border-gray-200 rounded-b-lg bg-gray-50 p-2 space-y-2 min-h-[200px]">
               {col.jobs.length === 0 && (
-                <p className="text-xs text-gray-400 italic text-center pt-8">No jobs</p>
+                <p className="text-xs text-gray-500 italic text-center pt-8">No jobs</p>
               )}
               {col.jobs.map((job) => (
                 <JobCard key={job.id} job={job} />
@@ -167,7 +167,7 @@ function JobCard({ job }: { job: JobForCard }) {
         {job.pics_received ? (
           <span className="text-green-600" title="Pics received">&#10003; Pics</span>
         ) : (
-          <span className="text-gray-400" title="No pics yet">&#10007; Pics</span>
+          <span className="text-gray-500" title="No pics yet">&#10007; Pics</span>
         )}
         {job.job_type && (
           <span className="text-gray-500 capitalize">{job.job_type}</span>
