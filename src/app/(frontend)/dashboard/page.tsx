@@ -1,3 +1,5 @@
+export const metadata = { title: "Dashboard" };
+
 import { headers as getHeaders } from "next/headers.js";
 import { redirect } from "next/navigation";
 import { getPayload } from "payload";
@@ -9,7 +11,7 @@ import { OverdueAlert } from "./components/OverdueAlert";
 import { JobsKanbanBoard, type JobColumnData, type JobForCard } from "./components/JobsKanbanBoard";
 import { PinnedJobsBand, type PinnedJobItem } from "./components/PinnedJobsBand";
 import { RecentJobsBand, type RecentJobItem } from "./components/RecentJobsBand";
-import { FullscreenButton } from "./components/FullscreenButton";
+import { DashboardNav } from "./components/DashboardNav";
 
 /** Status values shown as columns (not delivered or archived). */
 const ACTIVE_STATUSES = [
@@ -229,43 +231,15 @@ export default async function DashboardPage() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gray-50 px-2 pt-1">
-      <div className="flex flex-wrap items-center gap-2 mb-1 flex-shrink-0">
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Jobs</span>
-        <a
-          href="/admin/collections/jobs/create"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs px-2 py-0.5 border border-gray-200 rounded text-gray-600 hover:bg-gray-100"
-        >
-          + Job
-        </a>
-        <a
-          href="/admin/collections/clients/create"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs px-2 py-0.5 border border-gray-200 rounded text-gray-600 hover:bg-gray-100"
-        >
-          + Client
-        </a>
-        <a
-          href="/dashboard/client-import"
-          className="text-xs px-2 py-0.5 border border-gray-200 rounded text-gray-600 hover:bg-gray-100"
-        >
-          Import CSV
-        </a>
-        <a
-          href="/dashboard/organizations"
-          className="text-xs px-2 py-0.5 border border-blue-300 rounded text-blue-600 hover:bg-blue-50 inline-flex items-center gap-1"
-        >
-          Orgs
-          {orgsNeedingFollowUp > 0 && (
-            <span className="bg-red-500 text-white text-xs px-1 rounded-full leading-none py-0.5">
-              {orgsNeedingFollowUp}
-            </span>
-          )}
-        </a>
-        <FullscreenButton />
-      </div>
+      <DashboardNav
+        section="jobs"
+        orgsNeedingFollowUp={orgsNeedingFollowUp}
+        quickCreate={[
+          { label: "+ Job", href: "/admin/collections/jobs/create" },
+          { label: "+ Client", href: "/admin/collections/clients/create" },
+        ]}
+        importHref="/dashboard/client-import"
+      />
 
       <div className="flex-shrink-0">
         <StatsBar

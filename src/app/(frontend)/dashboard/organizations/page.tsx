@@ -1,10 +1,12 @@
+export const metadata = { title: "Organizations" };
+
 import { headers as getHeaders } from "next/headers.js";
 import { redirect } from "next/navigation";
 import { getPayload } from "payload";
 import config from "@/payload.config";
 import type { Organization } from "@/payload-types";
 import { KanbanColumns, type OrgColumnData } from "./KanbanColumns";
-import { FullscreenButton } from "../components/FullscreenButton";
+import { DashboardNav } from "../components/DashboardNav";
 
 const COLUMNS: { key: string; label: string; color: string }[] = [
   { key: "contacted",            label: "Contacted",            color: "blue"   },
@@ -87,27 +89,13 @@ export default async function OrganizationsDashboardPage() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gray-50 px-2 pt-1">
-      <div className="flex flex-wrap items-center gap-2 mb-1 flex-shrink-0">
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Orgs</span>
-        <a
-          href="/admin/collections/organizations/create"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs px-2 py-0.5 border border-gray-200 rounded text-gray-600 hover:bg-gray-100"
-        >
-          + Org
-        </a>
-        <a
-          href="/dashboard/brevo-org-import"
-          className="text-xs px-2 py-0.5 border border-gray-200 rounded text-gray-600 hover:bg-gray-100"
-        >
-          Import CSV
-        </a>
-        <a href="/dashboard" className="text-xs text-gray-500 hover:underline ml-auto">
-          &larr; Back
-        </a>
-        <FullscreenButton />
-      </div>
+      <DashboardNav
+        section="organizations"
+        quickCreate={[
+          { label: "+ Org", href: "/admin/collections/organizations/create" },
+        ]}
+        importHref="/dashboard/brevo-org-import"
+      />
 
       <KanbanColumns columns={columnData} today={today} />
     </div>

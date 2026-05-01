@@ -1,6 +1,6 @@
 import { ImportForm } from "./ImportForm";
 
-export const metadata = { title: "Brevo Org Import" };
+export const metadata = { title: "Brevo Import" };
 
 export default function BrevoOrgImportPage() {
   return (
