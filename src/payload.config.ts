@@ -22,6 +22,11 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    components: {
+      graphics: {
+        Logo: "@/components/AdminLogo",
+      },
+    },
   },
   collections: [Users, Media, Events, Clients, Jobs, Organizations],
   editor: lexicalEditor(),
