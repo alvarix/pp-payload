@@ -4,6 +4,36 @@ Notable changes to `pp-v2`. Dates in YYYY-MM-DD.
 
 ## Unreleased
 
+## 2026-05-01
+
+### Intake form redesign
+- Dark stone-900 background with reversed Pet Portraits logo header
+- Contact link (`alvar@petportraits.ink?subject=intake`) below logo
+- All form fields, sections, and error states updated for dark theme
+
+### Admin email notification on intake
+- New `src/lib/email.ts` — `sendIntakeNotification()` calls Brevo transactional API (no new packages, plain fetch)
+- Fires after job creation in `/api/intake`; failure is non-fatal and logged server-side only
+- Email includes client name, email, pet name, and a direct link to the job record in Payload admin
+- `docs/spec-intake-email-notification-2026-05-01.md` — provider comparison (Brevo vs Resend), implementation spec
+
+### Page titles
+- Root layout: `PetPortraits.ink` with `%s | PetPortraits.ink` template
+- Per-page titles added: Commission Intake, Dashboard, Organizations, Client Import, Brevo Import, Events
+
+### Navigation
+- New `DashboardNav` component replaces scattered inline nav links across dashboard pages
+- Shows active section (Jobs / Orgs), org follow-up badge, quick-create actions, Import CSV, Admin panel link
+- Homepage (`/`) redirects to `/dashboard`
+
+### Database connection pooling
+- `payload.config.ts`: pool capped at `max: 3`, `idleTimeoutMillis: 10s` to avoid exhausting Supabase's 15-connection session-mode limit
+- Vercel `DATABASE_URL` updated to Supabase transaction-mode pooler (port 6543, Drizzle/ORM option)
+- `.env.example` updated with clear guidance on direct vs pooler connection strings per environment
+- `BREVO_API_KEY` added to `.env.example`
+
+## Unreleased (prior)
+
 ### deploy branch
 
 - **docs** — added `docs/deploy-strategy-2026-04-21.md`. Locks deploy target to Vercel + Supabase (DB + Storage), open intake, variable Stripe amount, stacked-accordion multi-pet, signed-URL upload from day 1 (mission-critical), documented pruning/growth strategy.
