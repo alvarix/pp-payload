@@ -32,6 +32,10 @@ export default buildConfig({
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URL || "",
+      // Cap connections per instance — Supabase session-mode pool limit is 15 total.
+      // Vercel DATABASE_URL should use the transaction-mode pooler (port 6543).
+      max: 3,
+      idleTimeoutMillis: 10_000,
     },
   }),
   sharp,
