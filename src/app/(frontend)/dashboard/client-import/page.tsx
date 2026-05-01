@@ -1,3 +1,5 @@
+export const metadata = { title: "Client Import" };
+
 import { headers as getHeaders } from "next/headers.js";
 import { redirect } from "next/navigation";
 import { getPayload } from "payload";

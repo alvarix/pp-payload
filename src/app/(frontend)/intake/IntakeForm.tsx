@@ -8,6 +8,9 @@ interface IntakeFormProps {
   stripeSessionId?: string;
 }
 
+const inputCls = "w-full px-3 py-2 bg-stone-800 border border-stone-600 rounded-md text-stone-100 placeholder-stone-500 focus:outline-none focus:border-stone-400";
+const sectionCls = "border border-stone-700 bg-stone-800/50 rounded-lg p-4 sm:p-6";
+
 export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
@@ -41,9 +44,9 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
 
   if (submitStatus === "success") {
     return (
-      <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-        <h2 className="text-2xl font-semibold text-green-900 mb-2">Thank you!</h2>
-        <p className="text-green-800">
+      <div className="border border-green-700 bg-green-900/40 rounded-lg p-6">
+        <h2 className="text-2xl font-semibold text-green-300 mb-2">Thank you!</h2>
+        <p className="text-green-200">
           Your intake form has been submitted successfully. We&apos;ll be in touch soon!
         </p>
       </div>
@@ -66,12 +69,12 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
       )}
 
       {/* Contact Information */}
-      <div className="border rounded-lg p-4 sm:p-6">
-        <h2 className="text-xl font-semibold mb-4">Your Information</h2>
+      <div className={sectionCls}>
+        <h2 className="text-xl font-semibold mb-4 text-stone-100">Your Information</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="first_name" className="block text-sm font-medium mb-1">
+            <label htmlFor="first_name" className="block text-sm font-medium mb-1 text-stone-300">
               First Name *
             </label>
             <input
@@ -80,11 +83,11 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
               name="first_name"
               required
               defaultValue={prefill?.firstName ?? ""}
-              className="w-full px-3 py-2 border rounded-md"
+              className={inputCls}
             />
           </div>
           <div>
-            <label htmlFor="last_name" className="block text-sm font-medium mb-1">
+            <label htmlFor="last_name" className="block text-sm font-medium mb-1 text-stone-300">
               Last Name *
             </label>
             <input
@@ -93,13 +96,13 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
               name="last_name"
               required
               defaultValue={prefill?.lastName ?? ""}
-              className="w-full px-3 py-2 border rounded-md"
+              className={inputCls}
             />
           </div>
         </div>
 
         <div className="mt-4">
-          <label htmlFor="email" className="block text-sm font-medium mb-1">
+          <label htmlFor="email" className="block text-sm font-medium mb-1 text-stone-300">
             Email *
           </label>
           <input
@@ -108,12 +111,12 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
             name="email"
             required
             defaultValue={prefill?.email ?? ""}
-            className="w-full px-3 py-2 border rounded-md"
+            className={inputCls}
           />
         </div>
 
         <div className="mt-4">
-          <label htmlFor="phone" className="block text-sm font-medium mb-1">
+          <label htmlFor="phone" className="block text-sm font-medium mb-1 text-stone-300">
             Phone
           </label>
           <input
@@ -121,29 +124,29 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
             id="phone"
             name="phone"
             defaultValue={prefill?.phone ?? ""}
-            className="w-full px-3 py-2 border rounded-md"
+            className={inputCls}
           />
         </div>
 
         <div className="mt-4">
-          <label htmlFor="referral" className="block text-sm font-medium mb-1">
+          <label htmlFor="referral" className="block text-sm font-medium mb-1 text-stone-300">
             How did you hear about us?
           </label>
           <input
             type="text"
             id="referral"
             name="referral"
-            className="w-full px-3 py-2 border rounded-md"
+            className={inputCls}
           />
         </div>
       </div>
 
       {/* Pet Information */}
-      <div className="border rounded-lg p-4 sm:p-6">
-        <h2 className="text-xl font-semibold mb-4">Pet Information</h2>
+      <div className={sectionCls}>
+        <h2 className="text-xl font-semibold mb-4 text-stone-100">Pet Information</h2>
 
         <div className="mt-4">
-          <label htmlFor="pet_name" className="block text-sm font-medium mb-1">
+          <label htmlFor="pet_name" className="block text-sm font-medium mb-1 text-stone-300">
             Pet&apos;s Name *
           </label>
           <input
@@ -151,15 +154,15 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
             id="pet_name"
             name="pet_name"
             required
-            className="w-full px-3 py-2 border rounded-md"
+            className={inputCls}
           />
         </div>
 
         <div className="mt-4">
-          <label htmlFor="pet_sex" className="block text-sm font-medium mb-1">
+          <label htmlFor="pet_sex" className="block text-sm font-medium mb-1 text-stone-300">
             Sex
           </label>
-          <select id="pet_sex" name="pet_sex" className="w-full px-3 py-2 border rounded-md">
+          <select id="pet_sex" name="pet_sex" className={inputCls}>
             <option value="">Select...</option>
             <option value="male">Male</option>
             <option value="female">Female</option>
@@ -168,47 +171,52 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
         </div>
 
         <div className="mt-4">
-          <label htmlFor="pet_breed" className="block text-sm font-medium mb-1">
+          <label htmlFor="pet_breed" className="block text-sm font-medium mb-1 text-stone-300">
             Breed &amp; Markings
           </label>
           <input
             type="text"
             id="pet_breed"
             name="pet_breed"
-            className="w-full px-3 py-2 border rounded-md"
+            className={inputCls}
           />
         </div>
 
         <div className="mt-4">
-          <label htmlFor="pet_personality" className="block text-sm font-medium mb-1">
+          <label htmlFor="pet_personality" className="block text-sm font-medium mb-1 text-stone-300">
             Personality (helps us capture their essence!)
           </label>
           <textarea
             id="pet_personality"
             name="pet_personality"
             rows={3}
-            className="w-full px-3 py-2 border rounded-md"
+            className={inputCls}
           />
         </div>
 
         <div className="mt-4">
-          <label htmlFor="pet_social_media" className="block text-sm font-medium mb-1">
+          <label htmlFor="pet_social_media" className="block text-sm font-medium mb-1 text-stone-300">
             Pet&apos;s Social Media (optional)
           </label>
           <input
             type="text"
             id="pet_social_media"
             name="pet_social_media"
-            className="w-full px-3 py-2 border rounded-md"
+            className={inputCls}
             placeholder="@yourpet"
           />
         </div>
 
         <div className="mt-4">
-          <label htmlFor="pet_pics" className="block text-sm font-medium mb-1">
-            <strong>Photos</strong>: DM me photos on instagram <a href='https://instagram.com/alvar.nyc' target='_blank'>@alvar.nyc</a> or upload below.
-            <br/>(2–5 clearly lit photos: not resting or with clothes or toys).
-            </label>
+          <label className="block text-sm font-medium mb-2 text-stone-300">
+            <strong className="text-stone-100">Photos</strong>: DM me on Instagram{" "}
+            <a href="https://instagram.com/alvar.nyc" target="_blank" className="underline text-stone-300 hover:text-white">
+              @alvar.nyc
+            </a>{" "}
+            or upload below.
+            <br />
+            <span className="text-stone-500">(2–5 clearly lit photos: not resting or with clothes or toys)</span>
+          </label>
           {photoInputs.map((inputId, index) => (
             <div key={inputId} className="mb-3">
               <div className="flex gap-2 items-center">
@@ -217,13 +225,13 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
                   name="pet_pics"
                   accept="image/*"
                   multiple
-                  className="flex-1 px-3 py-2 border rounded-md"
+                  className="flex-1 px-3 py-2 bg-stone-800 border border-stone-600 rounded-md text-stone-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-stone-700 file:text-stone-200 file:text-sm"
                 />
                 {index > 0 && (
                   <button
                     type="button"
                     onClick={() => setPhotoInputs(photoInputs.filter((_, i) => i !== index))}
-                    className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md"
+                    className="px-3 py-2 text-red-400 hover:bg-stone-700 rounded-md text-sm"
                   >
                     Remove
                   </button>
@@ -234,40 +242,44 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
           <button
             type="button"
             onClick={() => setPhotoInputs([...photoInputs, Date.now()])}
-            className="mt-2 px-4 py-2 text-sm text-black bg-gray-100 hover:bg-gray-200 rounded-md"
+            className="mt-2 px-4 py-2 text-sm text-stone-300 bg-stone-700 hover:bg-stone-600 rounded-md"
           >
             + Add more photos
           </button>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-sm text-stone-500 mt-2">
             Upload photos showing different angles and expressions.
           </p>
         </div>
       </div>
 
       {/* Additional Notes */}
-      <div className="border rounded-lg p-4 sm:p-6">
-        <label htmlFor="notes" className="block text-sm font-medium mb-1">
+      <div className={sectionCls}>
+        <label htmlFor="notes" className="block text-sm font-medium mb-1 text-stone-300">
           Additional Notes
         </label>
         <textarea
           id="notes"
           name="notes"
           rows={4}
-          className="w-full px-3 py-2 border rounded-md"
+          className={inputCls}
           placeholder="Date needed, special requests, etc."
         />
       </div>
 
       {submitStatus === "error" && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
-          There was an error submitting your form. Please try again or contact us directly.
+        <div className="border border-red-700 bg-red-900/40 rounded-lg p-4 text-red-300">
+          There was an error submitting your form. Please try again or{" "}
+          <a href="mailto:alvar@petportraits.ink?subject=intake" className="underline">
+            contact me directly
+          </a>
+          .
         </div>
       )}
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        className="w-full bg-stone-100 text-stone-900 py-3 rounded-md font-semibold hover:bg-white disabled:bg-stone-600 disabled:text-stone-400 disabled:cursor-not-allowed"
       >
         {isSubmitting ? "Submitting…" : "Submit Intake Form"}
       </button>
