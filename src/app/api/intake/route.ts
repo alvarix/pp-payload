@@ -2,6 +2,7 @@ import { getPayload } from "payload";
 import configPromise from "@payload-config";
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionPrefill } from "@/lib/stripe";
+import { sendIntakeNotification } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -169,6 +170,17 @@ export async function POST(request: NextRequest) {
         ],
       },
     });
+
+    try {
+      await sendIntakeNotification({
+        clientName: [clientData.first_name, clientData.last_name].filter(Boolean).join(" ") || clientData.email,
+        email: clientData.email,
+        petName: (formData.get("pet_name") as string) || "Unknown",
+        jobId: job.id,
+      });
+    } catch (emailErr) {
+      console.error("Intake notification email failed:", emailErr);
+    }
 
     return NextResponse.json({ success: true, jobId: job.id });
   } catch (error) {
