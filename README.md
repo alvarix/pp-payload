@@ -35,7 +35,7 @@ Handles client intake, job tracking, portfolio management, and events. The publi
 
 ## API routes
 
-`POST /api/intake` - public intake form endpoint. Accepts client contact info, pet data, and photo uploads (10MB cap per file). Creates or updates the client by email and creates a job. Used by the intake form at `/intake`.
+`POST /api/intake` - public intake form endpoint. Accepts client contact info, pet data, and photo uploads. Enforces 10MB per file, 10 files max, 70MB total. Creates or updates the client by email and creates a job. Used by the intake form at `/intake`. The form validates these limits client-side before submission to avoid opaque server errors.
 
 `POST /api/dashboard/actions` - auth-protected. Job actions: `set_status`, `toggle_pics_received`, `toggle_pinned`, `delete`.
 
@@ -153,11 +153,31 @@ Deployed to Vercel at `portal.petportraits.ink`, backed by Supabase Postgres + S
 
 For the full pre/post-launch checklist and known risks, see [`docs/launch-checklist-2026-04-24.md`](docs/launch-checklist-2026-04-24.md).
 
+### Supabase free tier limits
+
+Both the database and file storage run on Supabase's free plan:
+
+| Resource | Free limit | Risk at limit |
+|---|---|---|
+| File storage | 1 GB | Project paused — intake form returns 500 |
+| Database | 500 MB | Project paused |
+| Bandwidth | 5 GB/month | Project paused |
+| Inactivity | 7 days no DB queries | Project paused |
+
+At ~30–50 MB per intake submission (up to 10 photos), the 1 GB storage cap is hit after roughly 20–30 jobs. Monitor usage in the Supabase dashboard under Storage.
+
+**To avoid pausing without upgrading to Pro ($25/month):**
+- Set up a free uptime monitor (e.g. UptimeRobot) pinging the site every 5 minutes — this keeps the DB active and prevents inactivity pausing.
+- Replace Supabase S3 storage with **Cloudflare R2**: 10 GB free, no egress fees, $0.015/GB beyond that. Both use the S3-compatible API so the storage adapter config requires only credential changes.
+- Compress reference photos on upload using `sharp` (already a dependency) before writing to storage — typical phone photos compress 60–80% without visible quality loss.
+
+The Pro plan ($25/month) removes all of the above risks and is the straightforward production choice once jobs are flowing regularly.
+
 ## Security notes
 
 - `pp-wp` and `pp-wp.pub` in the project root are SSH keys used for server communication. **These must not be committed to version control.** Add them to `.gitignore` and store securely.
 - **Collection read access is open** (`() => true`) on Clients, Jobs, Organizations, and Media. Payload's auto-generated REST/GraphQL endpoints make this PII queryable by unauthenticated visitors. Lock down before public launch — see launch checklist risk #1.
-- `/api/intake` is unauthenticated by design (it's the public form endpoint), but trusts only the Stripe session ID and re-verifies server-side. Per-file upload cap is 10MB and the Media collection enforces a mime-type allowlist; there is still no rate limit — see launch checklist risk #3.
+- `/api/intake` is unauthenticated by design (it's the public form endpoint), but trusts only the Stripe session ID and re-verifies server-side. Upload limits: 10MB per file, 10 files max, 70MB total (enforced client- and server-side). The Media collection enforces a mime-type allowlist. There is still no rate limit — see launch checklist risk #3.
 - Stripe secret keys must never appear in chat transcripts, screenshots, or commit messages. If exposed, roll the key in Stripe immediately and update Vercel + any other consumer.
 
 ## WordPress integration

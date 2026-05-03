@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB per file
     const MAX_FILE_COUNT = 10;
-    const MAX_TOTAL_BYTES = 40 * 1024 * 1024; // 40MB total
+    const MAX_TOTAL_BYTES = 70 * 1024 * 1024; // 70MB total
 
     const nonEmptyFiles = petPicFiles.filter((f) => f.size > 0);
 
