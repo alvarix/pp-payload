@@ -13,7 +13,7 @@ const sectionCls = "border border-stone-700 bg-stone-800/50 rounded-lg p-4 sm:p-
 
 const MAX_PHOTOS = 10;
 const MAX_FILE_BYTES = 10 * 1024 * 1024;   // 10MB per file
-const MAX_TOTAL_BYTES = 40 * 1024 * 1024;  // 40MB total
+const MAX_TOTAL_BYTES = 70 * 1024 * 1024;  // 70MB total
 
 function formatMB(bytes: number): string {
   return (bytes / (1024 * 1024)).toFixed(1);
@@ -295,7 +295,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
 
           {totalTooLarge && (
             <p className="mt-1 text-sm text-red-400">
-              Total upload size is {formatMB(totalFileBytes)} MB, which exceeds the 40MB limit. Remove some photos or use smaller files.
+              Total upload size is {formatMB(totalFileBytes)} MB, which exceeds the 70MB limit. Remove some photos or use smaller files.
             </p>
           )}
 
