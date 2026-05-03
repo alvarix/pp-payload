@@ -11,13 +11,49 @@ interface IntakeFormProps {
 const inputCls = "w-full px-3 py-2 bg-stone-800 border border-stone-600 rounded-md text-stone-100 placeholder-stone-500 focus:outline-none focus:border-stone-400";
 const sectionCls = "border border-stone-700 bg-stone-800/50 rounded-lg p-4 sm:p-6";
 
+const MAX_PHOTOS = 10;
+const MAX_FILE_BYTES = 10 * 1024 * 1024;   // 10MB per file
+const MAX_TOTAL_BYTES = 40 * 1024 * 1024;  // 40MB total
+
+function formatMB(bytes: number): string {
+  return (bytes / (1024 * 1024)).toFixed(1);
+}
+
 export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
   const [photoInputs, setPhotoInputs] = useState([0]);
+  const [photoFiles, setPhotoFiles] = useState<Map<number, File[]>>(new Map());
+
+  const allFiles = Array.from(photoFiles.values()).flat();
+  const totalFileCount = allFiles.length;
+  const totalFileBytes = allFiles.reduce((sum, f) => sum + f.size, 0);
+  const oversizedFiles = allFiles.filter((f) => f.size > MAX_FILE_BYTES);
+  const tooManyPhotos = totalFileCount > MAX_PHOTOS;
+  const totalTooLarge = totalFileBytes > MAX_TOTAL_BYTES;
+  const hasPhotoError = oversizedFiles.length > 0 || tooManyPhotos || totalTooLarge;
+  const warnPhotoCount = totalFileCount > 5 && !tooManyPhotos;
+
+  /** Update tracked files for one input slot. */
+  function handleFileChange(inputId: number, files: FileList | null) {
+    const updated = new Map(photoFiles);
+    updated.set(inputId, files ? Array.from(files) : []);
+    setPhotoFiles(updated);
+  }
+
+  /** Remove an input slot and its tracked files. */
+  function removePhotoInput(index: number) {
+    const inputId = photoInputs[index];
+    const updated = new Map(photoFiles);
+    updated.delete(inputId);
+    setPhotoFiles(updated);
+    setPhotoInputs(photoInputs.filter((_, i) => i !== index));
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (hasPhotoError) return;
+
     setIsSubmitting(true);
     setSubmitStatus("idle");
 
@@ -215,8 +251,11 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
             </a>{" "}
             or upload below.
             <br />
-            <span className="text-stone-500">(2–5 clearly lit photos: not resting or with clothes or toys)</span>
+            <span className="text-stone-500">
+              2–5 clearly lit photos, no clothes or toys. Max {MAX_PHOTOS} photos, 10MB each.
+            </span>
           </label>
+
           {photoInputs.map((inputId, index) => (
             <div key={inputId} className="mb-3">
               <div className="flex gap-2 items-center">
@@ -225,12 +264,13 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
                   name="pet_pics"
                   accept="image/*"
                   multiple
+                  onChange={(e) => handleFileChange(inputId, e.target.files)}
                   className="flex-1 px-3 py-2 bg-stone-800 border border-stone-600 rounded-md text-stone-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-stone-700 file:text-stone-200 file:text-sm"
                 />
                 {index > 0 && (
                   <button
                     type="button"
-                    onClick={() => setPhotoInputs(photoInputs.filter((_, i) => i !== index))}
+                    onClick={() => removePhotoInput(index)}
                     className="px-3 py-2 text-red-400 hover:bg-stone-700 rounded-md text-sm"
                   >
                     Remove
@@ -239,6 +279,40 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
               </div>
             </div>
           ))}
+
+          {/* Live upload feedback */}
+          {totalFileCount > 0 && (
+            <p className={`text-sm mt-1 ${hasPhotoError ? "text-red-400" : warnPhotoCount ? "text-yellow-400" : "text-stone-400"}`}>
+              {totalFileCount} photo{totalFileCount !== 1 ? "s" : ""} selected &mdash; {formatMB(totalFileBytes)} MB total
+            </p>
+          )}
+
+          {tooManyPhotos && (
+            <p className="mt-1 text-sm text-red-400">
+              Too many photos. Please select {MAX_PHOTOS} or fewer.
+            </p>
+          )}
+
+          {totalTooLarge && (
+            <p className="mt-1 text-sm text-red-400">
+              Total upload size is {formatMB(totalFileBytes)} MB, which exceeds the 40MB limit. Remove some photos or use smaller files.
+            </p>
+          )}
+
+          {oversizedFiles.length > 0 && (
+            <p className="mt-1 text-sm text-red-400">
+              {oversizedFiles.length === 1
+                ? `"${oversizedFiles[0].name}" exceeds the 10MB per-file limit.`
+                : `${oversizedFiles.length} files exceed the 10MB per-file limit.`}
+            </p>
+          )}
+
+          {warnPhotoCount && (
+            <p className="mt-1 text-sm text-yellow-500">
+              {totalFileCount} photos selected. We recommend 2–5 for best results — consider picking your clearest shots.
+            </p>
+          )}
+
           <button
             type="button"
             onClick={() => setPhotoInputs([...photoInputs, Date.now()])}
@@ -278,7 +352,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
 
       <button
         type="submit"
-        disabled={isSubmitting}
+        disabled={isSubmitting || hasPhotoError}
         className="w-full bg-stone-100 text-stone-900 py-3 rounded-md font-semibold hover:bg-white disabled:bg-stone-600 disabled:text-stone-400 disabled:cursor-not-allowed"
       >
         {isSubmitting ? "Submitting…" : "Submit Intake Form"}

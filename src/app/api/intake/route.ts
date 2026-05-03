@@ -73,6 +73,26 @@ export async function POST(request: NextRequest) {
     const uploadedPicIds: number[] = [];
 
     const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB per file
+    const MAX_FILE_COUNT = 10;
+    const MAX_TOTAL_BYTES = 40 * 1024 * 1024; // 40MB total
+
+    const nonEmptyFiles = petPicFiles.filter((f) => f.size > 0);
+
+    if (nonEmptyFiles.length > MAX_FILE_COUNT) {
+      return NextResponse.json(
+        { error: `Too many photos. Maximum ${MAX_FILE_COUNT} files allowed.` },
+        { status: 413 },
+      );
+    }
+
+    const totalBytes = nonEmptyFiles.reduce((sum, f) => sum + f.size, 0);
+    if (totalBytes > MAX_TOTAL_BYTES) {
+      return NextResponse.json(
+        { error: "Total upload size exceeds 40MB limit." },
+        { status: 413 },
+      );
+    }
+
     for (const file of petPicFiles) {
       if (file.size > 0) {
         if (file.size > MAX_UPLOAD_BYTES) {
