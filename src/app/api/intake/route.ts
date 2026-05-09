@@ -4,7 +4,44 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionPrefill } from "@/lib/stripe";
 import { sendIntakeNotification } from "@/lib/email";
 
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB per file
+const MAX_FILE_COUNT = 10;
+const MAX_TOTAL_BYTES = 70 * 1024 * 1024; // 70MB total
+
+/**
+ * Validates photo files against size and count limits.
+ * Returns a NextResponse error if validation fails, null if OK.
+ *
+ * @param files - Non-empty file list from the form
+ */
+function validatePhotos(files: File[]): NextResponse | null {
+  if (files.length > MAX_FILE_COUNT) {
+    return NextResponse.json(
+      { error: `Too many photos. Maximum ${MAX_FILE_COUNT} files allowed.` },
+      { status: 413 },
+    );
+  }
+  const totalBytes = files.reduce((sum, f) => sum + f.size, 0);
+  if (totalBytes > MAX_TOTAL_BYTES) {
+    return NextResponse.json(
+      { error: "Total upload size exceeds 70MB limit." },
+      { status: 413 },
+    );
+  }
+  for (const file of files) {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json(
+        { error: `File "${file.name}" exceeds 10MB limit` },
+        { status: 413 },
+      );
+    }
+  }
+  return null;
+}
+
 export async function POST(request: NextRequest) {
+  const isPartial = request.nextUrl?.searchParams?.get("partial") === "1";
+
   try {
     const payload = await getPayload({ config: configPromise });
     const formData = await request.formData();
@@ -54,7 +91,6 @@ export async function POST(request: NextRequest) {
     let client;
     if (existingClients.docs.length > 0) {
       const existing = existingClients.docs[0];
-      // Only back-fill address when the client has none
       const addressUpdate = existing.address?.street1 ? {} : clientAddressPayload;
       client = await payload.update({
         collection: "clients",
@@ -68,39 +104,17 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // -- Upload pet photos ----------------------------------------------------
-    const petPicFiles = formData.getAll("pet_pics") as File[];
+    // -- Upload pet photos (skipped for partial submits) ----------------------
     const uploadedPicIds: number[] = [];
 
-    const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB per file
-    const MAX_FILE_COUNT = 10;
-    const MAX_TOTAL_BYTES = 70 * 1024 * 1024; // 70MB total
+    if (!isPartial) {
+      const petPicFiles = formData.getAll("pet_pics") as File[];
+      const nonEmptyFiles = petPicFiles.filter((f) => f.size > 0);
 
-    const nonEmptyFiles = petPicFiles.filter((f) => f.size > 0);
+      const photoError = validatePhotos(nonEmptyFiles);
+      if (photoError) return photoError;
 
-    if (nonEmptyFiles.length > MAX_FILE_COUNT) {
-      return NextResponse.json(
-        { error: `Too many photos. Maximum ${MAX_FILE_COUNT} files allowed.` },
-        { status: 413 },
-      );
-    }
-
-    const totalBytes = nonEmptyFiles.reduce((sum, f) => sum + f.size, 0);
-    if (totalBytes > MAX_TOTAL_BYTES) {
-      return NextResponse.json(
-        { error: "Total upload size exceeds 40MB limit." },
-        { status: 413 },
-      );
-    }
-
-    for (const file of petPicFiles) {
-      if (file.size > 0) {
-        if (file.size > MAX_UPLOAD_BYTES) {
-          return NextResponse.json(
-            { error: `File "${file.name}" exceeds 10MB limit` },
-            { status: 413 }
-          );
-        }
+      for (const file of nonEmptyFiles) {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
         const media = await payload.create({
@@ -154,6 +168,11 @@ export async function POST(request: NextRequest) {
     ): s is "paid" | "unpaid" | "no_payment_required" =>
       s === "paid" || s === "unpaid" || s === "no_payment_required";
 
+    const baseNotes = (formData.get("notes") as string) || undefined;
+    const notes = isPartial
+      ? `[partial submit: photos pending — client to send via IG/email]${baseNotes ? `\n${baseNotes}` : ""}`
+      : baseNotes;
+
     const job = await payload.create({
       collection: "jobs",
       data: {
@@ -162,7 +181,7 @@ export async function POST(request: NextRequest) {
         job_type: stripeAutoFill?.jobType,
         delivery_method: stripeAutoFill?.deliveryMethod,
         referral: (formData.get("referral") as string) || undefined,
-        notes: (formData.get("notes") as string) || undefined,
+        notes,
         // Stripe identifiers — source-of-truth is the server-verified session
         stripe_checkout_session_id: stripe?.sessionId,
         stripe_payment_link_id: stripe?.paymentLinkId ?? undefined,
@@ -197,6 +216,7 @@ export async function POST(request: NextRequest) {
         email: clientData.email,
         petName: (formData.get("pet_name") as string) || "Unknown",
         jobId: job.id,
+        partial: isPartial,
       });
     } catch (emailErr) {
       console.error("Intake notification email failed:", emailErr);

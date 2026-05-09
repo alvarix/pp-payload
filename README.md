@@ -17,6 +17,8 @@ Handles client intake, job tracking, portfolio management, and events. The publi
 - Shipping address
 - A portfolio group with images (tagged by role), testimonial, portfolio status, and featured flag
 
+**IntakeEvents** - telemetry log for the public intake form. One row per event (`field_progress`, `validation_blocked`, `submit_failed`, `abandoned`). Admin-read-only — contains PII (email, phone). Filter by session in admin: `/admin/collections/intake-events?where[session_id][equals]=<uuid>`.
+
 **Organizations** - outreach pipeline for pop-up event collaborations. Tracks business info, qualification (dog-friendly, event space, pop-up history), fit scoring (`top_tier`, `strong`, `worth_trying`), a `pinned` flag, and primary + additional contacts (each with notes). Outreach status: `researched → contacted → opened_email → responded → meeting_scheduled → upcoming_event → ongoing_relationship → past_collaborator → declined → no_response`. Organized in tabs: Business Info, Contact, Qualification, Outreach.
 
 **Events** - calendar/marketing events with slug, dates, location, rich text description, image, and publish status.
@@ -35,7 +37,9 @@ Handles client intake, job tracking, portfolio management, and events. The publi
 
 ## API routes
 
-`POST /api/intake` - public intake form endpoint. Accepts client contact info, pet data, and photo uploads. Enforces 10MB per file, 10 files max, 70MB total. Creates or updates the client by email and creates a job. Used by the intake form at `/intake`. The form validates these limits client-side before submission to avoid opaque server errors.
+`POST /api/intake` - public intake form endpoint. Accepts client contact info, pet data, and photo uploads. Enforces 10MB per file, 10 files max, 70MB total. Add `?partial=1` to skip photo validation — creates the job anyway with a notes prefix indicating photos are pending via IG/email. Creates or updates the client by email and creates a job.
+
+`POST /api/intake/events` - unauthenticated telemetry endpoint. Accepts `{ type, sessionId, snapshot, error }` and creates a row in `intake-events`. Sends an alert email to Alvar for `submit_failed`, `validation_blocked` (≥30s with photo error), and `abandoned` events, deduped once per session per type. Always returns HTTP 200 so telemetry failures never block the form.
 
 `POST /api/dashboard/actions` - auth-protected. Job actions: `set_status`, `toggle_pics_received`, `toggle_pinned`, `delete`.
 

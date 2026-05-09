@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { Prefill } from "@/lib/stripe";
 
 interface IntakeFormProps {
@@ -25,6 +25,25 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
   const [photoInputs, setPhotoInputs] = useState([0]);
   const [photoFiles, setPhotoFiles] = useState<Map<number, File[]>>(new Map());
 
+  // Draft restoration: load once from localStorage on mount, then force a
+  // re-render of the form DOM so the new defaultValues are picked up.
+  const [draftValues, setDraftValues] = useState<Record<string, string>>({});
+  const [draftKey, setDraftKey] = useState(0);
+
+  // Controlled only for the mailto subject line — not full controlled form.
+  const [petNameValue, setPetNameValue] = useState("");
+
+  // Refs shared across effects and event handlers.
+  const formRef = useRef<HTMLFormElement>(null);
+  const sessionIdRef = useRef<string | undefined>(undefined);
+  const dirtyRef = useRef(false);
+  const submittedRef = useRef(false);
+  const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fieldProgressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const validationBlockedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const validationBlockedFiredRef = useRef(false);
+  const hasPhotoErrorRef = useRef(false);
+
   const allFiles = Array.from(photoFiles.values()).flat();
   const totalFileCount = allFiles.length;
   const totalFileBytes = allFiles.reduce((sum, f) => sum + f.size, 0);
@@ -33,6 +52,127 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
   const totalTooLarge = totalFileBytes > MAX_TOTAL_BYTES;
   const hasPhotoError = oversizedFiles.length > 0 || tooManyPhotos || totalTooLarge;
   const warnPhotoCount = totalFileCount > 5 && !tooManyPhotos;
+
+  // Keep ref in sync so timer callbacks see current value without stale closure.
+  useEffect(() => {
+    hasPhotoErrorRef.current = hasPhotoError;
+  }, [hasPhotoError]);
+
+  // Load sessionId from sessionStorage (one UUID per browser session).
+  useEffect(() => {
+    let id = sessionStorage.getItem("intake_session_id");
+    if (!id) {
+      id = crypto.randomUUID();
+      sessionStorage.setItem("intake_session_id", id);
+    }
+    sessionIdRef.current = id;
+  }, []);
+
+  // Restore draft from localStorage. Using draftKey to force the form DOM to
+  // remount so new defaultValues are applied. Happens before user interaction.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("intake_draft");
+      if (raw) {
+        const draft = JSON.parse(raw) as Record<string, string>;
+        setDraftValues(draft);
+        setPetNameValue(draft.pet_name ?? "");
+        setDraftKey((k) => k + 1);
+      }
+    } catch {
+      // Corrupt draft — ignore.
+    }
+  }, []);
+
+  // Validation-blocked beacon: start 30s timer when hasPhotoError first becomes
+  // true; cancel if the user resolves the error before it fires.
+  useEffect(() => {
+    if (hasPhotoError && !validationBlockedFiredRef.current) {
+      validationBlockedTimerRef.current = setTimeout(() => {
+        if (hasPhotoErrorRef.current) {
+          validationBlockedFiredRef.current = true;
+          postEvent("validation_blocked", { error: { errors: ["photo_validation_error"] } });
+        }
+      }, 30_000);
+    } else if (!hasPhotoError && validationBlockedTimerRef.current) {
+      clearTimeout(validationBlockedTimerRef.current);
+      validationBlockedTimerRef.current = null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasPhotoError]);
+
+  // Abandoned beacon: fire on pagehide if the user has touched the form but
+  // never completed a submit.
+  useEffect(() => {
+    function onPageHide() {
+      if (dirtyRef.current && !submittedRef.current) {
+        postEvent("abandoned");
+      }
+    }
+    window.addEventListener("pagehide", onPageHide);
+    return () => window.removeEventListener("pagehide", onPageHide);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /** Reads current text field values from the live DOM form. */
+  function getCurrentSnapshot(): Record<string, string> {
+    if (!formRef.current) return {};
+    const snap: Record<string, string> = {};
+    for (const [key, value] of new FormData(formRef.current).entries()) {
+      if (key !== "pet_pics" && typeof value === "string") {
+        snap[key] = value;
+      }
+    }
+    return snap;
+  }
+
+  /**
+   * Posts a telemetry event to /api/intake/events.
+   * Uses sendBeacon for abandoned events so the request survives tab close.
+   *
+   * @param type - Event type
+   * @param extra - Additional fields merged into the payload
+   */
+  function postEvent(type: string, extra: Record<string, unknown> = {}) {
+    const body = JSON.stringify({
+      type,
+      sessionId: sessionIdRef.current,
+      snapshot: getCurrentSnapshot(),
+      ...extra,
+    });
+    if (type === "abandoned" && typeof navigator !== "undefined" && navigator.sendBeacon) {
+      navigator.sendBeacon(
+        "/api/intake/events",
+        new Blob([body], { type: "application/json" }),
+      );
+    } else {
+      fetch("/api/intake/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        keepalive: true,
+      }).catch(() => {});
+    }
+  }
+
+  /** Handles field changes: marks dirty, saves draft, sends field_progress beacon. */
+  function handleFormChange(e: React.ChangeEvent<HTMLFormElement>) {
+    const target = e.target as HTMLInputElement;
+    if (target.type === "file") return; // photos not drafted
+
+    dirtyRef.current = true;
+
+    if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
+    draftSaveTimerRef.current = setTimeout(() => {
+      const snap = getCurrentSnapshot();
+      try { localStorage.setItem("intake_draft", JSON.stringify(snap)); } catch { /* storage full */ }
+    }, 500);
+
+    if (fieldProgressTimerRef.current) clearTimeout(fieldProgressTimerRef.current);
+    fieldProgressTimerRef.current = setTimeout(() => {
+      postEvent("field_progress");
+    }, 1500);
+  }
 
   /** Update tracked files for one input slot. */
   function handleFileChange(inputId: number, files: FileList | null) {
@@ -68,11 +208,47 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
 
       if (!response.ok) throw new Error("Submission failed");
 
+      submittedRef.current = true;
       setSubmitStatus("success");
       form.reset();
+      try { localStorage.removeItem("intake_draft"); } catch { /* ignore */ }
     } catch (error) {
       console.error("Intake submission error:", error);
       setSubmitStatus("error");
+      postEvent("submit_failed", {
+        error: { message: error instanceof Error ? error.message : String(error) },
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handlePartialSubmit() {
+    setIsSubmitting(true);
+    setSubmitStatus("idle");
+
+    if (!formRef.current) return;
+    const formData = new FormData(formRef.current);
+    // Strip all file inputs — photos are out-of-band for partial submits.
+    formData.delete("pet_pics");
+
+    try {
+      const response = await fetch("/api/intake?partial=1", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error("Submission failed");
+
+      submittedRef.current = true;
+      setSubmitStatus("success");
+      try { localStorage.removeItem("intake_draft"); } catch { /* ignore */ }
+    } catch (error) {
+      console.error("Partial intake submission error:", error);
+      setSubmitStatus("error");
+      postEvent("submit_failed", {
+        error: { message: error instanceof Error ? error.message : String(error), partial: true },
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -89,9 +265,16 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
     );
   }
 
+  const mailtoSubject = encodeURIComponent(
+    petNameValue ? `Photos for ${petNameValue}` : "Photos for intake",
+  );
+
   return (
     <form
+      key={draftKey}
+      ref={formRef}
       onSubmit={handleSubmit}
+      onChange={handleFormChange}
       method="post"
       action="/api/intake"
       encType="multipart/form-data"
@@ -118,7 +301,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
               id="first_name"
               name="first_name"
               required
-              defaultValue={prefill?.firstName ?? ""}
+              defaultValue={draftValues.first_name ?? prefill?.firstName ?? ""}
               className={inputCls}
             />
           </div>
@@ -131,7 +314,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
               id="last_name"
               name="last_name"
               required
-              defaultValue={prefill?.lastName ?? ""}
+              defaultValue={draftValues.last_name ?? prefill?.lastName ?? ""}
               className={inputCls}
             />
           </div>
@@ -146,7 +329,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
             id="email"
             name="email"
             required
-            defaultValue={prefill?.email ?? ""}
+            defaultValue={draftValues.email ?? prefill?.email ?? ""}
             className={inputCls}
           />
         </div>
@@ -159,7 +342,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
             type="tel"
             id="phone"
             name="phone"
-            defaultValue={prefill?.phone ?? ""}
+            defaultValue={draftValues.phone ?? prefill?.phone ?? ""}
             className={inputCls}
           />
         </div>
@@ -172,6 +355,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
             type="text"
             id="referral"
             name="referral"
+            defaultValue={draftValues.referral ?? ""}
             className={inputCls}
           />
         </div>
@@ -190,7 +374,9 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
             id="pet_name"
             name="pet_name"
             required
+            defaultValue={draftValues.pet_name ?? ""}
             className={inputCls}
+            onChange={(e) => setPetNameValue(e.target.value)}
           />
         </div>
 
@@ -214,6 +400,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
             type="text"
             id="pet_breed"
             name="pet_breed"
+            defaultValue={draftValues.pet_breed ?? ""}
             className={inputCls}
           />
         </div>
@@ -226,6 +413,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
             id="pet_personality"
             name="pet_personality"
             rows={3}
+            defaultValue={draftValues.pet_personality ?? ""}
             className={inputCls}
           />
         </div>
@@ -238,6 +426,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
             type="text"
             id="pet_social_media"
             name="pet_social_media"
+            defaultValue={draftValues.pet_social_media ?? ""}
             className={inputCls}
             placeholder="@yourpet"
           />
@@ -322,6 +511,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
           </button>
           <p className="text-sm text-stone-500 mt-2">
             Upload photos showing different angles and expressions.
+            Photos will need to be re-selected if you refresh the page.
           </p>
         </div>
       </div>
@@ -335,6 +525,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
           id="notes"
           name="notes"
           rows={4}
+          defaultValue={draftValues.notes ?? ""}
           className={inputCls}
           placeholder="Date needed, special requests, etc."
         />
@@ -357,6 +548,37 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
       >
         {isSubmitting ? "Submitting…" : "Submit Intake Form"}
       </button>
+
+      {/* Partial submit escape hatch when photos are over the limit. */}
+      {hasPhotoError && (
+        <div className="border border-stone-600 bg-stone-800/30 rounded-lg p-4 text-center">
+          <button
+            type="button"
+            onClick={handlePartialSubmit}
+            disabled={isSubmitting}
+            className="w-full bg-stone-700 text-stone-200 py-3 rounded-md font-semibold hover:bg-stone-600 disabled:bg-stone-800 disabled:text-stone-500 disabled:cursor-not-allowed mb-3"
+          >
+            Submit without photos
+          </button>
+          <p className="text-sm text-stone-400">
+            Please DM photos on Instagram to{" "}
+            <a
+              href="https://instagram.com/alvar.nyc"
+              target="_blank"
+              className="underline text-stone-300 hover:text-white"
+            >
+              @alvar.nyc
+            </a>{" "}
+            or email{" "}
+            <a
+              href={`mailto:alvar@petportraits.ink?subject=${mailtoSubject}`}
+              className="underline text-stone-300 hover:text-white"
+            >
+              alvar@petportraits.ink
+            </a>
+          </p>
+        </div>
+      )}
     </form>
   );
 }

@@ -73,6 +73,7 @@ export interface Config {
     clients: Client;
     jobs: Job;
     organizations: Organization;
+    'intake-events': IntakeEvent;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -93,6 +94,7 @@ export interface Config {
     clients: ClientsSelect<false> | ClientsSelect<true>;
     jobs: JobsSelect<false> | JobsSelect<true>;
     organizations: OrganizationsSelect<false> | OrganizationsSelect<true>;
+    'intake-events': IntakeEventsSelect<false> | IntakeEventsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -554,6 +556,37 @@ export interface Job {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "intake-events".
+ */
+export interface IntakeEvent {
+  id: number;
+  session_id: string;
+  event_type: 'field_progress' | 'validation_blocked' | 'submit_failed' | 'abandoned';
+  form_snapshot?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  error_details?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  stripe_session_id?: string | null;
+  user_agent?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -599,6 +632,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'organizations';
         value: number | Organization;
+      } | null)
+    | ({
+        relationTo: 'intake-events';
+        value: number | IntakeEvent;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -879,6 +916,20 @@ export interface OrganizationsSelect<T extends boolean = true> {
   eventDate?: T;
   eventTerms?: T;
   events?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "intake-events_select".
+ */
+export interface IntakeEventsSelect<T extends boolean = true> {
+  session_id?: T;
+  event_type?: T;
+  form_snapshot?: T;
+  error_details?: T;
+  stripe_session_id?: T;
+  user_agent?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -11,6 +11,7 @@ import * as migration_20260424_220000_add_org_contact_method from './20260424_22
 import * as migration_20260428_120000_add_org_pinned_and_contact_notes from './20260428_120000_add_org_pinned_and_contact_notes';
 import * as migration_20260428_130000_add_jobs_pinned from './20260428_130000_add_jobs_pinned';
 import * as migration_20260429_212813 from './20260429_212813';
+import * as migration_20260509_000000_add_intake_events from './20260509_000000_add_intake_events';
 
 export const migrations = [
   {
@@ -76,6 +77,11 @@ export const migrations = [
   {
     up: migration_20260429_212813.up,
     down: migration_20260429_212813.down,
-    name: '20260429_212813'
+    name: '20260429_212813',
+  },
+  {
+    up: migration_20260509_000000_add_intake_events.up,
+    down: migration_20260509_000000_add_intake_events.down,
+    name: '20260509_000000_add_intake_events',
   },
 ];

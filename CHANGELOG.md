@@ -4,6 +4,25 @@ Notable changes to `pp-v2`. Dates in YYYY-MM-DD.
 
 ## Unreleased
 
+## 2026-05-09
+
+### Intake error capture, draft persistence, partial submit
+
+- **Telemetry beacon** — new `POST /api/intake/events` endpoint records form events (`field_progress`, `validation_blocked`, `submit_failed`, `abandoned`) and emails Alvar for error/abandonment events, deduped once per session per type via Brevo
+- **Draft persistence** — text fields auto-save to `localStorage["intake_draft"]` (500ms debounce); restored on page load with a `key`-based remount so `defaultValue` applies; cleared on successful submit
+- **Partial submit CTA** — "Submit without photos" button appears when `hasPhotoError` is true; posts to `/api/intake?partial=1` (skips photo validation, adds notes prefix, sends `[partial]` email); includes IG DM link and `mailto:` link with pre-filled subject
+- **IntakeEvents Payload collection** — `src/collections/IntakeEvents.ts` — admin-only read, fields: `session_id` (indexed), `event_type` (select), `form_snapshot` (json), `error_details` (json), `stripe_session_id`, `user_agent`
+- **Migration** — `src/migrations/20260509_000000_add_intake_events.ts` — creates `intake_events` table + enum type + `session_id` index
+- **`sanitizeSnapshot` utility** — `src/lib/sanitizeSnapshot.ts` — strips unknown keys, caps string length at 2000 chars, drops non-string values before storing snapshots
+- **`sendIntakeErrorAlert`** added to `src/lib/email.ts`; `sendIntakeNotification` updated to accept `partial` flag
+- **Tests** — `src/lib/__tests__/sanitizeSnapshot.test.ts` (Vitest unit, 7 cases); `tests/e2e/intake-error-capture.spec.ts` (Playwright e2e, 6 scenarios)
+- `docs/spec-intake-error-capture-2026-05-09.md` — implementation spec
+
+Open questions from spec (follow-up):
+- Draft vs Stripe prefill precedence: current impl — draft wins if present
+- PII retention: follow-up cron to delete intake_events rows >90 days
+- Rate limiting on `/api/intake/events`: in-memory per-IP throttle
+
 ## 2026-05-01
 
 ### Intake form redesign
