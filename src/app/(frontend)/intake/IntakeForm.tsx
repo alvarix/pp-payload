@@ -157,7 +157,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
 
   /** Handles field changes: marks dirty, saves draft, sends field_progress beacon. */
   function handleFormChange(e: React.ChangeEvent<HTMLFormElement>) {
-    const target = e.target as HTMLInputElement;
+    const target = e.target as unknown as HTMLInputElement;
     if (target.type === "file") return; // photos not drafted
 
     dirtyRef.current = true;
