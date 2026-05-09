@@ -12,8 +12,8 @@ const inputCls = "w-full px-3 py-2 bg-stone-800 border border-stone-600 rounded-
 const sectionCls = "border border-stone-700 bg-stone-800/50 rounded-lg p-4 sm:p-6";
 
 const MAX_PHOTOS = 10;
-const MAX_FILE_BYTES = 10 * 1024 * 1024;   // 10MB per file
-const MAX_TOTAL_BYTES = 70 * 1024 * 1024;  // 70MB total
+const MAX_FILE_BYTES = 4 * 1024 * 1024;    // 4MB per file — Vercel request body cap is 4.5MB total
+const MAX_TOTAL_BYTES = 4 * 1024 * 1024;   // 4MB total (leaves headroom for form fields)
 
 function formatMB(bytes: number): string {
   return (bytes / (1024 * 1024)).toFixed(1);
@@ -200,13 +200,21 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
     const form = e.currentTarget;
     const formData = new FormData(form);
 
+    let errorDetail: { message: string; status?: number } = { message: "Submission failed" };
     try {
       const response = await fetch("/api/intake", {
         method: "POST",
         body: formData,
       });
 
-      if (!response.ok) throw new Error("Submission failed");
+      if (!response.ok) {
+        errorDetail = { status: response.status, message: `HTTP ${response.status}` };
+        try {
+          const body = await response.json();
+          if (body.error) errorDetail.message = body.error;
+        } catch { /* non-JSON body */ }
+        throw new Error(errorDetail.message);
+      }
 
       submittedRef.current = true;
       setSubmitStatus("success");
@@ -215,9 +223,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
     } catch (error) {
       console.error("Intake submission error:", error);
       setSubmitStatus("error");
-      postEvent("submit_failed", {
-        error: { message: error instanceof Error ? error.message : String(error) },
-      });
+      postEvent("submit_failed", { error: errorDetail });
     } finally {
       setIsSubmitting(false);
     }
@@ -229,16 +235,26 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
 
     if (!formRef.current) return;
     const formData = new FormData(formRef.current);
-    // Strip all file inputs — photos are out-of-band for partial submits.
     formData.delete("pet_pics");
 
+    let errorDetail: { message: string; status?: number; partial: true } = {
+      message: "Submission failed",
+      partial: true,
+    };
     try {
       const response = await fetch("/api/intake?partial=1", {
         method: "POST",
         body: formData,
       });
 
-      if (!response.ok) throw new Error("Submission failed");
+      if (!response.ok) {
+        errorDetail = { status: response.status, message: `HTTP ${response.status}`, partial: true };
+        try {
+          const body = await response.json();
+          if (body.error) errorDetail.message = body.error;
+        } catch { /* non-JSON body */ }
+        throw new Error(errorDetail.message);
+      }
 
       submittedRef.current = true;
       setSubmitStatus("success");
@@ -246,9 +262,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
     } catch (error) {
       console.error("Partial intake submission error:", error);
       setSubmitStatus("error");
-      postEvent("submit_failed", {
-        error: { message: error instanceof Error ? error.message : String(error), partial: true },
-      });
+      postEvent("submit_failed", { error: errorDetail });
     } finally {
       setIsSubmitting(false);
     }
@@ -484,7 +498,8 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
 
           {totalTooLarge && (
             <p className="mt-1 text-sm text-red-400">
-              Total upload size is {formatMB(totalFileBytes)} MB, which exceeds the 70MB limit. Remove some photos or use smaller files.
+              Total upload size is {formatMB(totalFileBytes)} MB, which exceeds the 4MB limit.
+              Use the &ldquo;Submit without photos&rdquo; button below and send photos via IG or email instead.
             </p>
           )}
 
