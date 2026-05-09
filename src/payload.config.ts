@@ -2,6 +2,7 @@ import { Jobs } from "./collections/Jobs";
 import { Clients } from "./collections/Clients";
 import { Events } from "./collections/Events";
 import { Organizations } from "./collections/Organizations";
+import { IntakeEvents } from "./collections/IntakeEvents";
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { s3Storage } from "@payloadcms/storage-s3";
@@ -28,7 +29,7 @@ export default buildConfig({
       },
     },
   },
-  collections: [Users, Media, Events, Clients, Jobs, Organizations],
+  collections: [Users, Media, Events, Clients, Jobs, Organizations, IntakeEvents],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "",
   typescript: {
