@@ -564,8 +564,8 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
         {isSubmitting ? "Submitting…" : "Submit Intake Form"}
       </button>
 
-      {/* Partial submit escape hatch when photos are over the limit. */}
-      {hasPhotoError && (
+      {/* Partial submit escape hatch: photos over limit, or submit failed. */}
+      {(hasPhotoError || submitStatus === "error") && (
         <div className="border border-stone-600 bg-stone-800/30 rounded-lg p-4 text-center">
           <button
             type="button"
