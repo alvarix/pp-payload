@@ -4,9 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionPrefill } from "@/lib/stripe";
 import { sendIntakeNotification } from "@/lib/email";
 
-const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;  // 4MB per file — matches client-side limit
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB per file — replaced by direct S3 upload (spec-direct-upload-2026-05-09.md)
 const MAX_FILE_COUNT = 10;
-const MAX_TOTAL_BYTES = 4 * 1024 * 1024;   // 4MB total — Vercel Hobby body cap is 4.5MB
+const MAX_TOTAL_BYTES = 70 * 1024 * 1024;  // 70MB total — Vercel body limit bypassed once direct upload lands
 
 /**
  * Validates photo files against size and count limits.
@@ -24,14 +24,14 @@ function validatePhotos(files: File[]): NextResponse | null {
   const totalBytes = files.reduce((sum, f) => sum + f.size, 0);
   if (totalBytes > MAX_TOTAL_BYTES) {
     return NextResponse.json(
-      { error: "Total upload size exceeds 4MB limit." },
+      { error: "Total upload size exceeds 70MB limit." },
       { status: 413 },
     );
   }
   for (const file of files) {
     if (file.size > MAX_UPLOAD_BYTES) {
       return NextResponse.json(
-        { error: `File "${file.name}" exceeds 4MB limit` },
+        { error: `File "${file.name}" exceeds 10MB limit` },
         { status: 413 },
       );
     }

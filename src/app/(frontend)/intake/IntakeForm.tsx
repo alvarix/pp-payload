@@ -12,8 +12,8 @@ const inputCls = "w-full px-3 py-2 bg-stone-800 border border-stone-600 rounded-
 const sectionCls = "border border-stone-700 bg-stone-800/50 rounded-lg p-4 sm:p-6";
 
 const MAX_PHOTOS = 10;
-const MAX_FILE_BYTES = 4 * 1024 * 1024;    // 4MB per file — Vercel request body cap is 4.5MB total
-const MAX_TOTAL_BYTES = 4 * 1024 * 1024;   // 4MB total (leaves headroom for form fields)
+const MAX_FILE_BYTES = 10 * 1024 * 1024;   // 10MB per file — replaced by direct S3 upload (spec-direct-upload-2026-05-09.md)
+const MAX_TOTAL_BYTES = 70 * 1024 * 1024;  // 70MB total — same; Vercel body limit bypassed once direct upload lands
 
 function formatMB(bytes: number): string {
   return (bytes / (1024 * 1024)).toFixed(1);
@@ -498,8 +498,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
 
           {totalTooLarge && (
             <p className="mt-1 text-sm text-red-400">
-              Total upload size is {formatMB(totalFileBytes)} MB, which exceeds the 4MB limit.
-              Use the &ldquo;Submit without photos&rdquo; button below and send photos via IG or email instead.
+              Total upload size is {formatMB(totalFileBytes)} MB, which exceeds the 70MB limit. Remove some photos or use smaller files.
             </p>
           )}
 
