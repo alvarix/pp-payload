@@ -12,8 +12,8 @@ const inputCls = "w-full px-3 py-2 bg-stone-800 border border-stone-600 rounded-
 const sectionCls = "border border-stone-700 bg-stone-800/50 rounded-lg p-4 sm:p-6";
 
 const MAX_PHOTOS = 10;
-const MAX_FILE_BYTES = 10 * 1024 * 1024;   // 10MB per file — replaced by direct S3 upload (spec-direct-upload-2026-05-09.md)
-const MAX_TOTAL_BYTES = 70 * 1024 * 1024;  // 70MB total — same; Vercel body limit bypassed once direct upload lands
+const MAX_FILE_BYTES = 70 * 1024 * 1024;   // 70 MB per file (direct S3 upload)
+const MAX_TOTAL_BYTES = 200 * 1024 * 1024; // 200 MB total
 
 function formatMB(bytes: number): string {
   return (bytes / (1024 * 1024)).toFixed(1);
@@ -21,6 +21,7 @@ function formatMB(bytes: number): string {
 
 export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadPhase, setUploadPhase] = useState<"idle" | "uploading" | "saving">("idle");
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
   const [photoInputs, setPhotoInputs] = useState([0]);
   const [photoFiles, setPhotoFiles] = useState<Map<number, File[]>>(new Map());
@@ -195,13 +196,57 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
     if (hasPhotoError) return;
 
     setIsSubmitting(true);
+    setUploadPhase("idle");
     setSubmitStatus("idle");
 
     const form = e.currentTarget;
-    const formData = new FormData(form);
-
     let errorDetail: { message: string; status?: number } = { message: "Submission failed" };
+
     try {
+      const allFilesFlat = Array.from(photoFiles.values()).flat();
+      const mediaIds: number[] = [];
+
+      if (allFilesFlat.length > 0) {
+        // Step 1: get presigned S3 PUT URLs — no file bytes sent to the server.
+        setUploadPhase("uploading");
+        const urlsRes = await fetch("/api/intake/upload-urls", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            files: allFilesFlat.map((f) => ({ name: f.name, mimeType: f.type, size: f.size })),
+          }),
+        });
+
+        if (!urlsRes.ok) {
+          const body = await urlsRes.json().catch(() => ({}));
+          throw new Error((body as { error?: string }).error ?? "Failed to prepare upload");
+        }
+
+        const { uploads } = await urlsRes.json() as {
+          uploads: Array<{ uploadUrl: string; mediaId: number }>;
+        };
+
+        // Step 2: upload each file directly to S3 — bypasses Vercel body limit.
+        await Promise.all(
+          uploads.map(async ({ uploadUrl, mediaId }, i) => {
+            const file = allFilesFlat[i];
+            const res = await fetch(uploadUrl, {
+              method: "PUT",
+              headers: { "Content-Type": file.type },
+              body: file,
+            });
+            if (!res.ok) throw new Error(`Upload failed for "${file.name}" (${res.status})`);
+            mediaIds.push(mediaId);
+          }),
+        );
+      }
+
+      // Step 3: submit form fields + resolved media IDs. No file bytes.
+      setUploadPhase("saving");
+      const formData = new FormData(form);
+      formData.delete("pet_pics");
+      formData.set("mediaIds", JSON.stringify(mediaIds));
+
       const response = await fetch("/api/intake", {
         method: "POST",
         body: formData,
@@ -226,6 +271,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
       postEvent("submit_failed", { error: errorDetail });
     } finally {
       setIsSubmitting(false);
+      setUploadPhase("idle");
     }
   }
 
@@ -455,7 +501,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
             or upload below.
             <br />
             <span className="text-stone-500">
-              2–5 clearly lit photos, no clothes or toys. Max {MAX_PHOTOS} photos, 10MB each.
+              2–5 clearly lit photos, no clothes or toys. Max {MAX_PHOTOS} photos, 70MB each.
             </span>
           </label>
 
@@ -498,15 +544,15 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
 
           {totalTooLarge && (
             <p className="mt-1 text-sm text-red-400">
-              Total upload size is {formatMB(totalFileBytes)} MB, which exceeds the 70MB limit. Remove some photos or use smaller files.
+              Total upload size is {formatMB(totalFileBytes)} MB, which exceeds the 200MB limit. Remove some photos or use smaller files.
             </p>
           )}
 
           {oversizedFiles.length > 0 && (
             <p className="mt-1 text-sm text-red-400">
               {oversizedFiles.length === 1
-                ? `"${oversizedFiles[0].name}" exceeds the 10MB per-file limit.`
-                : `${oversizedFiles.length} files exceed the 10MB per-file limit.`}
+                ? `"${oversizedFiles[0].name}" exceeds the 70MB per-file limit.`
+                : `${oversizedFiles.length} files exceed the 70MB per-file limit.`}
             </p>
           )}
 
@@ -560,7 +606,11 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
         disabled={isSubmitting || hasPhotoError}
         className="w-full bg-stone-100 text-stone-900 py-3 rounded-md font-semibold hover:bg-white disabled:bg-stone-600 disabled:text-stone-400 disabled:cursor-not-allowed"
       >
-        {isSubmitting ? "Submitting…" : "Submit Intake Form"}
+        {uploadPhase === "uploading"
+          ? "Uploading photos…"
+          : uploadPhase === "saving"
+            ? "Saving…"
+            : "Submit Intake Form"}
       </button>
 
       {/* Partial submit escape hatch: photos over limit, or submit failed. */}

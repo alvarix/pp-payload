@@ -4,41 +4,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionPrefill } from "@/lib/stripe";
 import { sendIntakeNotification } from "@/lib/email";
 
-const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB per file — replaced by direct S3 upload (spec-direct-upload-2026-05-09.md)
-const MAX_FILE_COUNT = 10;
-const MAX_TOTAL_BYTES = 70 * 1024 * 1024;  // 70MB total — Vercel body limit bypassed once direct upload lands
-
-/**
- * Validates photo files against size and count limits.
- * Returns a NextResponse error if validation fails, null if OK.
- *
- * @param files - Non-empty file list from the form
- */
-function validatePhotos(files: File[]): NextResponse | null {
-  if (files.length > MAX_FILE_COUNT) {
-    return NextResponse.json(
-      { error: `Too many photos. Maximum ${MAX_FILE_COUNT} files allowed.` },
-      { status: 413 },
-    );
-  }
-  const totalBytes = files.reduce((sum, f) => sum + f.size, 0);
-  if (totalBytes > MAX_TOTAL_BYTES) {
-    return NextResponse.json(
-      { error: "Total upload size exceeds 70MB limit." },
-      { status: 413 },
-    );
-  }
-  for (const file of files) {
-    if (file.size > MAX_UPLOAD_BYTES) {
-      return NextResponse.json(
-        { error: `File "${file.name}" exceeds 10MB limit` },
-        { status: 413 },
-      );
-    }
-  }
-  return null;
-}
-
 export async function POST(request: NextRequest) {
   const isPartial = request.nextUrl?.searchParams?.get("partial") === "1";
 
@@ -104,30 +69,38 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // -- Upload pet photos (skipped for partial submits) ----------------------
+    // -- Resolve pre-uploaded photo IDs (skipped for partial submits) ---------
+    // Photos are uploaded directly to S3 by the browser via presigned URLs
+    // from /api/intake/upload-urls. The form sends only the resulting media IDs.
     const uploadedPicIds: number[] = [];
 
     if (!isPartial) {
-      const petPicFiles = formData.getAll("pet_pics") as File[];
-      const nonEmptyFiles = petPicFiles.filter((f) => f.size > 0);
-
-      const photoError = validatePhotos(nonEmptyFiles);
-      if (photoError) return photoError;
-
-      for (const file of nonEmptyFiles) {
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const media = await payload.create({
-          collection: "media",
-          data: { alt: `${formData.get("pet_name") ?? "pet"} - reference photo` },
-          file: {
-            data: buffer,
-            mimetype: file.type,
-            name: file.name,
-            size: file.size,
-          },
-        });
-        uploadedPicIds.push(typeof media.id === "number" ? media.id : parseInt(media.id, 10));
+      const mediaIdsRaw = formData.get("mediaIds") as string | null;
+      if (mediaIdsRaw) {
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(mediaIdsRaw);
+        } catch {
+          return NextResponse.json({ error: "Invalid mediaIds" }, { status: 400 });
+        }
+        if (
+          !Array.isArray(parsed) ||
+          parsed.some((id) => typeof id !== "number" || !Number.isInteger(id))
+        ) {
+          return NextResponse.json(
+            { error: "mediaIds must be an array of integers" },
+            { status: 400 },
+          );
+        }
+        for (const id of parsed as number[]) {
+          const exists = await payload
+            .findByID({ collection: "media", id })
+            .catch(() => null);
+          if (!exists) {
+            return NextResponse.json({ error: `Media ${id} not found` }, { status: 400 });
+          }
+          uploadedPicIds.push(id);
+        }
       }
     }
 
