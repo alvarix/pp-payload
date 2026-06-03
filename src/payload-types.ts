@@ -370,33 +370,39 @@ export interface Job {
   notes?: string | null;
   pinned?: boolean | null;
   /**
+   * How this job was created
+   */
+  source?: ('website' | 'pos' | 'manual') | null;
+  /**
    * Pet information from intake form
    */
-  pets: {
-    name: string;
-    sex?: ('male' | 'female' | 'unknown') | null;
-    /**
-     * e.g. 3 years, 6 months
-     */
-    age?: string | null;
-    /**
-     * Breed and markings
-     */
-    breed?: string | null;
-    /**
-     * Personality notes from intake form
-     */
-    personality?: string | null;
-    /**
-     * Pet's social media handles
-     */
-    social_media?: string | null;
-    /**
-     * Reference photos uploaded by client
-     */
-    pics?: (number | Media)[] | null;
-    id?: string | null;
-  }[];
+  pets?:
+    | {
+        name: string;
+        sex?: ('male' | 'female' | 'unknown') | null;
+        /**
+         * e.g. 3 years, 6 months
+         */
+        age?: string | null;
+        /**
+         * Breed and markings
+         */
+        breed?: string | null;
+        /**
+         * Personality notes from intake form
+         */
+        personality?: string | null;
+        /**
+         * Pet's social media handles
+         */
+        social_media?: string | null;
+        /**
+         * Reference photos uploaded by client
+         */
+        pics?: (number | Media)[] | null;
+        id?: string | null;
+      }[]
+    | null;
   status:
     | 'inquiry'
     | 'intake_received'
@@ -787,6 +793,7 @@ export interface JobsSelect<T extends boolean = true> {
   delivery_method?: T;
   notes?: T;
   pinned?: T;
+  source?: T;
   pets?:
     | T
     | {
