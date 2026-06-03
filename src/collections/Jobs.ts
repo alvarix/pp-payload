@@ -93,11 +93,24 @@ export const Jobs: CollectionConfig = {
       defaultValue: false,
     },
     {
+      name: "source",
+      type: "select",
+      label: "Source",
+      defaultValue: "website",
+      options: [
+        { label: "Website", value: "website" },
+        { label: "POS (Terminal)", value: "pos" },
+        { label: "Manual", value: "manual" },
+      ],
+      admin: {
+        description: "How this job was created",
+      },
+    },
+    {
       name: "pets",
       type: "array",
       label: "Pets",
-      required: true,
-      minRows: 1,
+      minRows: 0,
       fields: [
         {
           name: "name",

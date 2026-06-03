@@ -3,6 +3,7 @@ import configPromise from "@payload-config";
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionPrefill } from "@/lib/stripe";
 import { sendIntakeNotification } from "@/lib/email";
+import { findOrCreateClient } from "@/lib/findOrCreateClient";
 
 export async function POST(request: NextRequest) {
   const isPartial = request.nextUrl?.searchParams?.get("partial") === "1";
@@ -48,26 +49,7 @@ export async function POST(request: NextRequest) {
       ? { address: billingForClient }
       : {};
 
-    const existingClients = await payload.find({
-      collection: "clients",
-      where: { email: { equals: clientData.email } },
-    });
-
-    let client;
-    if (existingClients.docs.length > 0) {
-      const existing = existingClients.docs[0];
-      const addressUpdate = existing.address?.street1 ? {} : clientAddressPayload;
-      client = await payload.update({
-        collection: "clients",
-        id: existing.id,
-        data: { ...clientData, ...addressUpdate },
-      });
-    } else {
-      client = await payload.create({
-        collection: "clients",
-        data: { ...clientData, ...clientAddressPayload },
-      });
-    }
+    const client = await findOrCreateClient(payload, clientData, clientAddressPayload);
 
     // -- Resolve pre-uploaded photo IDs (skipped for partial submits) ---------
     // Photos are uploaded directly to S3 by the browser via presigned URLs

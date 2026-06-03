@@ -51,6 +51,50 @@ export async function sendIntakeNotification(opts: {
 }
 
 /**
+ * Sends an admin notification email for a POS (Terminal) sale.
+ * Subject is prefixed with [POS] to distinguish from website intake.
+ *
+ * @param opts.email - Client email used at terminal
+ * @param opts.jobId - Created Job record ID
+ * @param opts.amountCents - Charged amount in cents
+ * @param opts.paymentIntentId - Stripe pi_... ID
+ */
+export async function sendPosIntakeNotification(opts: {
+  email: string;
+  jobId: number;
+  amountCents: number;
+  paymentIntentId: string;
+}) {
+  const { email, jobId, amountCents, paymentIntentId } = opts;
+  const jobUrl = `https://portal.petportraits.ink/admin/collections/jobs/${jobId}`;
+  const amount = (amountCents / 100).toFixed(2);
+
+  const res = await fetch(BREVO_URL, {
+    method: "POST",
+    headers: { "api-key": process.env.BREVO_API_KEY!, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sender: SENDER,
+      to: [{ email: ADMIN_EMAIL }],
+      subject: `[POS] New sale: ${email} — $${amount}`,
+      textContent: [
+        "POS (Terminal) sale recorded.",
+        "",
+        `Client email:      ${email}`,
+        `Amount:            $${amount}`,
+        `Payment Intent ID: ${paymentIntentId}`,
+        "",
+        "View record:",
+        jobUrl,
+      ].join("\n"),
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Brevo API error: ${res.status}`);
+  }
+}
+
+/**
  * Sends an error/abandonment alert email for intake telemetry events.
  * Called by /api/intake/events for submit_failed, validation_blocked, abandoned.
  *
