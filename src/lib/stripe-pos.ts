@@ -34,7 +34,7 @@ export function extractPosPayment(
   // Email is required — skip and log if absent
   const email =
     pi.receipt_email ??
-    (charge.billing_details?.email || null);
+    (charge?.billing_details?.email || null);
 
   if (!email) {
     console.warn(
