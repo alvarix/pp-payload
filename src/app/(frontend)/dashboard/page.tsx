@@ -241,19 +241,8 @@ export default async function DashboardPage() {
         importHref="/dashboard/client-import"
       />
 
-      <div className="flex-shrink-0">
-        <StatsBar
-          activeJobCount={activeJobs.length}
-          needInfoCount={needInfoCount}
-          drawnCount={drawnCount}
-          feedbackCount={feedbackCount}
-          totalClients={totalClients}
-          overdueCount={staleJobs.length}
-          orgsNeedingFollowUp={orgsNeedingFollowUp}
-          topClients={topClients}
-        />
-        <OverdueAlert staleJobs={staleJobs} />
-      </div>
+
+
 
       <div className="flex-shrink-0">
         <PinnedJobsBand jobs={pinnedItems} />
