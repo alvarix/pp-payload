@@ -15,7 +15,7 @@ export type PinnedJobItem = {
  */
 export function PinnedJobsBand({ jobs }: { jobs: PinnedJobItem[] }) {
   return (
-    <details className="mb-2" open>
+    <details className="mb-2">
       <summary className="flex items-center gap-2 mb-2 cursor-pointer list-none select-none">
         <span className="text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded bg-rose-100 text-rose-700 ring-1 ring-rose-300">
           Pinned
