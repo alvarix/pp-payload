@@ -49,9 +49,21 @@ export async function POST(request: NextRequest) {
 
   // latest_charge arrives as a string ID in raw webhook events — expand it
   // so extractPosPayment can read payment_method_details.type.
+  // Charge lookup can fail in test mode when using a live Stripe key; treat
+  // that as a non-fatal skip so real prod events are unaffected.
   if (typeof pi.latest_charge === "string") {
-    const charge = await stripe.charges.retrieve(pi.latest_charge);
-    pi = { ...pi, latest_charge: charge };
+    try {
+      const charge = await stripe.charges.retrieve(pi.latest_charge);
+      pi = { ...pi, latest_charge: charge };
+    } catch (err) {
+      console.warn(
+        `[stripe-pos] Could not retrieve charge ${pi.latest_charge} — skipping card_present check:`,
+        err,
+      );
+      // Proceed without the charge; extractPosPayment will skip card_present
+      // validation and rely solely on receipt_email.
+      pi = { ...pi, latest_charge: null };
+    }
   }
 
   const data = extractPosPayment(
