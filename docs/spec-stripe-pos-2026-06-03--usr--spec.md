@@ -18,34 +18,34 @@ in the CRM so revenue is tracked without manual data entry.
 - [ ] (Optional) Add `metadata: { job_type: 'street' }` to terminal charges
 
 ### Step 1 — Webhook endpoint
-- [ ] `src/app/api/stripe/pos/route.ts` created
-- [ ] Signature verification working (400 on bad sig)
-- [ ] Only acts on `payment_intent.succeeded`
+- [x] `src/app/api/stripe/pos/route.ts` created
+- [x] Signature verification working (400 on bad sig)
+- [x] Only acts on `payment_intent.succeeded`
 
 ### Step 2 — POS filter + extract
-- [ ] `src/lib/stripe-pos.ts` with `extractPosPayment()`
-- [ ] Correctly filters to `card_present` only
+- [x] `src/lib/stripe-pos.ts` with `extractPosPayment()`
+- [x] Correctly filters to `card_present` only
 
 ### Step 3 — Client find/create
-- [ ] `src/lib/findOrCreateClient.ts` shared helper
-- [ ] Handles missing email (placeholder or skip — confirm in open questions)
+- [x] `src/lib/findOrCreateClient.ts` shared helper
+- [x] Handles missing email — skip + log warning
 
 ### Step 4 — Job creation
-- [ ] Job stub created with `pos` payment method entry
-- [ ] All Stripe fields populated
-- [ ] Pets placeholder handles `minRows: 1` constraint
+- [x] Job stub created with `pos` payment method entry
+- [x] All Stripe fields populated
+- [x] `minRows` relaxed to 0 — pets array empty on POS stubs
 
 ### Step 5 — Email notification
-- [ ] Notification sent on POS job creation
+- [x] Notification sent on POS job creation
 
 ### Step 6 — Tests
-- [ ] Unit tests for `extractPosPayment`
+- [x] Unit tests for `extractPosPayment` (6 passing)
 - [ ] Integration tests for webhook endpoint
 
 ### Step 7 — Deploy + manual test
-- [ ] Stripe CLI replay test against Vercel preview
-- [ ] Client + Job appear correctly in admin
-- [ ] Notification email received
+- [x] Stripe CLI replay test — Client + Job created in admin
+- [ ] Live terminal tap (card_present) — pending real hardware test
+- [ ] Notification email received on live tap
 
 ---
 
