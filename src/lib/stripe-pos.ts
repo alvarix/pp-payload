@@ -26,10 +26,9 @@ export function extractPosPayment(
   const charge = pi.latest_charge as Stripe.Charge | null | undefined;
 
   // Must be a card-present (Terminal) charge.
-  // TODO: restore this check after live terminal test is confirmed.
-  // if (charge?.payment_method_details?.type !== "card_present") {
-  //   return null;
-  // }
+  if (charge?.payment_method_details?.type !== "card_present") {
+    return null;
+  }
 
   // Email is required — skip and log if absent
   const email =
