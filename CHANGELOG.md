@@ -4,6 +4,47 @@ Notable changes to `pp-v2`. Dates in YYYY-MM-DD.
 
 ## Unreleased
 
+## 2026-06-08
+
+### Stripe POS webhook — invoice.updated path + dedup
+
+Fixed: POS Terminal sales were not creating Client/Job records despite Stripe
+reporting 200 OK delivery. Root causes identified and resolved:
+
+1. **Wrong signing secret** (`STRIPE_POS_WEBHOOK_SECRET` in Vercel contained an
+   incorrect value) — all 42 webhook deliveries from 6/6 returned 400. Fixed by
+   copying the correct `whsec_...` from the live-mode endpoint in Stripe dashboard.
+
+2. **Email timing race** — `payment_intent.succeeded` fires 2 seconds before the
+   customer enters their receipt email on the terminal (`customer.updated`).
+   `receipt_email` and `billing_details.email` are both null at delivery time;
+   the handler skipped record creation silently.
+
+**Fix:**
+- `invoice.updated` (status = paid) added as the primary webhook event. By the
+  time this event fires, `customer.updated` has already run and
+  `invoice.customer_email` is populated.
+- `extractPosFromInvoice()` added to `src/lib/stripe-pos.ts` — extracts email,
+  amount, PI ID, and customer ID from the Invoice object. Handles the Stripe API
+  `2025-05-28.basil` type change where `payment_intent` moved to
+  `invoice.payments[]` (field still present in raw webhook JSON; accessed via
+  cast).
+- `payment_intent.succeeded` kept as fallback for cases where `receipt_email` is
+  set directly on the intent.
+- **Dedup check** added to `createPosRecord()` — looks up existing Jobs by
+  `stripe_payment_intent_id` before creating; prevents duplicate records if both
+  events fire for the same charge.
+- Explicit `console.log` on every received event so Vercel logs always show an
+  entry (previously silent returns left no trace).
+- `docs/17--spec-stripe-pos-debug-2026-06-08.md` added — documents both root
+  causes, the fix, and the recovery steps for missed charges.
+
+**Action required (Stripe dashboard):** add `invoice.updated` to the subscribed
+events on the `portal.petportraits.ink/api/stripe/pos` webhook endpoint.
+
+**Recovery:** resend today's missed `invoice.updated` events manually from
+Stripe Dashboard → Developers → Events.
+
 ## 2026-05-09
 
 ### Intake error capture, draft persistence, partial submit
