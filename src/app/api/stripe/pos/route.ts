@@ -52,12 +52,62 @@ export async function POST(request: NextRequest) {
   console.log(`[stripe-pos] Received event: ${event.type} (${event.id})`);
 
   // ── invoice.updated (primary path) ────────────────────────────────────────
-  // Fires after customer.updated, so customer_email is already populated.
+  // `customer.updated` fires before this event so the customer has their email
+  // by the time we process it — but invoice.customer_email is snapshotted at
+  // finalization and stays null if the email was entered after that moment.
+  // We fall back to fetching the customer directly from Stripe.
   if (event.type === "invoice.updated") {
-    const invoice = event.data.object as Stripe.Invoice;
-    const data = extractPosFromInvoice(invoice);
-    if (!data) return NextResponse.json({ received: true });
-    return createPosRecord(data);
+    const stripe = getStripeClient();
+    // Stripe API 2025-05-28.basil moved payment_intent to invoice.payments[];
+    // the field is still present in raw webhook JSON as a string.
+    const inv = event.data.object as Stripe.Invoice & {
+      payment_intent?: string | null;
+    };
+
+    if (inv.status !== "paid") return NextResponse.json({ received: true });
+
+    const piId = inv.payment_intent ?? null;
+    if (!piId) {
+      console.warn(`[stripe-pos] Invoice ${inv.id} has no payment_intent — skipping`);
+      return NextResponse.json({ received: true });
+    }
+
+    const customerId =
+      typeof inv.customer === "string" ? inv.customer : null;
+
+    // invoice.customer_email is null when email is entered after finalization.
+    // Fall back to a live customer fetch — customer.updated has already fired
+    // so the email is guaranteed to be there by the time we run.
+    let email: string | null = inv.customer_email ?? null;
+    if (!email && customerId) {
+      try {
+        const customer = await stripe.customers.retrieve(customerId);
+        if (!customer.deleted) {
+          email = (customer as Stripe.Customer).email ?? null;
+        }
+      } catch (err) {
+        console.warn(
+          `[stripe-pos] Could not retrieve customer ${customerId}:`,
+          err,
+        );
+      }
+    }
+
+    if (!email) {
+      console.warn(
+        `[stripe-pos] Invoice ${inv.id} has no resolvable email — skipping`,
+      );
+      return NextResponse.json({ received: true });
+    }
+
+    return createPosRecord({
+      email,
+      amountCents: inv.amount_paid,
+      currency: inv.currency,
+      paymentIntentId: piId,
+      customerId,
+      metadata: (inv.metadata ?? {}) as Record<string, string>,
+    });
   }
 
   // ── payment_intent.succeeded (fallback path) ──────────────────────────────
