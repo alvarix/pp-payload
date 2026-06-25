@@ -99,6 +99,22 @@ export function ImportForm({
     return tokens.filter((h) => !predefinedNames.has(h));
   }
 
+  /**
+   * Reconciles exclusions when the CSV source changes.
+   * Keeps the user's intentional predefined-field exclusions, and only
+   * drops exclusions for extra (CSV-detected) columns that are gone.
+   * @param extras - extra column headers detected in the new CSV
+   */
+  function reconcileExclusions(extras: string[]) {
+    setExcludedColumns((prev) => {
+      const next = new Set<string>();
+      for (const c of prev) {
+        if (predefinedNames.has(c) || extras.includes(c)) next.add(c);
+      }
+      return next;
+    });
+  }
+
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -106,9 +122,10 @@ export function ImportForm({
     const reader = new FileReader();
     reader.onload = (ev) => {
       const text = (ev.target?.result as string) || "";
+      const extras = parseExtraHeaders(text);
       setCsvText(text);
-      setExtraColumns(parseExtraHeaders(text));
-      setExcludedColumns(new Set());
+      setExtraColumns(extras);
+      reconcileExclusions(extras);
       setResult(null);
       setError("");
     };
@@ -296,10 +313,11 @@ export function ImportForm({
             value={csvText}
             onChange={(e) => {
               const text = e.target.value;
+              const extras = parseExtraHeaders(text);
               setCsvText(text);
               setFileName("");
-              setExtraColumns(parseExtraHeaders(text));
-              setExcludedColumns(new Set());
+              setExtraColumns(extras);
+              reconcileExclusions(extras);
               setResult(null);
               setError("");
             }}
