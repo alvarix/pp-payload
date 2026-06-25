@@ -86,7 +86,7 @@ export async function POST(request: Request) {
     eventsMissed: new Set<string>(),
     skipped: 0,
     errors: [] as string[],
-    rows: [] as { name: string; pet: string; event: string; status: string; action: string }[],
+    rows: [] as { name: string; pet: string; event: string; venue: string; jobType: string; status: string; action: string }[],
   };
 
   for (const row of rows) {
@@ -153,8 +153,10 @@ export async function POST(request: Request) {
 
     const rowSummary = {
       name: fullName || email || "(no name)",
-      pet: pet || "(no pet)",
+      pet: pet || "",
       event: matchedEventName || eventName || "",
+      venue: venueName || "",
+      jobType,
       status: jobStatus,
       action: "",
     };

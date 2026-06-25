@@ -17,7 +17,7 @@ interface ImportResult {
   eventsMissed: string[];
   skipped: number;
   errors: string[];
-  rows: { name: string; pet: string; event: string; status: string; action: string }[];
+  rows: { name: string; pet: string; event: string; venue: string; jobType: string; status: string; action: string }[];
 }
 
 const STATUS_OPTIONS = [
@@ -83,6 +83,7 @@ export function ImportForm({
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [fileName, setFileName] = useState("");
   const [result, setResult] = useState<ImportResult | null>(null);
+  const [resultIsDryRun, setResultIsDryRun] = useState(true);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState("");
@@ -199,6 +200,7 @@ export function ImportForm({
         setError(data.error || "Import failed.");
       } else {
         setResult(data);
+        setResultIsDryRun(dryRun);
       }
     } catch (e: any) {
       setError(e.message || "Network error.");
@@ -409,9 +411,9 @@ export function ImportForm({
         <div className="space-y-4">
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-sm space-y-1">
             <p className="font-semibold text-green-800 mb-2">
-              {result.jobsCreated > 0
-                ? `Import complete — ${result.jobsCreated} jobs created`
-                : "Dry run complete"}
+              {resultIsDryRun
+                ? `Dry run — would create ${result.jobsCreated} job${result.jobsCreated !== 1 ? "s" : ""}`
+                : `Import complete — ${result.jobsCreated} client${result.jobsCreated !== 1 ? "s" : ""} created`}
             </p>
             <p>Clients created: <strong>{result.clientsCreated}</strong></p>
             <p>Clients matched: <strong>{result.clientsMatched}</strong></p>
@@ -439,9 +441,11 @@ export function ImportForm({
               <table className="w-full text-xs border-collapse">
                 <thead>
                   <tr className="bg-gray-50">
-                    <th className="border border-gray-200 px-2 py-1 text-left">Name</th>
-                    <th className="border border-gray-200 px-2 py-1 text-left">Pet</th>
-                    <th className="border border-gray-200 px-2 py-1 text-left">Event</th>
+                    <th className="border border-gray-200 px-2 py-1 text-left">Name / Email</th>
+                    {result.rows.some((r) => r.pet)      && <th className="border border-gray-200 px-2 py-1 text-left">Pet</th>}
+                    {result.rows.some((r) => r.event)    && <th className="border border-gray-200 px-2 py-1 text-left">Event</th>}
+                    {result.rows.some((r) => r.venue)    && <th className="border border-gray-200 px-2 py-1 text-left">Venue</th>}
+                    <th className="border border-gray-200 px-2 py-1 text-left">Type</th>
                     <th className="border border-gray-200 px-2 py-1 text-left">Status</th>
                     <th className="border border-gray-200 px-2 py-1 text-left">Action</th>
                   </tr>
@@ -450,8 +454,10 @@ export function ImportForm({
                   {result.rows.map((row, i) => (
                     <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                       <td className="border border-gray-200 px-2 py-1">{row.name}</td>
-                      <td className="border border-gray-200 px-2 py-1">{row.pet}</td>
-                      <td className="border border-gray-200 px-2 py-1">{row.event}</td>
+                      {result.rows.some((r) => r.pet)   && <td className="border border-gray-200 px-2 py-1">{row.pet}</td>}
+                      {result.rows.some((r) => r.event) && <td className="border border-gray-200 px-2 py-1">{row.event}</td>}
+                      {result.rows.some((r) => r.venue) && <td className="border border-gray-200 px-2 py-1">{row.venue}</td>}
+                      <td className="border border-gray-200 px-2 py-1">{row.jobType}</td>
                       <td className="border border-gray-200 px-2 py-1">{row.status}</td>
                       <td className="border border-gray-200 px-2 py-1 text-gray-500">{row.action}</td>
                     </tr>
