@@ -107,7 +107,7 @@ export async function POST(request: Request) {
     const clientNotes = row["Client Notes"] || row["client notes"] || "";
     const referral = row["Referral"] || row["referral"] || "";
 
-    if (!first && !last && !pet) {
+    if (!first && !last && !pet && !email) {
       stats.skipped++;
       continue;
     }
@@ -152,7 +152,7 @@ export async function POST(request: Request) {
     }
 
     const rowSummary = {
-      name: fullName || "(no name)",
+      name: fullName || email || "(no name)",
       pet: pet || "(no pet)",
       event: matchedEventName || eventName || "",
       status: jobStatus,
@@ -167,9 +167,24 @@ export async function POST(request: Request) {
     }
 
     try {
-      let clientId: number;
+      let clientId: number | undefined;
 
-      if (first || last) {
+      // 1) Match by email first (most reliable identity key).
+      if (email) {
+        const { docs: byEmail } = await payload.find({
+          collection: "clients",
+          where: { email: { equals: email } },
+          limit: 1,
+        });
+        if (byEmail.length > 0) {
+          clientId = byEmail[0].id;
+          stats.clientsMatched++;
+          rowSummary.action = "client matched";
+        }
+      }
+
+      // 2) Fall back to name matching when no email match was found.
+      if (clientId === undefined && (first || last)) {
         const searchName = fullName.toLowerCase();
         const { docs: existing } = await payload.find({
           collection: "clients",
@@ -192,23 +207,27 @@ export async function POST(request: Request) {
           clientId = match.id;
           stats.clientsMatched++;
           rowSummary.action = "client matched";
-        } else {
-          const created = await payload.create({
-            collection: "clients",
-            data: {
-              first_name: first,
-              last_name: last,
-              email: email || `import-${Date.now()}-${Math.random().toString(36).slice(2)}@placeholder.local`,
-              notes: clientNotes || undefined,
-            },
-          });
-          clientId = created.id;
-          stats.clientsCreated++;
-          rowSummary.action = "client created";
         }
-      } else {
-        stats.skipped++;
-        continue;
+      }
+
+      // 3) Create a client when nothing matched. Requires email or a name.
+      if (clientId === undefined) {
+        if (!email && !first && !last) {
+          stats.skipped++;
+          continue;
+        }
+        const created = await payload.create({
+          collection: "clients",
+          data: {
+            first_name: first,
+            last_name: last,
+            email: email || `import-${Date.now()}-${Math.random().toString(36).slice(2)}@placeholder.local`,
+            notes: clientNotes || undefined,
+          },
+        });
+        clientId = created.id;
+        stats.clientsCreated++;
+        rowSummary.action = "client created";
       }
 
       await payload.create({
