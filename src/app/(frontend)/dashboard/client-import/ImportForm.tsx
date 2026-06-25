@@ -5,6 +5,8 @@ import { useState, useRef } from "react";
 export interface ColumnDef {
   name: string;
   note: string;
+  /** Excluded by default; user can re-enable via the chip toggle. */
+  excludeByDefault?: boolean;
 }
 
 interface ImportResult {
@@ -84,7 +86,9 @@ export function ImportForm({
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState("");
-  const [excludedColumns, setExcludedColumns] = useState<Set<string>>(new Set());
+  const [excludedColumns, setExcludedColumns] = useState<Set<string>>(
+    () => new Set(columnDefs.filter((c) => c.excludeByDefault).map((c) => c.name))
+  );
   const [hoveredCol, setHoveredCol] = useState<string | null>(null);
   const [extraColumns, setExtraColumns] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
