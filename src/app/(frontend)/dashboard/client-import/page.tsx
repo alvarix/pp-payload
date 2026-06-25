@@ -11,20 +11,20 @@ import type { ColumnDef } from "./ImportForm";
  * Per-column definitions — name maps to the CSV header, note appears on hover.
  */
 const COLUMN_DEFS: ColumnDef[] = [
-  { name: "Email",    note: "Optional. A placeholder address is generated if omitted." },
-  { name: "First",    note: "Client first name. Matched case-insensitively with Last. Client is created if not found." },
-  { name: "Last",     note: "Client last name. Matched case-insensitively with First." },
-  { name: "Pet",      note: "Pet name." },
-  { name: "Breed",    note: "Pet breed." },
-  { name: "Sex",      note: "Pet sex. Accepted values: male, female, unknown." },
-  { name: "Age",      note: "Pet age. Free text, e.g. 3 years or 6 months." },
-  { name: "Event",    note: "Matched by name to existing Event records. Not created if missing." },
-  { name: "Venue",    note: "Matched by name to existing Organization records. Not created if missing." },
-  { name: "Type",     note: "street or studio. Defaults to street. Due date = today + 7 days (street) or + 10 days (studio)." },
-  { name: "Status",   note: "Optional override. Valid: new, intake_received, in_progress, awaiting_pics_or_payment, ready_to_ship, delivered. Defaults to new." },
-  { name: "Job Notes",    note: "Saved to the job record." },
-  { name: "Client Notes", note: "Saved to the client record." },
-  { name: "Referral",     note: "How the client heard about you — saved to the job record." },
+  { name: "Email",        note: "Client email. Used as the primary identity key — matched against existing clients before creating a new one." },
+  { name: "First",        note: "Client first name. Matched with Last when no email match exists.", excludeByDefault: true },
+  { name: "Last",         note: "Client last name.", excludeByDefault: true },
+  { name: "Pet",          note: "Pet name.", excludeByDefault: true },
+  { name: "Breed",        note: "Pet breed.", excludeByDefault: true },
+  { name: "Sex",          note: "Pet sex. Accepted values: male, female, unknown.", excludeByDefault: true },
+  { name: "Age",          note: "Pet age. Free text, e.g. 3 years or 6 months.", excludeByDefault: true },
+  { name: "Event",        note: "Matched by name to existing Event records. Not created if missing.", excludeByDefault: true },
+  { name: "Venue",        note: "Matched by name to existing Organization records. Not created if missing." },
+  { name: "Type",         note: "street or studio. Defaults to street. Due date = today + 7 days (street) or + 10 days (studio)." },
+  { name: "Status",       note: "Optional override. Valid: inquiry, intake_received, in_progress, awaiting_pics_or_payment, ready_to_ship, delivered, portfolio_ready. Defaults to inquiry." },
+  { name: "Job Notes",    note: "Saved to the job record.", excludeByDefault: true },
+  { name: "Client Notes", note: "Saved to the client record.", excludeByDefault: true },
+  { name: "Referral",     note: "How the client heard about you — saved to the job record.", excludeByDefault: true },
 ];
 
 /**
