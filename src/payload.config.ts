@@ -28,6 +28,16 @@ export default buildConfig({
         Logo: "@/components/AdminLogo",
       },
     },
+    meta: {
+      titleSuffix: ' Pets.ink',
+      icons: [
+        {
+          rel: 'icon',
+          type: 'image/png',
+          url: '/favicon.png', // Path relative to your public folder
+        },
+      ],
+    },
   },
   collections: [Users, Media, Events, Clients, Jobs, Organizations, IntakeEvents],
   editor: lexicalEditor(),
