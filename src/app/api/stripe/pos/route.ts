@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getPayload } from "payload";
-import type { BasePayload } from "payload";
 import configPromise from "@payload-config";
 import { getStripeClient } from "@/lib/stripe";
 import { extractPosPayment } from "@/lib/stripe-pos";

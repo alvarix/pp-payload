@@ -357,15 +357,17 @@ export interface Job {
    */
   organization?: (number | null) | Organization;
   /**
-   * Event this job was created at
+   * Event this job was created at — populated by CSV import
    */
   event?: (number | null) | Event;
   /**
    * Street: 5-10 days to ship. Studio: 1-2 weeks to ship.
    */
   job_type?: ('street' | 'studio') | null;
+  /**
+   * Calculated from job type shipping window during CSV import
+   */
   due_date?: string | null;
-  urgency?: ('low' | 'medium' | 'high') | null;
   delivery_method?: ('pickup' | 'delivery' | 'other') | null;
   notes?: string | null;
   pinned?: boolean | null;
@@ -428,11 +430,11 @@ export interface Job {
    */
   stripe_checkout_session_id?: string | null;
   /**
-   * plink_... — which Payment Link the customer used
+   * plink_... — populated from /api/intake checkout session
    */
   stripe_payment_link_id?: string | null;
   /**
-   * pi_... — reconciliation key for refunds / disputes
+   * pi_... — used for dedup in POS webhook and intake reconciliation
    */
   stripe_payment_intent_id?: string | null;
   /**
@@ -444,7 +446,7 @@ export interface Job {
    */
   stripe_amount_paid_cents?: number | null;
   /**
-   * ISO currency code, lowercase (e.g. usd)
+   * ISO currency code, lowercase (e.g. usd) — populated from Stripe session
    */
   stripe_currency?: string | null;
   /**
@@ -483,79 +485,6 @@ export interface Job {
    * How did you hear about us?
    */
   referral?: string | null;
-  /**
-   * Portfolio display settings - completed artwork for public showcase
-   */
-  portfolio?: {
-    /**
-     * Finished artwork images with flexible tagging
-     */
-    images?:
-      | {
-          image: number | Media;
-          /**
-           * Tag images to designate usage (can select multiple). Change tags to swap which is main/thumb without re-uploading.
-           */
-          image_tags?: ('main' | 'thumbnail' | 'alternate' | 'wip' | 'detail')[] | null;
-          id?: string | null;
-        }[]
-      | null;
-    /**
-     * Reference photos to display in portfolio (select from intake pics or upload altered versions)
-     */
-    reference_images?:
-      | {
-          /**
-           * Original intake pic or edited version for portfolio display
-           */
-          image?: (number | null) | Media;
-          /**
-           * Uncheck if this is an altered/cropped version
-           */
-          is_original?: boolean | null;
-          /**
-           * Tag reference images for display context
-           */
-          reference_tags?: ('featured' | 'before' | 'cropped' | 'enhanced')[] | null;
-          id?: string | null;
-        }[]
-      | null;
-    /**
-     * Client testimonial or feedback
-     */
-    testimonial?: {
-      root: {
-        type: string;
-        children: {
-          type: any;
-          version: number;
-          [k: string]: unknown;
-        }[];
-        direction: ('ltr' | 'rtl') | null;
-        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-        indent: number;
-        version: number;
-      };
-      [k: string]: unknown;
-    } | null;
-    /**
-     * Only published items appear on public portfolio
-     */
-    portfolio_status?: ('hidden' | 'draft' | 'published') | null;
-    /**
-     * Highlight on homepage
-     */
-    featured?: boolean | null;
-    /**
-     * Categories (e.g., "dog", "cat", "watercolor")
-     */
-    portfolio_tags?:
-      | {
-          tag?: string | null;
-          id?: string | null;
-        }[]
-      | null;
-  };
   pet_names?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -789,7 +718,6 @@ export interface JobsSelect<T extends boolean = true> {
   event?: T;
   job_type?: T;
   due_date?: T;
-  urgency?: T;
   delivery_method?: T;
   notes?: T;
   pinned?: T;
@@ -842,34 +770,6 @@ export interface JobsSelect<T extends boolean = true> {
         country?: T;
       };
   referral?: T;
-  portfolio?:
-    | T
-    | {
-        images?:
-          | T
-          | {
-              image?: T;
-              image_tags?: T;
-              id?: T;
-            };
-        reference_images?:
-          | T
-          | {
-              image?: T;
-              is_original?: T;
-              reference_tags?: T;
-              id?: T;
-            };
-        testimonial?: T;
-        portfolio_status?: T;
-        featured?: T;
-        portfolio_tags?:
-          | T
-          | {
-              tag?: T;
-              id?: T;
-            };
-      };
   pet_names?: T;
   updatedAt?: T;
   createdAt?: T;
