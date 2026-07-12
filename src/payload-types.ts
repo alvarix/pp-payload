@@ -485,6 +485,10 @@ export interface Job {
    * How did you hear about us?
    */
   referral?: string | null;
+  /**
+   * Client testimonial or feedback
+   */
+  testimonial?: string | null;
   pet_names?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -770,6 +774,7 @@ export interface JobsSelect<T extends boolean = true> {
         country?: T;
       };
   referral?: T;
+  testimonial?: T;
   pet_names?: T;
   updatedAt?: T;
   createdAt?: T;

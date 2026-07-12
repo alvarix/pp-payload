@@ -361,6 +361,14 @@ export const Jobs: CollectionConfig = {
 				description: "How did you hear about us?",
 			},
 		},
+		{
+			name: "testimonial",
+			type: "textarea",
+			label: "Testimonial",
+			admin: {
+				description: "Client testimonial or feedback",
+			},
+		},
 
 		{
 			name: "pet_names",
