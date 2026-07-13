@@ -10,44 +10,68 @@ const ADMIN_EMAIL = "alvar@petportraits.ink";
  * @param opts.email - Client's email address
  * @param opts.petName - Pet's name from the intake form
  * @param opts.jobId - Payload job record ID
+ * @param opts.jobType - Order type (street or studio)
+ * @param opts.petPicUrls - Direct URLs to uploaded pet photos
  * @param opts.partial - When true, prefixes subject with [partial]
  */
 export async function sendIntakeNotification(opts: {
-  clientName: string;
-  email: string;
-  petName: string;
-  jobId: number;
-  partial?: boolean;
+	clientName: string;
+	email: string;
+	petName: string;
+	jobId: number;
+	jobType?: string | null;
+	petPicUrls?: string[];
+	partial?: boolean;
 }) {
-  const { clientName, email, petName, jobId, partial } = opts;
-  const jobUrl = `https://portal.petportraits.ink/admin/collections/jobs/${jobId}`;
-  const subject = partial
-    ? `[partial] New intake: ${petName} (${clientName})`
-    : `New intake: ${petName} (${clientName})`;
+	const { clientName, email, petName, jobId, jobType, petPicUrls, partial } =
+		opts;
+	const jobUrl = `https://portal.petportraits.ink/admin/collections/jobs/${jobId}`;
+	const subject = partial
+		? `[partial] New intake: ${petName} (${clientName})`
+		: `New intake: ${petName} (${clientName})`;
 
-  const res = await fetch(BREVO_URL, {
-    method: "POST",
-    headers: { "api-key": process.env.BREVO_API_KEY!, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      sender: SENDER,
-      to: [{ email: ADMIN_EMAIL }],
-      subject,
-      textContent: [
-        partial ? "Partial intake received (photos pending via IG or email)." : "New intake form received.",
-        "",
-        `Client: ${clientName}`,
-        `Email:  ${email}`,
-        `Pet:    ${petName}`,
-        "",
-        "View record:",
-        jobUrl,
-      ].join("\n"),
-    }),
-  });
+	const typeLabel =
+		jobType === "street"
+			? "Street"
+			: jobType === "studio"
+				? "Studio"
+				: "(not set)";
 
-  if (!res.ok) {
-    throw new Error(`Brevo API error: ${res.status}`);
-  }
+	const lines: string[] = [
+		partial
+			? "Partial intake received (photos pending via IG or email)."
+			: "New intake form received.",
+		"",
+		`Client: ${clientName}`,
+		`Email:  ${email}`,
+		`Pet:    ${petName}`,
+		`Type:   ${typeLabel}`,
+	];
+
+	if (petPicUrls && petPicUrls.length > 0) {
+		lines.push("", "Pet Photos:");
+		petPicUrls.forEach((url, i) => lines.push(`  ${i + 1}. ${url}`));
+	}
+
+	lines.push("", "View record:", jobUrl);
+
+	const res = await fetch(BREVO_URL, {
+		method: "POST",
+		headers: {
+			"api-key": process.env.BREVO_API_KEY!,
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+			sender: SENDER,
+			to: [{ email: ADMIN_EMAIL }],
+			subject,
+			textContent: lines.join("\n"),
+		}),
+	});
+
+	if (!res.ok) {
+		throw new Error(`Brevo API error: ${res.status}`);
+	}
 }
 
 /**
@@ -58,40 +82,53 @@ export async function sendIntakeNotification(opts: {
  * @param opts.jobId - Created Job record ID
  * @param opts.amountCents - Charged amount in cents
  * @param opts.paymentIntentId - Stripe pi_... ID
+ * @param opts.jobType - Order type (street or studio)
  */
 export async function sendPosIntakeNotification(opts: {
-  email: string;
-  jobId: number;
-  amountCents: number;
-  paymentIntentId: string;
+	email: string;
+	jobId: number;
+	amountCents: number;
+	paymentIntentId: string;
+	jobType?: string | null;
 }) {
-  const { email, jobId, amountCents, paymentIntentId } = opts;
-  const jobUrl = `https://portal.petportraits.ink/admin/collections/jobs/${jobId}`;
-  const amount = (amountCents / 100).toFixed(2);
+	const { email, jobId, amountCents, paymentIntentId, jobType } = opts;
+	const jobUrl = `https://portal.petportraits.ink/admin/collections/jobs/${jobId}`;
+	const amount = (amountCents / 100).toFixed(2);
 
-  const res = await fetch(BREVO_URL, {
-    method: "POST",
-    headers: { "api-key": process.env.BREVO_API_KEY!, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      sender: SENDER,
-      to: [{ email: ADMIN_EMAIL }],
-      subject: `[POS] New sale: ${email} — $${amount}`,
-      textContent: [
-        "POS (Terminal) sale recorded.",
-        "",
-        `Client email:      ${email}`,
-        `Amount:            $${amount}`,
-        `Payment Intent ID: ${paymentIntentId}`,
-        "",
-        "View record:",
-        jobUrl,
-      ].join("\n"),
-    }),
-  });
+	const typeLabel =
+		jobType === "street"
+			? "Street"
+			: jobType === "studio"
+				? "Studio"
+				: "(not set)";
 
-  if (!res.ok) {
-    throw new Error(`Brevo API error: ${res.status}`);
-  }
+	const res = await fetch(BREVO_URL, {
+		method: "POST",
+		headers: {
+			"api-key": process.env.BREVO_API_KEY!,
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+			sender: SENDER,
+			to: [{ email: ADMIN_EMAIL }],
+			subject: `[POS] New sale: ${email} — $${amount}`,
+			textContent: [
+				"POS (Terminal) sale recorded.",
+				"",
+				`Client email:      ${email}`,
+				`Type:              ${typeLabel}`,
+				`Amount:            $${amount}`,
+				`Payment Intent ID: ${paymentIntentId}`,
+				"",
+				"View record:",
+				jobUrl,
+			].join("\n"),
+		}),
+	});
+
+	if (!res.ok) {
+		throw new Error(`Brevo API error: ${res.status}`);
+	}
 }
 
 /**
@@ -104,55 +141,58 @@ export async function sendPosIntakeNotification(opts: {
  * @param opts.error - Error details object if present
  */
 export async function sendIntakeErrorAlert(opts: {
-  type: string;
-  sessionId: string;
-  snapshot: Record<string, string> | null;
-  error?: unknown;
+	type: string;
+	sessionId: string;
+	snapshot: Record<string, string> | null;
+	error?: unknown;
 }) {
-  const { type, sessionId, snapshot, error } = opts;
-  const firstName = snapshot?.first_name ?? "";
-  const lastName = snapshot?.last_name ?? "";
-  const email = snapshot?.email ?? "";
-  const phone = snapshot?.phone ?? "";
-  const petName = snapshot?.pet_name ?? "";
-  const petBreed = snapshot?.pet_breed ?? "";
-  const stripeSessionId = snapshot?.stripe_checkout_session_id ?? "none";
-  const displayName = firstName || email || "anonymous";
+	const { type, sessionId, snapshot, error } = opts;
+	const firstName = snapshot?.first_name ?? "";
+	const lastName = snapshot?.last_name ?? "";
+	const email = snapshot?.email ?? "";
+	const phone = snapshot?.phone ?? "";
+	const petName = snapshot?.pet_name ?? "";
+	const petBreed = snapshot?.pet_breed ?? "";
+	const stripeSessionId = snapshot?.stripe_checkout_session_id ?? "none";
+	const displayName = firstName || email || "anonymous";
 
-  const adminLink =
-    `https://portal.petportraits.ink/admin/collections/intake-events` +
-    `?where[session_id][equals]=${encodeURIComponent(sessionId)}`;
+	const adminLink =
+		`https://portal.petportraits.ink/admin/collections/intake-events` +
+		`?where[session_id][equals]=${encodeURIComponent(sessionId)}`;
 
-  const res = await fetch(BREVO_URL, {
-    method: "POST",
-    headers: { "api-key": process.env.BREVO_API_KEY!, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      sender: SENDER,
-      to: [{ email: ADMIN_EMAIL }],
-      subject: `[intake] ${type}: ${displayName}`,
-      textContent: [
-        `Type:    ${type}`,
-        `Session: ${sessionId}`,
-        `Time:    ${new Date().toISOString()}`,
-        "",
-        "Form so far:",
-        `  Name:  ${[firstName, lastName].filter(Boolean).join(" ") || "(none)"}`,
-        `  Email: ${email || "(none)"}`,
-        `  Phone: ${phone || "(none)"}`,
-        `  Pet:   ${petName || "(none)"}${petBreed ? ` (${petBreed})` : ""}`,
-        "",
-        "Error details:",
-        `  ${error ? JSON.stringify(error, null, 2) : "none"}`,
-        "",
-        `Stripe session: ${stripeSessionId}`,
-        "",
-        "Admin link (filter events by session):",
-        adminLink,
-      ].join("\n"),
-    }),
-  });
+	const res = await fetch(BREVO_URL, {
+		method: "POST",
+		headers: {
+			"api-key": process.env.BREVO_API_KEY!,
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+			sender: SENDER,
+			to: [{ email: ADMIN_EMAIL }],
+			subject: `[intake] ${type}: ${displayName}`,
+			textContent: [
+				`Type:    ${type}`,
+				`Session: ${sessionId}`,
+				`Time:    ${new Date().toISOString()}`,
+				"",
+				"Form so far:",
+				`  Name:  ${[firstName, lastName].filter(Boolean).join(" ") || "(none)"}`,
+				`  Email: ${email || "(none)"}`,
+				`  Phone: ${phone || "(none)"}`,
+				`  Pet:   ${petName || "(none)"}${petBreed ? ` (${petBreed})` : ""}`,
+				"",
+				"Error details:",
+				`  ${error ? JSON.stringify(error, null, 2) : "none"}`,
+				"",
+				`Stripe session: ${stripeSessionId}`,
+				"",
+				"Admin link (filter events by session):",
+				adminLink,
+			].join("\n"),
+		}),
+	});
 
-  if (!res.ok) {
-    throw new Error(`Brevo API error: ${res.status}`);
-  }
+	if (!res.ok) {
+		throw new Error(`Brevo API error: ${res.status}`);
+	}
 }
