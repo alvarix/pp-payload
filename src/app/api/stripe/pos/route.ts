@@ -287,6 +287,7 @@ async function createPosRecord(data: PosPaymentData): Promise<NextResponse> {
 				jobId: job.id,
 				amountCents: data.amountCents,
 				paymentIntentId: data.paymentIntentId,
+				jobType,
 			});
 		} catch (emailErr) {
 			// Non-fatal — job is already created

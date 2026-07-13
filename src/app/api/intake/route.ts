@@ -179,6 +179,19 @@ export async function POST(request: NextRequest) {
 		});
 
 		try {
+			// Resolve uploaded pet photo URLs for the notification
+			const petPicUrls: string[] = [];
+			if (uploadedPicIds.length > 0) {
+				const mediaDocs = await payload.find({
+					collection: "media",
+					where: { id: { in: uploadedPicIds } },
+					limit: uploadedPicIds.length,
+				});
+				for (const media of mediaDocs.docs) {
+					if (media.url) petPicUrls.push(media.url);
+				}
+			}
+
 			await sendIntakeNotification({
 				clientName:
 					[clientData.first_name, clientData.last_name]
@@ -187,6 +200,8 @@ export async function POST(request: NextRequest) {
 				email: clientData.email,
 				petName: (formData.get("pet_name") as string) || "Unknown",
 				jobId: job.id,
+				jobType: stripeAutoFill?.jobType,
+				petPicUrls: petPicUrls.length > 0 ? petPicUrls : undefined,
 				partial: isPartial,
 			});
 		} catch (emailErr) {
