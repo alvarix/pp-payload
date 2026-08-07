@@ -48,6 +48,7 @@ Thumbs.db
 .vscode/
 *.swp
 data_import/
+.pi-subagents/
 
 # ------------------------------
 # Testing / tooling
