@@ -38,8 +38,8 @@ export default async function IntakePage({ searchParams }: IntakePageProps) {
           <Image
             src="/logo-reversed.png"
             alt="Pets.ink"
-            width={300}
-            height={100}
+            width={150}
+            height={164}
             priority
             style={{ height: "auto" }}
           />
