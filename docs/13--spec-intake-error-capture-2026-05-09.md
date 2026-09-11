@@ -220,7 +220,7 @@ When `hasPhotoError` is true, in addition to the disabled main submit button, sh
 ```
 [Submit without photos]
 
-Please DM photos on Instagram to @alvar.nyc or email alvar@petportraits.ink
+Please DM photos on Instagram to @alvar.nyc or email hi@pets.ink
 ```
 
 The button label is concise; the helper line below it tells the client exactly how to deliver photos out-of-band. Render `@alvar.nyc` as a link to `https://instagram.com/alvar.nyc` and the email as a `mailto:` link with subject prefilled to "Photos for {petName}" (fall back to "Photos for intake" if pet name not yet entered).

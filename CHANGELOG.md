@@ -68,7 +68,7 @@ Open questions from spec (follow-up):
 
 ### Intake form redesign
 - Dark stone-900 background with reversed Pet Portraits logo header
-- Contact link (`alvar@petportraits.ink?subject=intake`) below logo
+- Contact link (`hi@pets.ink?subject=intake`) below logo
 - All form fields, sections, and error states updated for dark theme
 
 ### Admin email notification on intake

@@ -594,7 +594,7 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
       {submitStatus === "error" && (
         <div className="border border-red-700 bg-red-900/40 rounded-lg p-4 text-red-300">
           There was an error submitting your form. Please try again or{" "}
-          <a href="mailto:alvar@petportraits.ink?subject=intake" className="underline">
+          <a href="mailto:hi@pets.ink?subject=intake" className="underline">
             contact me directly
           </a>
           .
@@ -635,10 +635,10 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
             </a>{" "}
             or email{" "}
             <a
-              href={`mailto:alvar@petportraits.ink?subject=${mailtoSubject}`}
+              href={`mailto:hi@pets.ink?subject=${mailtoSubject}`}
               className="underline text-stone-300 hover:text-white"
             >
-              alvar@petportraits.ink
+              hi@pets.ink
             </a>
           </p>
         </div>
