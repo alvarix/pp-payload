@@ -27,7 +27,7 @@ const bucket = process.env.SUPABASE_S3_BUCKET;
 const corsConfig = {
   CORSRules: [
     {
-      AllowedOrigins: ["https://petportraits.ink", "http://localhost:3000"],
+      AllowedOrigins: ["https://petportraits.ink", "http://localhost:3000", "https://pets.ink"],
       AllowedMethods: ["PUT"],
       AllowedHeaders: ["*"],
       MaxAgeSeconds: 3000,

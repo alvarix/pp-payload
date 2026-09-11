@@ -1,6 +1,6 @@
 # Spec: intake form → admin email notification
 
-Send an email to alvar@petportraits.ink each time a new intake form submission creates a job record.
+Send an email to hi@pets.ink each time a new intake form submission creates a job record.
 
 ## Provider comparison
 
@@ -24,7 +24,7 @@ Get the key from Brevo dashboard → SMTP & API → API Keys.
 
 ## What to send
 
-- **To:** alvar@petportraits.ink
+- **To:** hi@pets.ink
 - **From:** no-reply@petportraits.ink (or a Resend verified sender)
 - **Subject:** New intake: {petName} ({clientName})
 - **Body (plain text):**
@@ -66,7 +66,7 @@ export async function sendIntakeNotification(opts: {
     },
     body: JSON.stringify({
       sender: { name: "PetPortraits.ink", email: "no-reply@petportraits.ink" },
-      to: [{ email: "alvar@petportraits.ink" }],
+      to: [{ email: "hi@pets.ink" }],
       subject: `New intake: ${petName} (${clientName})`,
       textContent: [
         "New intake form received.",
@@ -113,7 +113,7 @@ Until verified, use a Brevo-provided test sender or your verified sender email d
 
 ## Acceptance criteria
 
-- Submitting /intake creates a job AND sends an email to alvar@petportraits.ink within seconds.
+- Submitting /intake creates a job AND sends an email to hi@pets.ink within seconds.
 - Email failure does NOT break the intake submission — errors are logged server-side only.
 - The link in the email goes directly to the job record in the Payload admin panel.
 

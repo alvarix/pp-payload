@@ -1,6 +1,6 @@
 const BREVO_URL = "https://api.brevo.com/v3/smtp/email";
 const SENDER = { name: "PetPortraits.ink", email: "no-reply@petportraits.ink" };
-const ADMIN_EMAIL = "alvar@petportraits.ink";
+const ADMIN_EMAIL = "hi@pets.ink";
 
 /**
  * Sends an admin notification email via the Brevo transactional API.

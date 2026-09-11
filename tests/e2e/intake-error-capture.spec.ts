@@ -50,7 +50,7 @@ test.describe("intake error capture", () => {
 
     await expect(page.locator('button:has-text("Submit without photos")')).toBeVisible();
     await expect(page.locator('a[href*="instagram.com/alvar.nyc"]')).toBeVisible();
-    await expect(page.locator('a[href*="mailto:alvar@petportraits.ink"]')).toBeVisible();
+    await expect(page.locator('a[href*="mailto:hi@pets.ink"]')).toBeVisible();
   });
 
   test("mailto subject includes pet name when filled", async ({ page }) => {
@@ -58,7 +58,7 @@ test.describe("intake error capture", () => {
     await page.fill('input[name="pet_name"]', "Mochi");
     await attachOversizedPhoto(page);
 
-    const mailtoHref = await page.locator('a[href*="mailto:alvar@petportraits.ink"]').getAttribute("href");
+    const mailtoHref = await page.locator('a[href*="mailto:hi@pets.ink"]').getAttribute("href");
     expect(mailtoHref).toContain("Photos%20for%20Mochi");
   });
 

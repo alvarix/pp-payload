@@ -50,7 +50,7 @@ export default async function IntakePage({ searchParams }: IntakePageProps) {
         <p className="text-center text-stone-400 text-sm mb-8">
           Questions?{" "}
           <a
-            href="mailto:alvar@petportraits.ink?subject=intake"
+            href="mailto:hi@pets.ink?subject=intake"
             className="underline text-stone-300 hover:text-white"
           >
             Contact me
