@@ -37,7 +37,7 @@ export default async function IntakePage({ searchParams }: IntakePageProps) {
         <div className="flex justify-center mb-8">
           <Image
             src="/logo-reversed.png"
-            alt="PetPortraits.ink"
+            alt="Pets.ink"
             width={300}
             height={100}
             priority
