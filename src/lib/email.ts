@@ -3,6 +3,21 @@ const SENDER = { name: "PetPortraits.ink", email: "no-reply@petportraits.ink" };
 const ADMIN_EMAIL = "hi@pets.ink";
 
 /**
+ * Convert a possibly-relative URL to an absolute URL.
+ * Payload stores media.url as a relative path (e.g. /api/media/file/foo.png);
+ * email clients cannot resolve relative URLs, so prefix with SERVER_URL.
+ * Already-absolute URLs (http/https) are returned unchanged.
+ *
+ * @param url - Relative or absolute URL
+ * @returns Absolute URL
+ */
+export function toAbsoluteUrl(url: string): string {
+	if (/^https?:\/\//i.test(url)) return url;
+	const base = process.env.SERVER_URL || "https://portal.petportraits.ink";
+	return `${base}${url.startsWith("/") ? url : `/${url}`}`;
+}
+
+/**
  * Sends an admin notification email via the Brevo transactional API.
  * Requires BREVO_API_KEY in env.
  *
@@ -50,7 +65,9 @@ export async function sendIntakeNotification(opts: {
 
 	if (petPicUrls && petPicUrls.length > 0) {
 		lines.push("", "Pet Photos:");
-		petPicUrls.forEach((url, i) => lines.push(`  ${i + 1}. ${url}`));
+		petPicUrls.forEach((url, i) =>
+			lines.push(`  ${i + 1}. ${toAbsoluteUrl(url)}`),
+		);
 	}
 
 	lines.push("", "View record:", jobUrl);

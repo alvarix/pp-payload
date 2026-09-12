@@ -101,6 +101,25 @@ describe("sendIntakeNotification", () => {
 		expect(text).toContain("2. https://example.com/pic2.jpg");
 	});
 
+	it("converts relative pet photo URLs to absolute", async () => {
+		await sendIntakeNotification({
+			clientName: "Jane Doe",
+			email: "jane@example.com",
+			petName: "Buddy",
+			jobId: 42,
+			petPicUrls: [
+				"/api/media/file/pic1.png",
+				"https://example.com/pic2.jpg",
+			],
+		});
+
+		const text = getSentTextContent();
+		expect(text).toContain(
+			"1. https://portal.petportraits.ink/api/media/file/pic1.png",
+		);
+		expect(text).toContain("2. https://example.com/pic2.jpg");
+	});
+
 	it("omits Pet Photos section when URLs array is empty", async () => {
 		await sendIntakeNotification({
 			clientName: "Jane Doe",
