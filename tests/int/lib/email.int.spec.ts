@@ -31,6 +31,12 @@ function getSentSubject(): string {
 	return body.subject;
 }
 
+function getSentHtmlContent(): string {
+	const call = mockFetch.mock.calls[0];
+	const body = JSON.parse(call[1].body);
+	return body.htmlContent;
+}
+
 describe("sendIntakeNotification", () => {
 	it("includes job type when street", async () => {
 		await sendIntakeNotification({
@@ -118,6 +124,36 @@ describe("sendIntakeNotification", () => {
 			"1. https://portal.petportraits.ink/api/media/file/pic1.png",
 		);
 		expect(text).toContain("2. https://example.com/pic2.jpg");
+	});
+
+	it("renders pet photos as HTML images after the links", async () => {
+		await sendIntakeNotification({
+			clientName: "Jane Doe",
+			email: "jane@example.com",
+			petName: "Buddy",
+			jobId: 42,
+			petPicUrls: ["/api/media/file/pic1.png"],
+		});
+
+		const html = getSentHtmlContent();
+		expect(html).toContain(
+			'<img src="https://portal.petportraits.ink/api/media/file/pic1.png"',
+		);
+		// Images come after the text and the record link
+		expect(html.indexOf("View record")).toBeLessThan(html.indexOf("<img"));
+	});
+
+	it("omits HTML images when there are no pet photos", async () => {
+		await sendIntakeNotification({
+			clientName: "Jane Doe",
+			email: "jane@example.com",
+			petName: "Buddy",
+			jobId: 42,
+		});
+
+		const html = getSentHtmlContent();
+		expect(html).not.toContain("<img");
+		expect(html).not.toContain("Photo previews");
 	});
 
 	it("omits Pet Photos section when URLs array is empty", async () => {
