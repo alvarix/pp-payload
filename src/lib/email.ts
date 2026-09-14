@@ -18,6 +18,22 @@ export function toAbsoluteUrl(url: string): string {
 }
 
 /**
+ * Escape HTML entities in user-supplied strings to prevent markup injection
+ * when interpolating them into the HTML email body.
+ *
+ * @param s - Untrusted string
+ * @returns HTML-escaped string
+ */
+function escapeHtml(s: string): string {
+	return s
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
+}
+
+/**
  * Sends an admin notification email via the Brevo transactional API.
  * Requires BREVO_API_KEY in env.
  *
@@ -52,10 +68,12 @@ export async function sendIntakeNotification(opts: {
 				? "Studio"
 				: "(not set)";
 
+	const headerLine = partial
+		? "Partial intake received (photos pending via IG or email)."
+		: "New intake form received.";
+
 	const lines: string[] = [
-		partial
-			? "Partial intake received (photos pending via IG or email)."
-			: "New intake form received.",
+		headerLine,
 		"",
 		`Client: ${clientName}`,
 		`Email:  ${email}`,
@@ -72,6 +90,38 @@ export async function sendIntakeNotification(opts: {
 
 	lines.push("", "View record:", jobUrl);
 
+	// HTML variant — same text with clickable links, then images rendered after.
+	const html: string[] = [
+		`<p>${escapeHtml(headerLine)}</p>`,
+		`<p>Client: ${escapeHtml(clientName)}<br>`,
+		`Email: ${escapeHtml(email)}<br>`,
+		`Pet: ${escapeHtml(petName)}<br>`,
+		`Type: ${escapeHtml(typeLabel)}</p>`,
+	];
+
+	if (petPicUrls && petPicUrls.length > 0) {
+		html.push("<p>Pet Photos:</p>", "<ul>");
+		petPicUrls.forEach((url, i) => {
+			const abs = toAbsoluteUrl(url);
+			html.push(
+				`<li><a href="${abs}">${i + 1}. ${escapeHtml(abs)}</a></li>`,
+			);
+		});
+		html.push("</ul>");
+	}
+
+	html.push(`<p>View record: <a href="${jobUrl}">${jobUrl}</a></p>`);
+
+	if (petPicUrls && petPicUrls.length > 0) {
+		html.push("<p>Photo previews:</p>");
+		petPicUrls.forEach((url, i) => {
+			const abs = toAbsoluteUrl(url);
+			html.push(
+				`<img src="${abs}" alt="Pet photo ${i + 1}" style="max-width: 480px; display: block; margin: 8px 0;" />`,
+			);
+		});
+	}
+
 	const res = await fetch(BREVO_URL, {
 		method: "POST",
 		headers: {
@@ -83,6 +133,7 @@ export async function sendIntakeNotification(opts: {
 			to: [{ email: ADMIN_EMAIL }],
 			subject,
 			textContent: lines.join("\n"),
+			htmlContent: html.join("\n"),
 		}),
 	});
 
