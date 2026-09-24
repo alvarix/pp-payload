@@ -4,6 +4,17 @@ Notable changes to `pp-v2`. Dates in YYYY-MM-DD.
 
 ## Unreleased
 
+### Kanban bulk status change + localhost CSRF fix
+
+- Dashboard: multi-select checkboxes on kanban cards with a bulk bar to change
+  the status of many jobs at once. New `bulk_set_status` action on
+  `/api/dashboard/actions` reports per-id successes/failures.
+- Fixed: client-side fetches to dashboard action endpoints 401'd on localhost.
+  Payload's cookie extraction rejects the auth cookie when `Origin` is not in
+  the `csrf` whitelist (default: `serverURL` only). Whitelisted
+  `http://localhost:3000`/`:3001` in `csrf` and `cors`. Full write-up in
+  `docs/known-issues.md`.
+
 ## 2026-06-08
 
 ### Stripe POS webhook — invoice.updated path + dedup

@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { jobId: number; action: string; status?: string };
+  let body: { jobId: number; jobIds?: number[]; action: string; status?: string };
   try {
     body = await request.json();
   } catch {
@@ -39,6 +39,40 @@ export async function POST(request: Request) {
   }
 
   const { jobId, action } = body;
+
+  // Bulk status change: { jobIds: number[], action: "bulk_set_status", status: string }
+  if (action === "bulk_set_status") {
+    const VALID_STATUSES = [
+      "inquiry", "intake_received", "in_progress",
+      "awaiting_pics_or_payment", "ready_to_ship", "delivered", "portfolio_ready",
+    ] as const;
+    type JobStatus = (typeof VALID_STATUSES)[number];
+
+    const jobIds = Array.isArray(body.jobIds) ? body.jobIds.filter((id) => typeof id === "number") : [];
+    if (jobIds.length === 0) {
+      return NextResponse.json({ error: "jobIds must be a non-empty array of numbers" }, { status: 400 });
+    }
+    if (!body.status || !VALID_STATUSES.includes(body.status as JobStatus)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+
+    // Sequential updates; collect per-id results so partial failures are reportable.
+    const updated: number[] = [];
+    const failed: { id: number; error: string }[] = [];
+    for (const id of jobIds) {
+      try {
+        await payload.update({
+          collection: "jobs",
+          id,
+          data: { status: body.status as JobStatus },
+        });
+        updated.push(id);
+      } catch (e: any) {
+        failed.push({ id, error: e.message ?? "Unknown error" });
+      }
+    }
+    return NextResponse.json({ success: failed.length === 0, updated, failed });
+  }
 
   if (!jobId || !action) {
     return NextResponse.json(

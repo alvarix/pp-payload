@@ -19,6 +19,11 @@ const dirname = path.dirname(filename);
 
 export default buildConfig({
   serverURL: process.env.SERVER_URL || "",
+  // CSRF whitelist: fetch POSTs carry an Origin header, and the auth cookie is
+  // rejected unless that origin is listed. Navigation requests send no Origin,
+  // which is why SSR pages authenticated fine while client fetches 401'd.
+  csrf: [process.env.SERVER_URL || "", "http://localhost:3000", "http://localhost:3001"],
+  cors: [process.env.SERVER_URL || "", "http://localhost:3000", "http://localhost:3001"],
   admin: {
     user: Users.slug,
     importMap: {
