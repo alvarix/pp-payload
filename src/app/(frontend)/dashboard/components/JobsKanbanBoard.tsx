@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { QuickActions } from "./QuickActions";
 import { CardActions } from "./CardActions";
 
@@ -36,9 +37,14 @@ const LS_KEY = "jobs-dashboard-col-order";
 /**
  * Client wrapper for the jobs kanban board.
  * Persists column order to localStorage; drag-to-reorder column headers.
+ * Supports multi-select for bulk status changes via checkboxes on cards.
  */
 export function JobsKanbanBoard({ columns }: { columns: JobColumnData[] }) {
+  const router = useRouter();
   const [order, setOrder] = useState<string[]>(() => columns.map((c) => c.key));
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState("");
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [dragging, setDragging] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
 
@@ -78,10 +84,85 @@ export function JobsKanbanBoard({ columns }: { columns: JobColumnData[] }) {
     setDragOver(null);
   }
 
+  function toggleSelect(id: number) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function clearSelection() {
+    setSelected(new Set());
+    setBulkStatus("");
+  }
+
+  /** Apply the chosen status to all selected jobs, then refresh and clear. */
+  async function applyBulkStatus() {
+    if (!bulkStatus || selected.size === 0) return;
+    setBulkBusy(true);
+    try {
+      const res = await fetch("/api/dashboard/actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "bulk_set_status", jobIds: [...selected], status: bulkStatus }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        console.error("Bulk status change failed:", data);
+        alert(`Bulk update failed: ${data?.error ?? res.statusText}`);
+        return;
+      }
+      if (data?.failed?.length > 0) {
+        alert(`Updated ${data.updated.length} job(s). Failed: ${data.failed.map((f: any) => f.id).join(", ")}`);
+      }
+      clearSelection();
+      router.refresh();
+    } catch (e) {
+      console.error("Bulk status change error:", e);
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
   const sorted = order.map((key) => columns.find((c) => c.key === key)!).filter(Boolean);
 
   return (
-    <div className="flex gap-4 overflow-x-auto overflow-y-auto h-full w-full min-w-0 pb-4">
+    <div className="relative h-full">
+      {selected.size > 0 && (
+        <div className="sticky top-0 z-10 mb-4 flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-md">
+          <span className="text-sm font-medium text-gray-800">
+            {selected.size} selected
+          </span>
+          <select
+            value={bulkStatus}
+            onChange={(e) => setBulkStatus(e.target.value)}
+            disabled={bulkBusy}
+            className="text-xs px-2 py-1.5 rounded border border-gray-300 bg-gray-50 text-gray-800 disabled:opacity-50"
+          >
+            <option value="">Set status…</option>
+            {ALL_STATUSES.map((s) => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
+          </select>
+          <button
+            onClick={applyBulkStatus}
+            disabled={!bulkStatus || bulkBusy}
+            className="text-xs px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-wait"
+          >
+            {bulkBusy ? "Updating…" : "Apply"}
+          </button>
+          <button
+            onClick={clearSelection}
+            disabled={bulkBusy}
+            className="text-xs px-3 py-1.5 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+          >
+            Clear
+          </button>
+        </div>
+      )}
+      <div className="flex gap-4 overflow-x-auto overflow-y-auto h-full w-full min-w-0 pb-4">
       {sorted.map((col) => {
         const isDragging = dragging === col.key;
         const isOver = dragOver === col.key;
@@ -110,17 +191,28 @@ export function JobsKanbanBoard({ columns }: { columns: JobColumnData[] }) {
                 <p className="text-xs text-gray-500 italic text-center pt-8">No jobs</p>
               )}
               {col.jobs.map((job) => (
-                <JobCard key={job.id} job={job} />
+                <JobCard key={job.id} job={job} selected={selected.has(job.id)} onToggleSelect={() => toggleSelect(job.id)} />
               ))}
             </div>
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
 
-function JobCard({ job }: { job: JobForCard }) {
+const ALL_STATUSES = [
+  { value: "inquiry", label: "Inquiry" },
+  { value: "intake_received", label: "Intake Received" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "awaiting_pics_or_payment", label: "Awaiting Pics/Payment" },
+  { value: "ready_to_ship", label: "Ready to Ship" },
+  { value: "delivered", label: "Delivered" },
+  { value: "portfolio_ready", label: "Portfolio Ready" },
+];
+
+function JobCard({ job, selected, onToggleSelect }: { job: JobForCard; selected: boolean; onToggleSelect: () => void }) {
   let dueDateClass = "text-gray-500";
   let dueDateLabel = "No due date";
 
@@ -136,7 +228,16 @@ function JobCard({ job }: { job: JobForCard }) {
   }
 
   return (
-    <div className={`bg-white rounded border ${job.pinned ? "border-rose-300 ring-1 ring-rose-200" : "border-gray-200"} p-3 shadow-sm`}>
+    <div className={`bg-white rounded border ${selected ? "border-blue-400 ring-1 ring-blue-300" : job.pinned ? "border-rose-300 ring-1 ring-rose-200" : "border-gray-200"} p-3 shadow-sm`}>
+      <label className="flex items-center justify-end">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={onToggleSelect}
+          title="Select for bulk status change"
+          className="h-3.5 w-3.5 accent-blue-600"
+        />
+      </label>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <a
