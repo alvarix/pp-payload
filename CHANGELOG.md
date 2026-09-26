@@ -4,6 +4,20 @@ Notable changes to `pp-v2`. Dates in YYYY-MM-DD.
 
 ## Unreleased
 
+### Phone required on intake
+
+- Intake form phone input is now `required` (label shows "Phone *"); draft
+  restore and Stripe prefill behavior unchanged.
+- `/api/intake` rejects submissions without a phone server-side (400
+  "Phone is required") for both full and partial submits, so browser-only
+  validation can't be bypassed. Direct POSTs and legacy clients matched by
+  email get their phone back-filled on update.
+- Collection-level `required` deliberately **not** set on `clients.phone`:
+  the Stripe POS webhook has no phone available, and a DB-level constraint
+  would fail POS client creation (Stripe would retry indefinitely).
+- Client CSV import now maps a `Phone` column and back-fills it on matched
+  clients that lack one.
+
 ### Kanban bulk status change + localhost CSRF fix
 
 - Dashboard: multi-select checkboxes on kanban cards with a bulk bar to change

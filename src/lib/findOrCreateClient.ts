@@ -5,6 +5,7 @@ export interface ClientInput {
   email: string;
   first_name?: string;
   last_name?: string;
+  /** Required by the intake form and intake API; optional elsewhere (e.g. POS has no phone). */
   phone?: string;
 }
 

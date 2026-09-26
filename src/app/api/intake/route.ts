@@ -20,6 +20,13 @@ export async function POST(request: NextRequest) {
 			phone: (formData.get("phone") as string) || undefined,
 		};
 
+		// Phone is required for all submissions (full and partial). The form marks
+		// it required, but the API enforces it server-side so the constraint holds
+		// even for direct POSTs that bypass the browser's validation.
+		if (!clientData.phone) {
+			return NextResponse.json({ error: "Phone is required" }, { status: 400 });
+		}
+
 		// -- Stripe verification (trust only the session ID from the form) -------
 		// Re-fetch the session server-side so an attacker can't forge stripe_* or
 		// payment fields by submitting arbitrary values to this public endpoint.
