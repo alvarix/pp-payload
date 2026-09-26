@@ -158,6 +158,8 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
 
   /** Handles field changes: marks dirty, saves draft, sends field_progress beacon. */
   function handleFormChange(e: React.ChangeEvent<HTMLFormElement>) {
+    // SAFETY: change events on <form> only originate from form controls, which
+    // all expose the HTMLInputElement interface for type/name reads used here.
     const target = e.target as unknown as HTMLInputElement;
     if (target.type === "file") return; // photos not drafted
 
@@ -236,9 +238,11 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
               body: file,
             });
             if (!res.ok) throw new Error(`Upload failed for "${file.name}" (${res.status})`);
-            mediaIds.push(mediaId);
+            return mediaId;
           }),
-        );
+        ).then((ids) => {
+          mediaIds.push(...ids);
+        });
       }
 
       // Step 3: submit form fields + resolved media IDs. No file bytes.
@@ -396,12 +400,13 @@ export function IntakeForm({ prefill, stripeSessionId }: IntakeFormProps) {
 
         <div className="mt-4">
           <label htmlFor="phone" className="block text-sm font-medium mb-1 text-stone-300">
-            Phone
+            Phone *
           </label>
           <input
             type="tel"
             id="phone"
             name="phone"
+            required
             defaultValue={draftValues.phone ?? prefill?.phone ?? ""}
             className={inputCls}
           />

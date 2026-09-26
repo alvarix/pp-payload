@@ -43,7 +43,7 @@ function splitCSVLine(line: string): string[] {
 /**
  * POST /api/dashboard/client-import
  * Body: { csv: string, dryRun: boolean }
- * Processes a CSV with columns: First, Last, Email, Pet, Breed, Date, Event, Type, Status
+ * Processes a CSV with columns: First, Last, Email, Phone, Pet, Breed, Date, Event, Type, Status
  * Creates/matches Clients and creates Jobs.
  */
 export async function POST(request: Request) {
@@ -110,6 +110,7 @@ export async function POST(request: Request) {
 		const eventName = row["Event"] || row["event"] || "";
 		const venueName = row["Venue"] || row["venue"] || "";
 		const email = row["Email"] || row["email"] || "";
+		const phone = row["Phone"] || row["phone"] || "";
 		const jobTypeRaw = (row["Type"] || row["type"] || "street")
 			.toLowerCase()
 			.trim();
@@ -194,6 +195,7 @@ export async function POST(request: Request) {
 
 		try {
 			let clientId: number | undefined;
+			let matchedClient: { id: number; phone?: string | null } | undefined;
 
 			// 1) Match by email first (most reliable identity key).
 			if (email) {
@@ -204,6 +206,7 @@ export async function POST(request: Request) {
 				});
 				if (byEmail.length > 0) {
 					clientId = byEmail[0].id;
+					matchedClient = { id: byEmail[0].id, phone: byEmail[0].phone };
 					stats.clientsMatched++;
 					rowSummary.action = "client matched";
 				}
@@ -233,9 +236,19 @@ export async function POST(request: Request) {
 
 				if (match) {
 					clientId = match.id;
+					matchedClient = { id: match.id, phone: match.phone };
 					stats.clientsMatched++;
 					rowSummary.action = "client matched";
 				}
+			}
+
+			// Back-fill phone on matched clients that don't have one yet.
+			if (clientId !== undefined && phone && matchedClient && !matchedClient.phone) {
+				await payload.update({
+					collection: "clients",
+					id: clientId,
+					data: { phone },
+				});
 			}
 
 			// 3) Create a client when nothing matched. Requires email or a name.
@@ -252,6 +265,7 @@ export async function POST(request: Request) {
 						email:
 							email ||
 							`import-${Date.now()}-${Math.random().toString(36).slice(2)}@placeholder.local`,
+						phone: phone || undefined,
 						notes: clientNotes || undefined,
 					},
 				});

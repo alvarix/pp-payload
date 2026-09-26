@@ -12,6 +12,7 @@ import type { ColumnDef } from "./ImportForm";
  */
 const COLUMN_DEFS: ColumnDef[] = [
   { name: "Email",        note: "Client email. Used as the primary identity key — matched against existing clients before creating a new one." },
+  { name: "Phone",        note: "Client phone number. Saved to new clients and back-filled on matched clients that lack one.", excludeByDefault: true },
   { name: "First",        note: "Client first name. Matched with Last when no email match exists.", excludeByDefault: true },
   { name: "Last",         note: "Client last name.", excludeByDefault: true },
   { name: "Pet",          note: "Pet name.", excludeByDefault: true },
