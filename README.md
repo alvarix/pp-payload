@@ -35,6 +35,28 @@ Handles client intake, job tracking, portfolio management, and events. The publi
 
 `/dashboard/client-import` — CSV importer for post-event client intake. Columns: `Email, First, Last, Pet, Breed, Event, Type, Status, Job Notes, Client Notes, Referral`. Supports paste/file or a per-field form. Column chips are shown before upload — hover for per-field notes, click × to exclude. Due date is today + shipping window (street +7 days, studio +10 days).
 
+**Export for Brevo** — a link in the dashboard nav on both the Jobs and Orgs pages. Downloads `clients-brevo-<date>.csv` for import into Brevo. Columns: `email, firstname, lastname, consent_given, consent_basis, marketing_status, marketing_status_changed_at, repeat_customer`. Append `?filter=sendable` to the endpoint to export only clients eligible for marketing email. See [Marketing consent](#marketing-consent) below.
+
+## Marketing consent
+
+Whether a client can receive marketing email is decided by two fields on `clients`, checked in one place — `isSendable()` in `src/lib/marketing.ts`:
+
+```text
+marketing_consent === true AND marketing_status === 'subscribed'
+```
+
+| Field | Values | Purpose |
+| --- | --- | --- |
+| `marketing_consent` | boolean | The opt-in checkbox. Defaults to checked on create. Unticked automatically when status becomes a suppression state. |
+| `consent_basis` | `express`, `existing_customer_us`, `none` | *Why* the address is mailable. `express` = they opted in. `existing_customer_us` = CAN-SPAM opt-out basis, no prior consent recorded. |
+| `consent_recorded_at` | date | When the basis was recorded. Stamped on create and on bulk backfill. |
+| `marketing_status` | `never_asked`, `subscribed`, `unsubscribed`, `bounced`, `complained` | Current delivery state. Bounced and complained are not user choices and block sending permanently. |
+| `marketing_status_changed_at` | date | Stamped by a `beforeChange` hook whenever the status changes. |
+
+**State as of 2026-10-21:** all 232 clients are `subscribed` with `marketing_consent = true` — 2 on an `express` basis, 230 recorded as `existing_customer_us` by a bulk operator decision. Pre-change values are preserved in the `clients_consent_snapshot_20261021` table; drop it once the bulk assertion is settled. `existing_customer_us` is defensible for US recipients only.
+
+Background and ongoing risks: [`docs/000--concern--where-the-data-lives.md`](docs/000--concern--where-the-data-lives.md).
+
 ## API routes
 
 `POST /api/intake` - public intake form endpoint. Accepts client contact info, pet data, and photo uploads. Enforces 10MB per file, 10 files max, 70MB total. Add `?partial=1` to skip photo validation — creates the job anyway with a notes prefix indicating photos are pending via IG/email. Creates or updates the client by email and creates a job.
@@ -44,6 +66,8 @@ Handles client intake, job tracking, portfolio management, and events. The publi
 `POST /api/dashboard/actions` - auth-protected. Job actions: `set_status`, `toggle_pics_received`, `toggle_pinned`, `delete`.
 
 `POST /api/dashboard/org-actions` - auth-protected. Org actions: `set_status`, `set_fit_score`, `toggle_pinned`, `delete`.
+
+`GET /api/dashboard/export/clients` - auth-protected. Returns a Brevo-shaped CSV download (`text/csv`, `no-store`, UTF-8 without BOM, CRLF, RFC 4180 quoting, sorted by email). Query param `filter=sendable` restricts output to clients where `isSendable()` is true. Response headers `X-Total-Clients` and `X-Sendable-Clients` report counts. Paginates at 200 rows and refuses beyond 10,000 rather than timing out.
 
 ## Tech stack
 

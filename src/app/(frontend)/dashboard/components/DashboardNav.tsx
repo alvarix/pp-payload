@@ -14,6 +14,8 @@ interface DashboardNavProps {
   quickCreate?: QuickCreate[];
   /** Context-specific import link */
   importHref?: string;
+  /** Context-specific CSV export link, rendered as a direct download */
+  exportHref?: string;
 }
 
 /**
@@ -25,6 +27,7 @@ export function DashboardNav({
   orgsNeedingFollowUp = 0,
   quickCreate = [],
   importHref,
+  exportHref,
 }: DashboardNavProps) {
   const linkCls = "text-xs px-2 py-0.5 border border-gray-200 rounded text-gray-600 hover:bg-gray-100";
   const activeCls = "text-xs px-2 py-0.5 border rounded font-semibold";
@@ -71,6 +74,13 @@ export function DashboardNav({
       {importHref && (
         <a href={importHref} className={linkCls}>
           Import CSV
+        </a>
+      )}
+
+      {/* Export - a plain anchor so the browser handles the file download */}
+      {exportHref && (
+        <a href={exportHref} className={linkCls}>
+          Export for Brevo
         </a>
       )}
 

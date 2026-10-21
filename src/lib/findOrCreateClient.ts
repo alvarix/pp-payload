@@ -1,4 +1,5 @@
 import type { Payload } from "payload";
+import { statusFromConsent } from "@/lib/marketing";
 
 /** Minimal client fields needed to find or create a record. */
 export interface ClientInput {
@@ -46,6 +47,13 @@ export async function findOrCreateClient(
 
   return payload.create({
     collection: "clients",
-    data: { ...clientData, ...addressPayload },
+    data: {
+      ...clientData,
+      ...addressPayload,
+      // New clients are mailable by default under the existing-customer basis;
+      // unsubscribing revokes it through the collection hook.
+      marketing_status: statusFromConsent(true),
+      consent_basis: "existing_customer_us",
+    },
   });
 }

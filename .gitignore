@@ -68,3 +68,6 @@ tsconfig.tsbuildinfo
 .vercel
 docs/.obsidian/
 docs/.obsidian/*
+
+# Client PII exports - never commit
+exports/

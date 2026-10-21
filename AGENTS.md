@@ -1139,3 +1139,34 @@ For deeper exploration of specific topics, refer to the context files located in
 - GitHub: https://github.com/payloadcms/payload
 - Examples: https://github.com/payloadcms/payload/tree/main/examples
 - Templates: https://github.com/payloadcms/payload/tree/main/templates
+
+## Documentation style
+
+Technical language is fine and should not be dumbed down, but **every doc in `docs/` opens with a `## For dummies` section**, placed immediately after the title and status lines.
+
+The shape is fixed:
+
+1. **Plain statements of fact.** Short sentences. No metaphors, no analogies, no "picture it like...". Say what happens and in what order.
+2. **Then the condensed technical version.** Dense is correct here — table names, column types, exact commands, real numbers.
+3. **For procedures, a copy-paste block.** The exact commands to run, in order, so nothing has to be assembled from prose.
+
+Analogy is not explanation. If a step needs an analogy, the step is usually doing too much; split it instead.
+
+Procedures must also state how to **verify locally before deploying**, since that is cheaper than being wrong in production.
+
+Readers who want the detail keep reading; readers who are tired get oriented first.
+
+### Doc numbering belongs to Alvar
+
+Do not mint numbers. A doc number identifies a **scope**, and assigning scopes is Alvar's decision, not the agent's.
+
+- Never create the next integer (`022`, `023`, ...) because a topic feels new. Related work stays under the existing number.
+- Never use a decimal (`021.1`, `021.2`) to mean "another doc in the same scope". Extra documents in one scope share the number and differ by descriptor: `021--llm--eblast.md`, `021--llm--resend-plugin-assessment.md`, `021--llm--db-migration-runbook.md`.
+- A decimal means exactly one thing: **a new draft of the same document** (`01--llm--spec.md` → `01.1--llm--spec.md`), never a sibling document.
+- When a new scope genuinely seems needed, ask rather than pick a number.
+
+### Standing concerns use `000--concern--<slug>.md`
+
+Ongoing risks that outlive any single feature — where data lives, vendor dependencies, sync gaps — do not belong to a spec scope. They go in `docs/000--concern--<slug>.md`.
+
+Every concern doc shares the number `000` and differs by slug, so nothing ever increments and the series cannot collide with the numbered spec series. Numbered concerns inside the doc are plain table rows (`1`, `2`, `3`), referenced as "concern 3", so adding one never renumbers the others.

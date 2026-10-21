@@ -323,9 +323,25 @@ export interface Client {
   company?: string | null;
   price?: number | null;
   /**
-   * Client has consented to marketing emails
+   * Opted in to marketing email. Defaults to checked for new clients (existing-customer basis); clearing it, or any suppression status, blocks sends.
    */
   marketing_consent?: boolean | null;
+  /**
+   * Why we are allowed to email this address. Express = they affirmatively opted in. Existing US customer = CAN-SPAM opt-out basis, no prior consent recorded. None = not mailable.
+   */
+  consent_basis: 'express' | 'existing_customer_us' | 'none';
+  /**
+   * When the consent basis was recorded. Stamped automatically on create and on bulk backfill.
+   */
+  consent_recorded_at?: string | null;
+  /**
+   * Why this address can or cannot receive marketing email. Bounced = address is dead. Complained = marked as spam. Only 'subscribed' plus consent allows a send.
+   */
+  marketing_status: 'never_asked' | 'subscribed' | 'unsubscribed' | 'bounced' | 'complained';
+  /**
+   * Set automatically when Marketing Status changes. Read-only in practice; the beforeChange hook owns it.
+   */
+  marketing_status_changed_at?: string | null;
   /**
    * Client has consented to portfolio display
    */
@@ -702,6 +718,10 @@ export interface ClientsSelect<T extends boolean = true> {
   company?: T;
   price?: T;
   marketing_consent?: T;
+  consent_basis?: T;
+  consent_recorded_at?: T;
+  marketing_status?: T;
+  marketing_status_changed_at?: T;
   portfolio_consent?: T;
   tags?:
     | T

@@ -95,6 +95,7 @@ export default async function OrganizationsDashboardPage() {
           { label: "+ Org", href: "/admin/collections/organizations/create" },
         ]}
         importHref="/dashboard/brevo-org-import"
+        exportHref="/api/dashboard/export/clients"
       />
 
       <KanbanColumns columns={columnData} today={today} />

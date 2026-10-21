@@ -4,6 +4,45 @@ Notable changes to `pp-v2`. Dates in YYYY-MM-DD.
 
 ## Unreleased
 
+### Brevo client export + marketing status
+
+- New `GET /api/dashboard/export/clients` returns a Brevo-shaped CSV
+  (`email, firstname, lastname, consent_given, consent_basis, marketing_status,
+  marketing_status_changed_at, repeat_customer`). Auth-gated, `no-store`,
+  deterministic `email` sort, RFC 4180 quoting, UTF-8 with no BOM, CRLF.
+- `?filter=sendable` narrows the export to clients eligible for marketing
+  email. Response headers report `X-Total-Clients` and `X-Sendable-Clients`.
+- "Export for Brevo" link added to the dashboard nav on both the Jobs and Orgs
+  pages.
+- `clients.unsubscribed_at` replaced by `clients.marketing_status`
+  (`never_asked`, `subscribed`, `unsubscribed`, `bounced`, `complained`) plus
+  `marketing_status_changed_at`, which a `beforeChange` hook stamps
+  automatically. A nullable date could not distinguish a dead address from a
+  spam complaint, so both looked sendable.
+- Send eligibility lives in one place, `isSendable()` in `src/lib/marketing.ts`:
+  `marketing_consent === true && marketing_status === 'subscribed'`.
+- Migration `20261021_000000_add_clients_marketing_status` creates both enums and
+  the new columns, backfills from `marketing_consent` and from any existing
+  `unsubscribed_at` data, then drops the old column. **Applied 2026-10-21 as
+  batch 12.** The Payload CLI hung rather than running it, so the statements
+  were executed directly in one transaction and the `payload_migrations` row was
+  inserted to match. Investigate the CLI hang before the next migration.
+- New clients default to `marketing_consent: true`, `marketing_status:
+  subscribed`, `consent_basis: existing_customer_us`; both create paths
+  (`client-import`, `findOrCreateClient`) set these explicitly.
+- `consent_basis` (`express | existing_customer_us | none`) and
+  `consent_recorded_at` record *why* an address is mailable. On 2026-10-21 all
+  232 clients were set mailable as a bulk operator decision: 2 `express`, 230
+  `existing_customer_us`. Pre-change values are preserved in
+  `clients_consent_snapshot_20261021`.
+- Any suppression status (`unsubscribed`, `bounced`, `complained`) revokes
+  consent automatically via the `beforeChange` hook, so unsubscribing unticks the
+  checkbox rather than leaving it checked next to a blocking status.
+- `repeat_customer` is derived at export time from a count of non-`inquiry`
+  jobs, so it cannot drift from job data.
+- New `src/lib/csv.ts` (RFC 4180 serializer) and `src/lib/marketing.ts`, with 33
+  unit tests between them.
+
 ### Phone required on intake
 
 - Intake form phone input is now `required` (label shows "Phone *"); draft

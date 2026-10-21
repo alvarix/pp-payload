@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { APIError } from "payload";
+import { isSuppressed } from "@/lib/marketing";
 
 export const Clients: CollectionConfig = {
   slug: "clients",
@@ -77,9 +78,65 @@ export const Clients: CollectionConfig = {
       name: "marketing_consent",
       type: "checkbox",
       label: "Marketing Consent",
-      defaultValue: false,
+      defaultValue: true,
       admin: {
-        description: "Client has consented to marketing emails",
+        description:
+          "Opted in to marketing email. Defaults to checked for new clients (existing-customer basis); clearing it, or any suppression status, blocks sends.",
+      },
+    },
+    {
+      name: "consent_basis",
+      type: "select",
+      label: "Consent Basis",
+      required: true,
+      defaultValue: "existing_customer_us",
+      options: [
+        { label: "Express opt-in", value: "express" },
+        { label: "Existing US customer", value: "existing_customer_us" },
+        { label: "None", value: "none" },
+      ],
+      admin: {
+        description:
+          "Why we are allowed to email this address. Express = they affirmatively opted in. Existing US customer = CAN-SPAM opt-out basis, no prior consent recorded. None = not mailable.",
+      },
+    },
+    {
+      name: "consent_recorded_at",
+      type: "date",
+      label: "Consent Recorded At",
+      admin: {
+        description:
+          "When the consent basis was recorded. Stamped automatically on create and on bulk backfill.",
+        readOnly: true,
+      },
+    },
+    {
+      name: "marketing_status",
+      type: "select",
+      label: "Marketing Status",
+      required: true,
+      defaultValue: "subscribed",
+      index: true,
+      options: [
+        { label: "Never asked", value: "never_asked" },
+        { label: "Subscribed", value: "subscribed" },
+        { label: "Unsubscribed", value: "unsubscribed" },
+        { label: "Bounced", value: "bounced" },
+        { label: "Complained (spam)", value: "complained" },
+      ],
+      admin: {
+        description:
+          "Why this address can or cannot receive marketing email. Bounced = address is dead. Complained = marked as spam. Only 'subscribed' plus consent allows a send.",
+      },
+    },
+    {
+      name: "marketing_status_changed_at",
+      type: "date",
+      label: "Marketing Status Changed At",
+      admin: {
+        description:
+          "Set automatically when Marketing Status changes. Read-only in practice; the beforeChange hook owns it.",
+        readOnly: true,
       },
     },
     {
@@ -109,6 +166,37 @@ export const Clients: CollectionConfig = {
 
   ],
   hooks: {
+    beforeChange: [
+      ({ data, originalDoc, operation }) => {
+        // Stamp when the marketing status actually changes, so the timestamp is
+        // never stale and never depends on someone remembering to set it.
+        const next = data.marketing_status;
+        const previous = originalDoc?.marketing_status;
+
+        if (operation === "create") {
+          if (!data.consent_recorded_at) {
+            data.consent_recorded_at = new Date().toISOString();
+          }
+          if (next && next !== "never_asked" && !data.marketing_status_changed_at) {
+            data.marketing_status_changed_at = new Date().toISOString();
+          }
+        } else if (next && next !== previous) {
+          data.marketing_status_changed_at = new Date().toISOString();
+        }
+
+        // Any suppression status revokes the opt-in. Unsubscribing is how a
+        // client changes their mind, so the checkbox must follow it rather than
+        // being left checked next to a status that blocks sending.
+        if (next && next !== previous && isSuppressed(next)) {
+          data.marketing_consent = false;
+          if (data.consent_basis !== "none") {
+            data.consent_basis = "none";
+          }
+        }
+
+        return data;
+      },
+    ],
     beforeDelete: [
       async ({ id, req }) => {
         const linked = await req.payload.find({

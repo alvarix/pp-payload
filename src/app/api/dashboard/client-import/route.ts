@@ -1,6 +1,7 @@
 import { headers as getHeaders } from "next/headers";
 import { getPayload } from "payload";
 import config from "@/payload.config";
+import { statusFromConsent } from "@/lib/marketing";
 
 /**
  * Parses CSV text into rows of key-value objects.
@@ -267,6 +268,10 @@ export async function POST(request: Request) {
 							`import-${Date.now()}-${Math.random().toString(36).slice(2)}@placeholder.local`,
 						phone: phone || undefined,
 						notes: clientNotes || undefined,
+						// New clients are mailable by default under the existing-customer
+						// basis. Unsubscribing revokes it through the collection hook.
+						marketing_status: statusFromConsent(true),
+						consent_basis: "existing_customer_us",
 					},
 				});
 				clientId = created.id;
