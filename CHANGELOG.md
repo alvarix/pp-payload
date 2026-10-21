@@ -4,6 +4,20 @@ Notable changes to `pp-v2`. Dates in YYYY-MM-DD.
 
 ## Unreleased
 
+### Export page describes the file it downloads
+
+- New `/dashboard/export/clients` page. Opening it starts the CSV download and
+  shows the exact parameters: resolved endpoint and filter, row count, filename,
+  encoding, line endings, quoting rules, every column with a live sample value,
+  and the marketing-status breakdown.
+- "Export for Brevo" in the dashboard nav now points at that page instead of
+  straight at the API route.
+- Auto-download with a manual button fallback, because Safari sometimes blocks a
+  download triggered during page load.
+- Export logic extracted to `src/lib/client-export.ts`, used by both the page and
+  the route, so the description cannot drift from the file. The route also
+  reports `X-Rows-Exported`.
+
 ### Schema push disabled in dev
 
 - `push: false` set on the Postgres adapter in `src/payload.config.ts`. Dev mode

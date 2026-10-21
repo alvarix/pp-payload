@@ -35,7 +35,9 @@ Handles client intake, job tracking, portfolio management, and events. The publi
 
 `/dashboard/client-import` — CSV importer for post-event client intake. Columns: `Email, First, Last, Pet, Breed, Event, Type, Status, Job Notes, Client Notes, Referral`. Supports paste/file or a per-field form. Column chips are shown before upload — hover for per-field notes, click × to exclude. Due date is today + shipping window (street +7 days, studio +10 days).
 
-**Export for Brevo** — a link in the dashboard nav on both the Jobs and Orgs pages. Downloads `clients-brevo-<date>.csv` for import into Brevo. Columns: `email, firstname, lastname, consent_given, consent_basis, marketing_status, marketing_status_changed_at, repeat_customer`. Append `?filter=sendable` to the endpoint to export only clients eligible for marketing email. See [Marketing consent](#marketing-consent) below.
+**Export for Brevo** — a link in the dashboard nav on both the Jobs and Orgs pages, pointing at `/dashboard/export/clients`. Opening it starts the CSV download and shows a page describing exactly what the file contains: the resolved endpoint and filter, row count, filename, encoding and quoting rules, every column with a live sample value, and the marketing-status breakdown.
+
+The page and the CSV are built from the same function (`loadClientExport` in `src/lib/client-export.ts`), so the description cannot drift from the file. If a browser blocks the automatic download, the same page carries a manual download button. Append `?filter=sendable` to the page URL to describe and download only marketing-eligible clients. See [Marketing consent](#marketing-consent) below.
 
 ## Marketing consent
 
@@ -67,7 +69,7 @@ Background and ongoing risks: [`docs/000--concern--where-the-data-lives.md`](doc
 
 `POST /api/dashboard/org-actions` - auth-protected. Org actions: `set_status`, `set_fit_score`, `toggle_pinned`, `delete`.
 
-`GET /api/dashboard/export/clients` - auth-protected. Returns a Brevo-shaped CSV download (`text/csv`, `no-store`, UTF-8 without BOM, CRLF, RFC 4180 quoting, sorted by email). Query param `filter=sendable` restricts output to clients where `isSendable()` is true. Response headers `X-Total-Clients` and `X-Sendable-Clients` report counts. Paginates at 200 rows and refuses beyond 10,000 rather than timing out.
+`GET /api/dashboard/export/clients` - auth-protected. Returns a Brevo-shaped CSV download (`text/csv`, `no-store`, UTF-8 without BOM, CRLF, RFC 4180 quoting, sorted by email). Query param `filter=sendable` restricts output to clients where `isSendable()` is true. Response headers `X-Total-Clients`, `X-Sendable-Clients` and `X-Rows-Exported` report counts. Paginates at 200 rows and refuses beyond 10,000 rather than timing out. Logic is shared with the `/dashboard/export/clients` page via `src/lib/client-export.ts`.
 
 ## Tech stack
 

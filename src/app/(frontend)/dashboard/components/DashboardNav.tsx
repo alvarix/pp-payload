@@ -80,7 +80,7 @@ export function DashboardNav({
       {/* Export - a plain anchor so the browser handles the file download */}
       {exportHref && (
         <a href={exportHref} className={linkCls}>
-          Export for Brevo
+          Export Clients for Brevo
         </a>
       )}
 

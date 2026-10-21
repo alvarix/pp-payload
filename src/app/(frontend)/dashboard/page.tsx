@@ -264,7 +264,7 @@ export default async function DashboardPage() {
 					{ label: "+ Client", href: "/admin/collections/clients/create" },
 				]}
 				importHref="/dashboard/client-import"
-				exportHref="/api/dashboard/export/clients"
+				exportHref="/dashboard/export/clients"
 			/>
 
 			<div className="flex-shrink-0">
