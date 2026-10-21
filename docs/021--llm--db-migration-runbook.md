@@ -90,7 +90,7 @@ Two findings from those measurements:
 | # | Hazard | Consequence | Guard |
 | --- | --- | --- | --- |
 | 1 | **Silent empty backup** | Two 0-byte dumps already exist in `db-backups/` | `test -s` plus a `CREATE TABLE` grep, abort on failure |
-| 2 | **Schema drift from migration history** | Confirmed: `unsubscribed_at` exists with no migration record, so `migrate:status` cannot be trusted as a description of the schema | Check `information_schema` directly (Step 6), and treat `migrate:create` output as a partial diff |
+| 2 | **Schema drift from migration history** | Confirmed 2026-10-21: a `pnpm dev` session against the production `DATABASE_URL` pushed schema, created `unsubscribed_at` without a migration record, and later dropped `clients_consent_snapshot_20261021` after a `DATA LOSS WARNING` prompt was answered `yes`. `migrate:status` is therefore not a description of the schema | Check `information_schema` directly (Step 6); treat `migrate:create` output as a partial diff; never answer a schema prompt — stop and read it |
 | 3 | **Backup written to the wrong directory** | `db-backup.sh` writes relative to the current directory | Absolute `OUT` path |
 | 4 | **Wrong database** | `.env` points at production | Step 0 prints host/port/db, never credentials |
 | 5 | **`pg_dump` older than server** | Refusal or partial dump | Step 2 compares versions (18.3 vs 17.6 — fine today) |
@@ -171,6 +171,14 @@ pnpm payload migrate        # up again
 This proves the `down` path works before you depend on it. It is optional; it takes seconds and touches nothing but this migration's own statements. Skip it and you are trusting a rollback you have never run.
 
 ### Step 5 — Apply
+
+Before running this, confirm three things:
+
+1. **No `pnpm dev` process is running.** A dev server pointed at the same database pushes schema independently and can drop tables while this migration runs.
+2. **`push: false` is set** on the postgres adapter in `src/payload.config.ts`. Until it is, any dev run is an unreviewed schema migration.
+3. **Any prompt stops the run.** If you see `Warnings detected during schema push`, do not answer it. Paste it and investigate. That prompt is a schema mutation asking for permission, not a routine confirmation.
+
+The command itself may exit without applying anything if it hits an interactive prompt in a non-TTY shell. If the output ends without naming the migration, it did not run — check `migrate:status` before assuming success.
 
 ```bash
 pnpm payload migrate

@@ -47,14 +47,28 @@ Condensed technical version:
 | 7 | **The export is a snapshot with no memory** | Nothing records "who we last sent to". A second send in the same week re-mails everyone unless someone filters by hand. | Nothing detects it | per eblast |
 | 8 | **Schema drifts outside migrations** | `clients.unsubscribed_at` and `clients_unsubscribed_at_idx` exist in production with no `payload_migrations` record, so `migrate:status` does not describe the database and `migrate:create` under-reports. | Column in DB, absent from `payload_migrations` | monthly |
 
-### On concern 8 specifically
+### On concern 8 specifically — confirmed, with a casualty
 
-`push` is evidently off: after `marketing_status` entered the collection config, the column never appeared in the database despite `payload generate:types`, `tsc` and `next build` all booting the config. That points at a `pnpm dev` session rather than a CLI command — Payload's dev mode syncs schema to whatever `DATABASE_URL` points at, and `.env` points at production.
+**Confirmed 2026-10-21.** A `pnpm dev` session was running against the production `DATABASE_URL`. Payload's dev mode reconciles the live schema against the collection configs and prompted:
 
-Either fix is sufficient:
+```text
+? Warnings detected during schema push:
+· You're about to delete clients_consent_snapshot_20261021 table with 232 items
+DATA LOSS WARNING: Possible data loss detected if schema is pushed.
+Accept warnings and push schema to database? … yes
+```
 
-- Point development at a separate database so a dev session cannot reach production.
+The prompt was answered `yes`, and the snapshot table was dropped. `clients` was untouched — 232 rows, all `subscribed`, 230 `existing_customer_us` + 2 `express`. Nothing else was dropped. The contents were reconstructable, because pre-change consent equals `consent_basis = 'express'` and `unsubscribed_at` was NULL for every row.
+
+Two lessons, both structural:
+
+1. A dev server pointed at production is a migration tool that nobody reviews. It must not be able to reach this database.
+2. Any prompt during a dev run should stop the operator, not be answered. The prompt text above is what "possible data loss" looks like before it happens.
+
+Either fix is sufficient, and both are cheap:
+
 - Set `push: false` on the postgres adapter so schema changes only happen through migrations.
+- Point development at a separate database so a dev session cannot reach production at all.
 
 ---
 

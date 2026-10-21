@@ -10,7 +10,7 @@
 
 Phase 1 is finished: there is a button that downloads a CSV of your clients, and every client is now mailable in the database.
 
-Phase 2 makes that button adjustable — choose which columns you get and which clients are included. There is no language model anywhere in this plan; an earlier draft of this document wrongly included one, and that section has been removed.
+Phase 2 makes that button adjustable — choose which columns you get and which clients are included. "LLM-assisted steps" in the original request means **I walk you through the procedure one gate at a time** — download, verify, import — not a model inside the export. An earlier draft of this document misread that and proposed a model-driven input; that section has been removed.
 
 Phase 3 is about sending the email ourselves through Resend instead of Brevo. It is written up, not decided. Nothing should be built for it yet.
 
@@ -19,7 +19,7 @@ Condensed version:
 | Phase | State | Blocking question |
 | --- | --- | --- |
 | 1 — fixed export button | **shipped**, migration applied, 232 mailable | none |
-| 2 — configurable export | proposal, no code | how much UI do you want |
+| 2 — configurable export + guided walkthrough | proposal, no code | how much UI do you want |
 | 3 — Resend | brief, speculative | replace Brevo or coexist |
 
 ---
@@ -80,9 +80,26 @@ Acceptance criteria:
 - Every registry entry has a unit test for its value function.
 - `X-Total-Clients` / `X-Sendable-Clients` still report true totals, not filtered counts.
 
-Effort: about 2 hours plus tests.
+Effort: about 2 hours plus tests. The walkthrough in 2.2 runs after it and takes 20-30 minutes.
 
-### 2.2 Optional second piece — the missing memory
+### 2.2 Guided walkthrough — what "LLM-assisted steps" means
+
+No code. The delivery method for Phase 2 is that I drive the procedure with the operator: you run each command, paste the output, and I confirm it matches the expected observable before we move to the next gate. A written runbook can be skimmed; a gate cannot.
+
+Six gates, each with a pass condition:
+
+| Gate | You run | Passes when |
+| --- | --- | --- |
+| 1. Database state | `payload migrate:status` and a client count | no migration pending, 232 clients, all `subscribed` |
+| 2. Backup | the `pg_dump` block in `docs/021--llm--db-migration-runbook.md` Step 3 | file exists, non-empty, contains `CREATE TABLE`, size comparable to the last dump |
+| 3. Local suite | `pnpm test:int`, `tsc --noEmit`, `pnpm build` | 52 tests pass, no new type errors, build compiles |
+| 4. Download | click **Export for Brevo** in dev | `clients-brevo-<date>.csv`, 233 lines, expected header |
+| 5. Verify contents | `head`, `wc -l`, and a `?filter=sendable` download | header matches, row count matches the DB count, sendable count matches `X-Sendable-Clients` |
+| 6. Brevo import | import into a new test list, map the columns | mapping accepted, contact count matches, no surprise contacts |
+
+Rules for the walkthrough: stop at the first gate whose output differs from the pass condition; never advance because it looked fine; and if a command produces a prompt asking to accept schema warnings, stop and paste it rather than answering — that prompt must not appear during an export test.
+
+### 2.3 Optional second piece — the missing memory
 
 Concern 7 in `docs/000--concern--where-the-data-lives.md`: nothing records who was sent what. A minimal fix is a `send_log` table written when an export is downloaded for Brevo, holding the date, the params, and the client ids. That turns "don't email these people twice" from a manual check into a query. Roughly 2 hours; worth doing before the next eblast, not before Phase 2 ships.
 
