@@ -79,3 +79,4 @@ data_import/cleaned-clients.json
 data_import/cleaned-jobs.json
 docs/all-leads-seed.json
 docs/outreach-leads-seed.json
+.hypa/data/hypa.db

@@ -4,6 +4,30 @@ Notable changes to `pp-v2`. Dates in YYYY-MM-DD.
 
 ## Unreleased
 
+### Client data removed from git history
+
+Five tracked files containing client and organization contact data were removed
+from every commit on every branch, and `main` and `deploy` were force-pushed. The
+remote no longer has them reachable from any ref.
+
+- Removed from history: `data_import/consolidated_clients2.csv`,
+  `data_import/cleaned-clients.json`, `data_import/cleaned-jobs.json`,
+  `docs/all-leads-seed.json`, `docs/outreach-leads-seed.json`.
+- All five are still on disk, byte-identical, and now listed in `.gitignore`. The
+  `data_import/*.mjs` scripts still run locally but need those files supplied by
+  hand, since a fresh clone no longer contains them.
+- Commit SHAs on `main` and `deploy` changed. Any existing clone must be re-cloned
+  or hard-reset; a normal pull will not reconcile the rewritten history.
+- One empty commit was pruned; commit count went 157 to 156.
+
+Two things remain true and are not fixable from this repo:
+
+- GitHub keeps unreachable objects retrievable by SHA until it garbage-collects
+  them. Truly purging them requires GitHub support or recreating the repository.
+- The pre-rewrite history is preserved locally in `.git/pre-purge-20261021.bundle`
+  and under `refs/original/`. Both contain the data. Never run `git push --mirror`
+  from this clone while they exist.
+
 ### Export page describes the file it downloads
 
 - New `/dashboard/export/clients` page. Opening it starts the CSV download and
