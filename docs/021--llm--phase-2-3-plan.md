@@ -10,7 +10,7 @@
 
 Phase 1 is finished: there is a button that downloads a CSV of your clients, and every client is now mailable in the database.
 
-Phase 2 makes that button adjustable — choose which columns you get, and describe the export in a sentence instead of clicking options. A language model turns your sentence into the same fixed set of settings the button already understands. It never touches the database and cannot invent a column.
+Phase 2 makes that button adjustable — choose which columns you get and which clients are included. There is no language model anywhere in this plan; an earlier draft of this document wrongly included one, and that section has been removed.
 
 Phase 3 is about sending the email ourselves through Resend instead of Brevo. It is written up, not decided. Nothing should be built for it yet.
 
@@ -19,7 +19,7 @@ Condensed version:
 | Phase | State | Blocking question |
 | --- | --- | --- |
 | 1 — fixed export button | **shipped**, migration applied, 232 mailable | none |
-| 2 — configurable export + LLM step | proposal, no code | how much UI do you want |
+| 2 — configurable export | proposal, no code | how much UI do you want |
 | 3 — Resend | brief, speculative | replace Brevo or coexist |
 
 ---
@@ -46,7 +46,7 @@ Known debt carried into Phase 2:
 
 ---
 
-## Phase 2 — configurable export, then an LLM-assisted step
+## Phase 2 — configurable export
 
 ### 2.1 Configurable export (no LLM, do this first)
 
@@ -82,43 +82,7 @@ Acceptance criteria:
 
 Effort: about 2 hours plus tests.
 
-### 2.2 LLM-assisted step (the part you asked about)
-
-You type: *"everyone who ordered twice, include pet breed and last order date"*. A model translates that into `include=email,firstname,lastname,consent_given,repeat_customer,pet_species,last_order_date&only=repeat`, shows you the interpretation, and you confirm or correct it. Then the normal download runs.
-
-The model is a **translator, not an executor**:
-
-| It does | It never does |
-| --- | --- |
-| Map a sentence to registry keys and filter params | Write SQL or call the database |
-| Ask a clarifying question when ambiguous | Guess at a column that is not in the registry |
-| Explain back what it understood | Decide which clients get emailed |
-
-Shape:
-
-```text
-POST /api/dashboard/export/plan   { prompt: string }
-  → 200 { params: { include: [...], filter: "sendable", only: "repeat" },
-          explanation: "Repeat customers only, with pet species and last order date.",
-          rejected: ["'pet breed' is not a column; nearest is pet_species"] }
-  → 422 { question: "Does 'ordered twice' mean two paid orders, or two inquiries?" }
-```
-
-Guardrails, in order of importance:
-
-1. **Whitelist enforcement lives on the server**, in the same validator the plain route uses. A model output that mentions an unknown column is rejected with the reason shown, never passed through.
-2. **Show the interpretation before downloading.** No silent execution — the operator sees the params and the explanation, then confirms.
-3. **No client data goes to the model.** The prompt carries the registry schema and the user's sentence, nothing else.
-4. **Deterministic downstream.** Once the params exist, the export is a pure function of the database; the model is out of the loop.
-5. **Ambiguity returns a question, not a default.** A confident wrong filter is worse than a follow-up question.
-
-What this is worth: it removes the gap between "I know what segment I want" and "which checkboxes produce it". The same registry powers the manual UI, so the LLM step is an input method, not a parallel code path.
-
-What it is not: it does not send email, does not decide consent, and does not remove the need for `filter=sendable` on the download link.
-
-Effort: 3-5 hours, most of it in the validator and the interpretation UI rather than the model call.
-
-### 2.3 Optional third piece — the missing memory
+### 2.2 Optional second piece — the missing memory
 
 Concern 7 in `docs/000--concern--where-the-data-lives.md`: nothing records who was sent what. A minimal fix is a `send_log` table written when an export is downloaded for Brevo, holding the date, the params, and the client ids. That turns "don't email these people twice" from a manual check into a query. Roughly 2 hours; worth doing before the next eblast, not before Phase 2 ships.
 
@@ -158,7 +122,7 @@ resolveRecipients: async ({ req }) => {
 
 ## Open decisions
 
-1. **Phase 2 UI**: a checkbox panel in the dashboard, or URL parameters only and let the LLM step generate the link? The second is a fraction of the work and covers the same need.
+1. **Phase 2 UI**: a checkbox panel in the dashboard, or URL parameters only? The second is a fraction of the work and covers the same need.
 2. **`send_log`**: build it before the next eblast, or accept manual bookkeeping one more time?
 3. **Phase 3**: replace Brevo or coexist for one cycle?
 4. **The `payload migrate` hang** — should that be fixed before Phase 2, so the next migration uses the supported path?
