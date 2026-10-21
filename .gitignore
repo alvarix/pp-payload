@@ -71,3 +71,11 @@ docs/.obsidian/*
 
 # Client PII exports - never commit
 exports/
+.hypa/data/hypa.db
+
+# Client data files - local copies kept, never committed
+data_import/consolidated_clients2.csv
+data_import/cleaned-clients.json
+data_import/cleaned-jobs.json
+docs/all-leads-seed.json
+docs/outreach-leads-seed.json
