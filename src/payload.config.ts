@@ -59,6 +59,12 @@ export default buildConfig({
       max: 3,
       idleTimeoutMillis: 10_000,
     },
+    // Never let dev mode rewrite the schema. Without this, `next dev` compares the
+    // live database against these collection configs and drops anything it does not
+    // recognise - it did exactly that on 2026-10-21, deleting a snapshot table after
+    // a "DATA LOSS WARNING" prompt was accepted. Schema changes go through
+    // `payload migrate` only. See docs/000--concern--where-the-data-lives.md.
+    push: false,
   }),
   sharp,
   plugins: [

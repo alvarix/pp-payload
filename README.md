@@ -103,12 +103,16 @@ PAYLOAD_ADMIN_PASSWORD=your-admin-password
 
 Get `DATABASE_URL` from the Supabase dashboard: Settings → Database → Connection string.
 
+> **`.env` points at the production database.** There is no local Postgres. `push: false` is set on the Postgres adapter, so `pnpm dev` cannot change the schema — apply changes with `pnpm payload migrate` instead. If a Payload prompt ever offers to push schema with a data-loss warning, do not accept it; stop and read it.
+
 ### Install and run
 
 ```bash
 pnpm install
 pnpm dev
 ```
+
+A dev server on this `.env` reads and writes live client data. Prefer a second Supabase project for development when the work involves schema or bulk updates.
 
 Open [http://localhost:3000](http://localhost:3000). First visit prompts for admin user creation.
 

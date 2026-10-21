@@ -4,6 +4,17 @@ Notable changes to `pp-v2`. Dates in YYYY-MM-DD.
 
 ## Unreleased
 
+### Schema push disabled in dev
+
+- `push: false` set on the Postgres adapter in `src/payload.config.ts`. Dev mode
+  no longer reconciles the database against the collection configs, so `next dev`
+  can no longer drop tables. It did on 2026-10-21: it detected
+  `clients_consent_snapshot_20261021` as an unmanaged table, showed a
+  `DATA LOSS WARNING`, and deleted it once the prompt was accepted.
+- Schema changes now happen only through `payload migrate`. If a collection is
+  edited without a migration, the running app will read a column the database
+  does not have, so writing the migration is required rather than optional.
+
 ### Brevo client export + marketing status
 
 - New `GET /api/dashboard/export/clients` returns a Brevo-shaped CSV
