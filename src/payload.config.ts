@@ -17,13 +17,55 @@ import { Media } from "./collections/Media";
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
+/**
+ * Origins allowed to make credentialed requests (Payload CSRF and CORS).
+ *
+ * Payload rejects the auth cookie when a request's `Origin` is absent from
+ * `csrf`. Navigation sends no Origin (so SSR authenticates) while `fetch` always
+ * does, which is why a missing origin looks like "the dashboard loads but
+ * nothing saves".
+ *
+ * Two behaviours make this easy to get wrong:
+ *  - An EMPTY list means "no restriction" (`csrf.length === 0` in extractJWT).
+ *  - Payload appends `serverURL` only when it is non-empty.
+ *
+ * So a deployment with `SERVER_URL` unset used to run unrestricted, until
+ * localhost origins made the list non-empty and the check strict - at which
+ * point production writes were silently rejected. The production origin is
+ * therefore listed explicitly: one missing env var must never be able to break
+ * every client-side write.
+ */
+const ALLOWED_ORIGINS = Array.from(
+  new Set(
+    [
+      process.env.SERVER_URL,
+      ...(process.env.EXTRA_ORIGINS ?? "").split(","),
+      "https://portal.petportraits.ink",
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://localhost:3002",
+      "http://127.0.0.1:3000",
+      "http://127.0.0.1:3001",
+      "http://127.0.0.1:3002",
+    ]
+      .map((origin) => origin?.trim())
+      .filter((origin): origin is string => Boolean(origin)),
+  ),
+);
+
+if (process.env.NODE_ENV === "production" && !process.env.SERVER_URL) {
+  // Loud but non-fatal: CSRF still works from the explicit list, but absolute
+  // URLs (password resets, admin redirects) will be wrong without this.
+  console.warn(
+    "[payload.config] SERVER_URL is not set. Absolute URLs will be relative. " +
+      "Set it to the deployment origin, e.g. https://portal.petportraits.ink",
+  );
+}
+
 export default buildConfig({
   serverURL: process.env.SERVER_URL || "",
-  // CSRF whitelist: fetch POSTs carry an Origin header, and the auth cookie is
-  // rejected unless that origin is listed. Navigation requests send no Origin,
-  // which is why SSR pages authenticated fine while client fetches 401'd.
-  csrf: [process.env.SERVER_URL || "", "http://localhost:3000", "http://localhost:3001"],
-  cors: [process.env.SERVER_URL || "", "http://localhost:3000", "http://localhost:3001"],
+  csrf: ALLOWED_ORIGINS,
+  cors: ALLOWED_ORIGINS,
   admin: {
     user: Users.slug,
     importMap: {

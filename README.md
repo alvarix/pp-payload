@@ -181,11 +181,12 @@ Deployed to Vercel at `portal.petportraits.ink`, backed by Supabase Postgres + S
 |---|---|
 | `DATABASE_URL` | Supabase pooler URL, port 5432 |
 | `PAYLOAD_SECRET` | Session signing key |
+| `SERVER_URL` | Public origin, e.g. `https://portal.petportraits.ink`. Exact match, no trailing slash. Required: it feeds CSRF/CORS and absolute URLs (password resets, admin redirects). If unset, the app logs a warning at boot and falls back to the explicit origin list in `src/payload.config.ts`. |
 | `STRIPE_SECRET_KEY` | LIVE mode key. Use a dedicated key (separate from any other Stripe consumer like WordPress) so blast radius is contained on rotation. |
 | `SUPABASE_S3_ENDPOINT`, `SUPABASE_S3_REGION`, `SUPABASE_S3_BUCKET` | S3-compatible storage config |
 | `SUPABASE_S3_ACCESS_KEY_ID`, `SUPABASE_S3_SECRET_ACCESS_KEY` | S3 credentials |
 
-For the full pre/post-launch checklist and known risks, see [`docs/launch-checklist-2026-04-24.md`](docs/launch-checklist-2026-04-24.md).
+For the full pre/post-launch checklist and known risks, see [`docs/09--launch-checklist-2026-04-24.md`](docs/09--launch-checklist-2026-04-24.md).
 
 ### Supabase free tier limits
 

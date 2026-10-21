@@ -4,6 +4,22 @@ Notable changes to `pp-v2`. Dates in YYYY-MM-DD.
 
 ## Unreleased
 
+### Client-side writes no longer depend on SERVER_URL
+
+- `csrf`/`cors` are now built from one `ALLOWED_ORIGINS` list containing
+  `SERVER_URL`, any comma-separated `EXTRA_ORIGINS`, the production origin
+  `https://portal.petportraits.ink`, and localhost/127.0.0.1 on ports 3000-3002.
+- Root cause of the 2026-10-21 status-change 401: Payload treats an **empty**
+  `csrf` list as "no restriction" (`csrf.length === 0`), and appends `serverURL`
+  only when it is non-empty. Production had `SERVER_URL` unset, so the list was
+  empty and the check was effectively off. Adding the localhost origins made the
+  list non-empty, the check strict, and production `fetch` was rejected while SSR
+  kept working. A missing env var must not be able to do that again.
+- Production boot now logs a warning when `SERVER_URL` is unset, because absolute
+  URLs stay broken without it even though CSRF no longer depends on it.
+- README lists `SERVER_URL` in the Vercel environment table; it was previously
+  documented only in `.env.example`.
+
 ### Client data removed from git history
 
 Five tracked files containing client and organization contact data were removed
