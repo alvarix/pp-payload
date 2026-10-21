@@ -48,7 +48,7 @@ Known debt carried into Phase 2:
 
 ## Phase 2 — configurable export
 
-### 2.1 Configurable export (no LLM, do this first)
+### 2.1 Configurable export
 
 The route currently hardcodes eight columns. Replace the hardcoded array with a **column registry**: each entry declares a header, how to read the value, and the query parameter that enables it.
 
@@ -68,7 +68,7 @@ Parameters, all optional, all server-validated against the registry:
 | `since=YYYY-MM-DD` | only clients with a job on or after the date | bad date → 400 |
 | `only=repeat\|new\|none` | derived from the job count already computed | unknown value → 400 |
 
-Why the registry matters: it is the seam that makes both the UI and the LLM step cheap. `include` is a whitelist, so neither a checkbox nor a model can invent a column or reach a field outside the declared list.
+Why the registry matters: it is the seam that makes any future UI cheap, and `include` is a whitelist, so a checkbox cannot invent a column or reach a field outside the declared list.
 
 Add `last_order_date` and `order_count` while the aggregate query is already being run — they cost nothing extra and are the two most useful segmentation columns.
 
