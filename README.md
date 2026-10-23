@@ -81,7 +81,7 @@ Background and ongoing risks: [`docs/000--concern--where-the-data-lives.md`](doc
 | Styling | Tailwind CSS 4 |
 | Rich text | Lexical |
 | Language | TypeScript 5.7 |
-| Runtime | Node 20+ |
+| Runtime | Node 22+ (`.nvmrc` pins 22; Vercel runs 24.x) |
 | Package manager | pnpm 9+ |
 
 ## Local setup

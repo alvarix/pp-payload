@@ -4,6 +4,23 @@ Notable changes to `pp-v2`. Dates in YYYY-MM-DD.
 
 ## Unreleased
 
+### Node runtime pin moved off EOL Node 18
+
+- Investigation of a Stripe "outdated Node.js" telemetry notice. Verified with
+  `vercel inspect --json` that the pp-payload production deployment runs
+  `nodejs24.x` and has for 39+ days, so production was never the source. The
+  account's other traffic is Ruby (PocketVendor POS), browser (Stripe.js), and
+  PHP (WordPress) — no Node 18 caller was ever identified. Notice left
+  unresolved; reply to Stripe asking for the triggering request ID if it
+  recurs.
+- `.nvmrc` changed `18` → `22`. The old value came from the Payload starter
+  template (written 2026-01) and would put anyone running `nvm use` in this
+  directory onto Node 18.20.8, EOL since 2025-04-30.
+- `engines.node` changed `^18.20.2 || >=20.9.0` → `^22.0.0 || ^24.0.0`. Node 24
+  is included because the Vercel project setting is 24.x; restricting to 22
+  would have contradicted the deployed runtime.
+- `package-lock.json` (gitignored, stale npm-era artifact) was left untouched.
+
 ### Client-side writes no longer depend on SERVER_URL
 
 - `csrf`/`cors` are now built from one `ALLOWED_ORIGINS` list containing
