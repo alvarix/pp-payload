@@ -143,6 +143,36 @@ describe("sendIntakeNotification", () => {
 		expect(html.indexOf("View record")).toBeLessThan(html.indexOf("<img"));
 	});
 
+	it("wraps each photo preview in an anchor linking to the image", async () => {
+		await sendIntakeNotification({
+			clientName: "Jane Doe",
+			email: "jane@example.com",
+			petName: "Buddy",
+			jobId: 42,
+			petPicUrls: ["/api/media/file/pic1.png"],
+		});
+
+		const html = getSentHtmlContent();
+		expect(html).toContain(
+			'<a href="https://portal.petportraits.ink/api/media/file/pic1.png"><img src="https://portal.petportraits.ink/api/media/file/pic1.png"',
+		);
+	});
+
+	it("anchors the photo preview to the same URL used in the links", async () => {
+		await sendIntakeNotification({
+			clientName: "Jane Doe",
+			email: "jane@example.com",
+			petName: "Buddy",
+			jobId: 42,
+			petPicUrls: ["/api/media/file/pic1.png"],
+		});
+
+		const html = getSentHtmlContent();
+		const hrefs = [...html.matchAll(/<a href="([^"]+)"/g)].map((m) => m[1]);
+		// Photo link appears as a text hyperlink and as the image anchor
+		expect(hrefs.filter((h) => h.endsWith("pic1.png"))).toHaveLength(2);
+	});
+
 	it("omits HTML images when there are no pet photos", async () => {
 		await sendIntakeNotification({
 			clientName: "Jane Doe",
