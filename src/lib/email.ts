@@ -117,7 +117,7 @@ export async function sendIntakeNotification(opts: {
 		petPicUrls.forEach((url, i) => {
 			const abs = toAbsoluteUrl(url);
 			html.push(
-				`<img src="${abs}" alt="Pet photo ${i + 1}" style="max-width: 480px; display: block; margin: 8px 0;" />`,
+				`<a href="${abs}"><img src="${abs}" alt="Pet photo ${i + 1}" style="max-width: 480px; display: block; margin: 8px 0; border: 0;" /></a>`,
 			);
 		});
 	}
