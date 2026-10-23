@@ -81,6 +81,9 @@ importers:
       '@types/node':
         specifier: ^22.5.4
         version: 22.19.7
+      '@types/pg':
+        specifier: 8.10.2
+        version: 8.10.2
       '@types/react':
         specifier: 19.2.1
         version: 19.2.1
@@ -99,6 +102,9 @@ importers:
       jsdom:
         specifier: 26.1.0
         version: 26.1.0
+      pg:
+        specifier: 8.16.3
+        version: 8.16.3
       playwright:
         specifier: 1.56.1
         version: 1.56.1

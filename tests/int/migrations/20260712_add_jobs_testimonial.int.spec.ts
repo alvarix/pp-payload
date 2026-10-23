@@ -13,16 +13,26 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { readFileSync } from "fs";
 import { resolve } from "path";
+import dotenv from "dotenv";
 import pg from "pg";
 
 const { Pool } = pg;
 
+/**
+ * Resolve DATABASE_URL from `.env`.
+ *
+ * Uses dotenv's parser rather than a regex because `.env` contains disabled
+ * entries such as `#DATABASE_URL=...` above the live one; a loose regex matched
+ * the commented line first and the suite tried to connect to localhost:5432.
+ * dotenv skips comment lines and strips surrounding quotes.
+ *
+ * @returns The connection string, or null when `.env` has no usable entry.
+ */
 function loadDbUrl(): string | null {
 	try {
 		const envPath = resolve(process.cwd(), ".env");
-		const env = readFileSync(envPath, "utf8");
-		const match = env.match(/DATABASE_URL\s*=\s*(.+)/);
-		return match ? match[1].trim() : null;
+		const parsed = dotenv.parse(readFileSync(envPath, "utf8"));
+		return parsed.DATABASE_URL?.trim() || null;
 	} catch {
 		return null;
 	}

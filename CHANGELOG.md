@@ -4,6 +4,28 @@ Notable changes to `pp-v2`. Dates in YYYY-MM-DD.
 
 ## Unreleased
 
+### Install and typecheck gates repaired
+
+- `pnpm install --frozen-lockfile` was failing with `ERR_PNPM_IGNORED_BUILDS`
+  (esbuild, sharp, unrs-resolver). pnpm 12 no longer reads
+  `package.json#pnpm.onlyBuiltDependencies`, so the allowlist was dead config.
+  Approvals now live in `pnpm-workspace.yaml` under `allowBuilds:`, and the
+  obsolete `package.json#pnpm` block was removed. A clean install exits 0.
+- `pg` 8.16.3 and `@types/pg` 8.10.2 added as devDependencies. This closes the
+  long-standing `tsc --noEmit` error `Cannot find module 'pg'` in
+  `tests/int/migrations/20260712_add_jobs_testimonial.int.spec.ts`, so typecheck
+  is now a usable gate instead of permanently red.
+- That migration spec had a second, hidden defect: `loadDbUrl()` matched
+  `DATABASE_URL` with a loose regex, which hit the **commented** `#DATABASE_URL=`
+  line at the top of `.env` and therefore tried to connect to
+  `127.0.0.1:5432` (`ECONNREFUSED`). It now parses `.env` with `dotenv.parse`,
+  which skips comments and strips quotes. The suite creates and drops its own
+  `migration_test_20260712` table on whatever `DATABASE_URL` points at; no
+  production table is touched and no rows are read or written outside it.
+- Verified: `pnpm install --frozen-lockfile` exit 0, `tsc --noEmit` exit 0,
+  `pnpm run test:int` 119/119 across 12 files, and the scratch table is gone
+  afterwards.
+
 ### Node runtime pin moved off EOL Node 18
 
 - Investigation of a Stripe "outdated Node.js" telemetry notice. Verified with
