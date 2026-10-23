@@ -19,6 +19,41 @@ Nothing here is being done. It is a "should we, and what would it cost" document
 
 **The one thing to remember:** Resend is speculative. This document is a map for a trip you have not decided to take.
 
+## Musings: what can be gained (2026-10-21, same-day addendum)
+
+Recorded after revisiting this against the *actual* current workflow: export contacts from the CRM, import into Brevo, compose and send in Brevo's web interface, export the bounce/unsub CSV, paste back through the org-import screen.
+
+**Directional lean, updated:** the overhead is too great for a speculative benefit. Nothing below overrides that; it exists so the reasoning survives even if the conclusion is revisited later.
+
+### What the plugin would actually buy
+
+1. **Audience as live CRM truth.** The single thing Brevo structurally cannot do: segment from real CRM data — "completed a job in the last 12 months", "two or more past orders", "never reordered". Today every eblast goes to a frozen snapshot of whoever was in the last export. This is the only pro that is *inherently* impossible without the migration.
+2. **Closed feedback loop.** Bounce/unsub webhooks write back automatically. The CSV export-import ritual disappears (concern 10 in the ranked table).
+3. **Per-client send history.** "When did we last email this person" becomes queryable in the CRM record.
+4. **One system.** No Brevo account, no second vendor, no third admin UI.
+
+### What weighs against it
+
+1. **The hard part is already solved, by Brevo.** Brevo's web editor is a mature campaign composer. The plugin's Lexical authoring is worse for newsletter layouts. The plugin's headline feature — authoring — is the one Brevo does better, which inverts the usual build-vs-buy logic.
+   *Correction (same-day, from Alvar):* eblast HTML is composed by hand; no Brevo builder is used. The editor comparison is therefore moot in both directions — neither system's authoring surface has any value here, which strengthens the lean rather than weakening it.
+2. **Volume math.** A handful of eblasts a year means the export/import friction costs a few hours annually. The migration costs 10-15 h of build plus a *permanent* operational surface: cron, webhook ingest, idempotency, unsubscribe endpoint, retention pruning. Fixed cost against trivial recurring cost.
+3. **The risk buys nothing today.** A live-Postgres schema migration for four new collections, on speculative benefit, is precisely the wrong-path risk.
+4. **Cold deliverability.** Brevo's domain reputation is warm. Resend starts at zero (concern 12).
+5. **The strongest pro does not need Resend.** `marketing_status` plus a tighter export/import path captures most of the feedback-loop value inside the Brevo workflow (see the independent justification above).
+6. **The one concrete trigger duplicates Stripe.** A post-purchase auto-email is ~an invoice Stripe already sends.
+
+### Outside-the-box alternatives that avoid the plugin entirely
+
+- **The 80/20 move:** keep Brevo; add a one-click "export subscribed clients" button in the dashboard (filtering `marketing_status` once it exists) and auto-import the bounce CSV rather than pasting. Kills most of the friction for roughly two hours of work. No plugin, no migration.
+- **Transactional moments without the plugin:** the email Stripe does *not* send is the review request, the "your portrait is finished" note, the one-year reorder nudge. If ever wanted, that is plain `resend` SDK behind a module, ~50 lines, no collections, no cron. It never needs this plugin.
+- **Segments without Resend:** saved-segment filters on the export screen give "holiday eblast: past clients only" as a one-click CSV — which is the actual action, not in-Payload sending.
+
+### The reframe worth keeping
+
+The plumbing was never the value — the email content is. Neither Brevo nor the plugin writes a better eblast. Any decision here should be triggered by a *content* need ("I want to send X to Y and currently cannot"), never by a plumbing need. As of today no such content need exists that Brevo cannot serve.
+
+**Revisit trigger:** the first time a wanted eblast genuinely cannot be targeted from CRM data through the export path, or the third time the CSV round trip causes a real mistake (double-email, missed unsubscribe).
+
 ## Speculative status
 
 Everything here is contingent on a decision you have not made. Treat it as a map of the territory, not a plan of record.
