@@ -44,6 +44,9 @@ function escapeHtml(s: string): string {
  * @param opts.jobType - Order type (street or studio)
  * @param opts.petPicUrls - Direct URLs to uploaded pet photos
  * @param opts.partial - When true, prefixes subject with [partial]
+ * @param opts.referral - Referral source (e.g. Instagram)
+ * @param opts.deliveryMethod - pickup or delivery
+ * @param opts.shippingAddress - Full shipping address when delivery
  */
 export async function sendIntakeNotification(opts: {
 	clientName: string;
@@ -53,9 +56,29 @@ export async function sendIntakeNotification(opts: {
 	jobType?: string | null;
 	petPicUrls?: string[];
 	partial?: boolean;
+	referral?: string | null;
+	deliveryMethod?: "pickup" | "delivery" | null;
+	shippingAddress?: {
+		line1: string;
+		line2?: string;
+		city: string;
+		state: string;
+		postal_code: string;
+		country: string;
+	} | null;
 }) {
-	const { clientName, email, petName, jobId, jobType, petPicUrls, partial } =
-		opts;
+	const {
+		clientName,
+		email,
+		petName,
+		jobId,
+		jobType,
+		petPicUrls,
+		partial,
+		referral,
+		deliveryMethod,
+		shippingAddress,
+	} = opts;
 	const jobUrl = `https://portal.petportraits.ink/admin/collections/jobs/${jobId}`;
 	const subject = partial
 		? `[partial] New intake: ${petName} (${clientName})`
@@ -66,6 +89,13 @@ export async function sendIntakeNotification(opts: {
 			? "Street"
 			: jobType === "studio"
 				? "Studio"
+				: "(not set)";
+
+	const deliveryLabel =
+		deliveryMethod === "pickup"
+			? "Pickup"
+			: deliveryMethod === "delivery"
+				? "Delivery"
 				: "(not set)";
 
 	const headerLine = partial
@@ -79,7 +109,19 @@ export async function sendIntakeNotification(opts: {
 		`Email:  ${email}`,
 		`Pet:    ${petName}`,
 		`Type:   ${typeLabel}`,
+		`Delivery: ${deliveryLabel}`,
+		`Referral: ${referral ?? "(none)"}`,
 	];
+
+	if (shippingAddress && deliveryMethod === "delivery") {
+		lines.push("", "Shipping Address:");
+		lines.push(`  ${shippingAddress.line1}`);
+		if (shippingAddress.line2) lines.push(`  ${shippingAddress.line2}`);
+		lines.push(
+			`  ${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.postal_code}`,
+		);
+		if (shippingAddress.country) lines.push(`  ${shippingAddress.country}`);
+	}
 
 	if (petPicUrls && petPicUrls.length > 0) {
 		lines.push("", "Pet Photos:");
@@ -93,11 +135,25 @@ export async function sendIntakeNotification(opts: {
 	// HTML variant — same text with clickable links, then images rendered after.
 	const html: string[] = [
 		`<p>${escapeHtml(headerLine)}</p>`,
-		`<p>Client: ${escapeHtml(clientName)}<br>`,
-		`Email: ${escapeHtml(email)}<br>`,
-		`Pet: ${escapeHtml(petName)}<br>`,
-		`Type: ${escapeHtml(typeLabel)}</p>`,
+		`<p><strong>${escapeHtml(clientName)}</strong><br>`,
+		`Email: <a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a><br>`,
+		`Pet: ${escapeHtml(petName)}</p>`,
+		`<p>Type: <strong>${escapeHtml(typeLabel)}</strong><br>`,
+		`Delivery: <strong>${escapeHtml(deliveryLabel)}</strong><br>`,
+		`Referral: <strong>${escapeHtml(referral ?? "(none)")}</strong></p>`,
 	];
+
+	if (shippingAddress && deliveryMethod === "delivery") {
+		html.push(
+			`<p><strong>${escapeHtml(shippingAddress.line1)}</strong>`,
+		);
+		if (shippingAddress.line2) html.push(`${escapeHtml(shippingAddress.line2)} <br>`);
+		html.push(
+			`${escapeHtml(shippingAddress.city)}, ${escapeHtml(shippingAddress.state)} ${escapeHtml(shippingAddress.postal_code)}`,
+		);
+		if (shippingAddress.country) html.push(`${escapeHtml(shippingAddress.country)}`);
+		html.push("</p>");
+	}
 
 	if (petPicUrls && petPicUrls.length > 0) {
 		html.push("<p>Pet Photos:</p>", "<ul>");
@@ -130,6 +186,7 @@ export async function sendIntakeNotification(opts: {
 		},
 		body: JSON.stringify({
 			sender: SENDER,
+			replyTo: { email, name: clientName },
 			to: [{ email: ADMIN_EMAIL }],
 			subject,
 			textContent: lines.join("\n"),
@@ -178,6 +235,7 @@ export async function sendPosIntakeNotification(opts: {
 		},
 		body: JSON.stringify({
 			sender: SENDER,
+			replyTo: { email, name: "POS Customer" },
 			to: [{ email: ADMIN_EMAIL }],
 			subject: `[POS] New sale: ${email} — $${amount}`,
 			textContent: [

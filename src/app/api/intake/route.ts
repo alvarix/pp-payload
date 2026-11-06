@@ -210,6 +210,9 @@ export async function POST(request: NextRequest) {
 				jobType: stripeAutoFill?.jobType,
 				petPicUrls: petPicUrls.length > 0 ? petPicUrls : undefined,
 				partial: isPartial,
+				referral: (formData.get("referral") as string) || undefined,
+				deliveryMethod: stripeAutoFill?.deliveryMethod,
+				shippingAddress: shippingAddress || undefined,
 			});
 		} catch (emailErr) {
 			console.error("Intake notification email failed:", emailErr);

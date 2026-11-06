@@ -19,6 +19,11 @@ beforeEach(() => {
 	mockFetch.mockResolvedValue({ ok: true });
 });
 
+function getSentBody(): Record<string, unknown> {
+	const call = mockFetch.mock.calls[0];
+	return JSON.parse(call[1].body);
+}
+
 function getSentTextContent(): string {
 	const call = mockFetch.mock.calls[0];
 	const body = JSON.parse(call[1].body);
@@ -173,6 +178,154 @@ describe("sendIntakeNotification", () => {
 		expect(hrefs.filter((h) => h.endsWith("pic1.png"))).toHaveLength(2);
 	});
 
+	it("sets replyTo to the client's email", async () => {
+		await sendIntakeNotification({
+			clientName: "Jane Doe",
+			email: "jane@example.com",
+			petName: "Buddy",
+			jobId: 42,
+		});
+
+		const body = getSentBody();
+		expect(body.replyTo).toEqual({
+			email: "jane@example.com",
+			name: "Jane Doe",
+		});
+	});
+
+	it("renders email as a mailto link in HTML", async () => {
+		await sendIntakeNotification({
+			clientName: "Jane Doe",
+			email: "jane@example.com",
+			petName: "Buddy",
+			jobId: 42,
+		});
+
+		const html = getSentHtmlContent();
+		expect(html).toContain(
+			'<a href="mailto:jane@example.com">jane@example.com</a>',
+		);
+	});
+
+	it("includes referral in text and HTML", async () => {
+		await sendIntakeNotification({
+			clientName: "Jane Doe",
+			email: "jane@example.com",
+			petName: "Buddy",
+			jobId: 42,
+			referral: "Instagram",
+		});
+
+		const text = getSentTextContent();
+		expect(text).toContain("Referral: Instagram");
+
+		const html = getSentHtmlContent();
+		expect(html).toContain("Referral: <strong>Instagram</strong>");
+	});
+
+	it("shows (none) when referral is absent", async () => {
+		await sendIntakeNotification({
+			clientName: "Jane Doe",
+			email: "jane@example.com",
+			petName: "Buddy",
+			jobId: 42,
+		});
+
+		const text = getSentTextContent();
+		expect(text).toContain("Referral: (none)");
+	});
+
+	it("includes delivery method", async () => {
+		await sendIntakeNotification({
+			clientName: "Jane Doe",
+			email: "jane@example.com",
+			petName: "Buddy",
+			jobId: 42,
+			deliveryMethod: "delivery",
+		});
+
+		const text = getSentTextContent();
+		expect(text).toContain("Delivery: Delivery");
+
+		const html = getSentHtmlContent();
+		expect(html).toContain("Delivery: <strong>Delivery</strong>");
+	});
+
+	it("shows shipping address in text and HTML when delivery", async () => {
+		await sendIntakeNotification({
+			clientName: "Jane Doe",
+			email: "jane@example.com",
+			petName: "Buddy",
+			jobId: 42,
+			deliveryMethod: "delivery",
+			shippingAddress: {
+				line1: "123 Main St",
+				city: "New York",
+				state: "NY",
+				postal_code: "10001",
+				country: "USA",
+			},
+		});
+
+		const text = getSentTextContent();
+		expect(text).toContain("Shipping Address:");
+		expect(text).toContain("  123 Main St");
+		expect(text).toContain("  New York, NY 10001");
+		expect(text).toContain("  USA");
+
+		const html = getSentHtmlContent();
+		expect(html).toContain("123 Main St");
+		expect(html).toContain("New York, NY 10001");
+		expect(html).toContain("USA");
+	});
+
+	it("omits shipping address when pickup", async () => {
+		await sendIntakeNotification({
+			clientName: "Jane Doe",
+			email: "jane@example.com",
+			petName: "Buddy",
+			jobId: 42,
+			deliveryMethod: "pickup",
+			shippingAddress: {
+				line1: "123 Main St",
+				city: "New York",
+				state: "NY",
+				postal_code: "10001",
+				country: "USA",
+			},
+		});
+
+		const text = getSentTextContent();
+		expect(text).not.toContain("Shipping Address:");
+
+		const html = getSentHtmlContent();
+		expect(html).not.toContain("123 Main St");
+	});
+
+	it("includes shipping address line2 when present", async () => {
+		await sendIntakeNotification({
+			clientName: "Jane Doe",
+			email: "jane@example.com",
+			petName: "Buddy",
+			jobId: 42,
+			deliveryMethod: "delivery",
+			shippingAddress: {
+				line1: "123 Main St",
+				line2: "Apt 4B",
+				city: "New York",
+				state: "NY",
+				postal_code: "10001",
+				country: "USA",
+			},
+		});
+
+		const text = getSentTextContent();
+		expect(text).toContain("Apt 4B");
+
+		const html = getSentHtmlContent();
+		expect(html).toContain("Apt 4B");
+	});
+
 	it("omits HTML images when there are no pet photos", async () => {
 		await sendIntakeNotification({
 			clientName: "Jane Doe",
@@ -243,6 +396,15 @@ describe("sendIntakeNotification", () => {
 			jobId: 99,
 			jobType: "studio",
 			petPicUrls: ["https://cdn.example.com/photo.png"],
+			referral: "Instagram",
+			deliveryMethod: "delivery",
+			shippingAddress: {
+				line1: "456 Oak Ave",
+				city: "Brooklyn",
+				state: "NY",
+				postal_code: "11201",
+				country: "USA",
+			},
 		});
 
 		const text = getSentTextContent();
@@ -250,6 +412,10 @@ describe("sendIntakeNotification", () => {
 		expect(text).toContain("Email:  john@example.com");
 		expect(text).toContain("Pet:    Luna");
 		expect(text).toContain("Type:   Studio");
+		expect(text).toContain("Delivery: Delivery");
+		expect(text).toContain("Referral: Instagram");
+		expect(text).toContain("Shipping Address:");
+		expect(text).toContain("456 Oak Ave");
 		expect(text).toContain("Pet Photos:");
 		expect(text).toContain("1. https://cdn.example.com/photo.png");
 		expect(text).toContain("jobs/99");
@@ -330,5 +496,20 @@ describe("sendPosIntakeNotification", () => {
 
 		expect(getSentSubject()).toContain("[POS]");
 		expect(getSentSubject()).toContain("$50.00");
+	});
+
+	it("sets replyTo to the client email", async () => {
+		await sendPosIntakeNotification({
+			email: "pos@example.com",
+			jobId: 10,
+			amountCents: 5000,
+			paymentIntentId: "pi_test",
+		});
+
+		const body = getSentBody();
+		expect(body.replyTo).toEqual({
+			email: "pos@example.com",
+			name: "POS Customer",
+		});
 	});
 });
