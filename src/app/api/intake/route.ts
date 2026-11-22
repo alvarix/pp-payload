@@ -211,6 +211,10 @@ export async function POST(request: NextRequest) {
 				petPicUrls: petPicUrls.length > 0 ? petPicUrls : undefined,
 				partial: isPartial,
 				referral: (formData.get("referral") as string) || undefined,
+				petBreed: (formData.get("pet_breed") as string) || undefined,
+				petSocialMedia: (formData.get("pet_social_media") as string) || undefined,
+				petPersonality: (formData.get("pet_personality") as string) || undefined,
+				jobNotes: notes,
 				deliveryMethod: stripeAutoFill?.deliveryMethod,
 				shippingAddress: shippingAddress || undefined,
 			});

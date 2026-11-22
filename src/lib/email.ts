@@ -45,6 +45,10 @@ function escapeHtml(s: string): string {
  * @param opts.petPicUrls - Direct URLs to uploaded pet photos
  * @param opts.partial - When true, prefixes subject with [partial]
  * @param opts.referral - Referral source (e.g. Instagram)
+ * @param opts.petBreed - Pet breed from the intake form
+ * @param opts.petSocialMedia - Pet's social media handle/URL; rendered as a link when it is a URL
+ * @param opts.petPersonality - Pet personality notes from the intake form
+ * @param opts.jobNotes - Client-submitted job notes
  * @param opts.deliveryMethod - pickup or delivery
  * @param opts.shippingAddress - Full shipping address when delivery
  */
@@ -57,6 +61,10 @@ export async function sendIntakeNotification(opts: {
 	petPicUrls?: string[];
 	partial?: boolean;
 	referral?: string | null;
+	petBreed?: string | null;
+	petSocialMedia?: string | null;
+	petPersonality?: string | null;
+	jobNotes?: string | null;
 	deliveryMethod?: "pickup" | "delivery" | null;
 	shippingAddress?: {
 		line1: string;
@@ -76,6 +84,10 @@ export async function sendIntakeNotification(opts: {
 		petPicUrls,
 		partial,
 		referral,
+		petBreed,
+		petSocialMedia,
+		petPersonality,
+		jobNotes,
 		deliveryMethod,
 		shippingAddress,
 	} = opts;
@@ -102,16 +114,31 @@ export async function sendIntakeNotification(opts: {
 		? "Partial intake received (photos pending via IG or email)."
 		: "New intake form received.";
 
+	// Only true URLs become links; bare handles (@pet) stay plain text.
+	const socialHtml = (() => {
+		if (!petSocialMedia) return "(not set)";
+		const url = petSocialMedia.match(/^https?:\/\/\S+$/i)?.[0];
+		if (url) return `<a href="${escapeHtml(url)}">${escapeHtml(url)}</a>`;
+		return escapeHtml(petSocialMedia);
+	})();
+
 	const lines: string[] = [
 		headerLine,
 		"",
 		`Client: ${clientName}`,
 		`Email:  ${email}`,
 		`Pet:    ${petName}`,
+		`Breed:  ${petBreed ?? "(not set)"}`,
+		`Social Media: ${petSocialMedia ?? "(not set)"}`,
+		`Personality: ${petPersonality ?? "(not set)"}`,
 		`Type:   ${typeLabel}`,
 		`Delivery: ${deliveryLabel}`,
 		`Referral: ${referral ?? "(none)"}`,
 	];
+
+	if (jobNotes) {
+		lines.push("", "Job Notes:", jobNotes);
+	}
 
 	if (shippingAddress && deliveryMethod === "delivery") {
 		lines.push("", "Shipping Address:");
@@ -137,11 +164,22 @@ export async function sendIntakeNotification(opts: {
 		`<p>${escapeHtml(headerLine)}</p>`,
 		`<p><strong>${escapeHtml(clientName)}</strong><br>`,
 		`Email: <a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a><br>`,
-		`Pet: ${escapeHtml(petName)}</p>`,
+		`Pet: ${escapeHtml(petName)}<br>`,
+		`Breed: ${escapeHtml(petBreed ?? "(not set)")}<br>`,
+		`Social Media: ${socialHtml}<br>`,
+		`Personality: ${escapeHtml(petPersonality ?? "(not set)")}</p>`,
 		`<p>Type: <strong>${escapeHtml(typeLabel)}</strong><br>`,
 		`Delivery: <strong>${escapeHtml(deliveryLabel)}</strong><br>`,
 		`Referral: <strong>${escapeHtml(referral ?? "(none)")}</strong></p>`,
 	];
+
+	if (jobNotes) {
+		// whitespace-pre-wrap keeps client line breaks without accepting markup
+		html.push(
+			"<p>Job Notes:</p>",
+			`<p style="white-space: pre-wrap;">${escapeHtml(jobNotes)}</p>`,
+		);
+	}
 
 	if (shippingAddress && deliveryMethod === "delivery") {
 		html.push(
