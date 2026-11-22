@@ -92,9 +92,10 @@ export async function sendIntakeNotification(opts: {
 		shippingAddress,
 	} = opts;
 	const jobUrl = `https://portal.petportraits.ink/admin/collections/jobs/${jobId}`;
-	const subject = partial
-		? `[partial] New intake: ${petName} (${clientName})`
-		: `New intake: ${petName} (${clientName})`;
+	// Studio jobs get a capitalized, type-prefixed subject for admin triage.
+	const subject = jobType === "studio"
+		? `${partial ? "[partial] " : ""}New Intake: STUDIO - ${petName} (${clientName})`
+		: `${partial ? "[partial] " : ""}New intake: ${petName} (${clientName})`;
 
 	const typeLabel =
 		jobType === "street"
