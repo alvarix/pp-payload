@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { extractPosPayment } from "../stripe-pos";
 import type Stripe from "stripe";
 
@@ -54,9 +54,7 @@ describe("extractPosPayment", () => {
     expect(extractPosPayment(pi)).toBeNull();
   });
 
-  it("returns null when no email is available and logs a warning", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
+  it("returns data with email null when no email is available (walk-up sale)", () => {
     const pi = makeCardPresentPI({
       receipt_email: null,
       latest_charge: {
@@ -65,12 +63,12 @@ describe("extractPosPayment", () => {
       },
     });
 
-    expect(extractPosPayment(pi)).toBeNull();
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("no email"),
-    );
-
-    warnSpy.mockRestore();
+    // Email-less sales are NO LONGER skipped — they capture against the
+    // shared walk-up placeholder client (see stripe-capture.ts). This was
+    // the root cause of the 2026-11 missing $163.31 Tap-to-Pay sale.
+    const result = extractPosPayment(pi);
+    expect(result).not.toBeNull();
+    expect(result?.email).toBeNull();
   });
 
   it("falls back to billing_details.email when receipt_email is null", () => {

@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionPrefill } from "@/lib/stripe";
 import { sendIntakeNotification } from "@/lib/email";
 import { findOrCreateClient } from "@/lib/findOrCreateClient";
+import { findJobByStripeIds } from "@/lib/stripe-capture";
 
 export async function POST(request: NextRequest) {
 	const isPartial = request.nextUrl?.searchParams?.get("partial") === "1";
@@ -128,7 +129,16 @@ export async function POST(request: NextRequest) {
 				}
 			: undefined;
 
-		// -- Create job -----------------------------------------------------------
+		// -- Create job (or reconcile onto the webhook stub) ---------------------
+		// If a Stripe webhook (POS or checkout) already created a stub Job for
+		// this payment, the form submission UPDATES that stub instead of
+		// creating a second Job — pets, notes and referral land on the same
+		// record the webhook made.
+		const existingJob = await findJobByStripeIds(payload, {
+			paymentIntentId: stripe?.paymentIntentId,
+			checkoutSessionId: stripe?.sessionId,
+		});
+
 		const petSex = formData.get("pet_sex") as string;
 		const sex: "male" | "female" | "unknown" =
 			petSex === "male" || petSex === "female" || petSex === "unknown"
@@ -145,11 +155,9 @@ export async function POST(request: NextRequest) {
 			? `[partial submit: photos pending — client to send via IG/email]${baseNotes ? `\n${baseNotes}` : ""}`
 			: baseNotes;
 
-		const job = await payload.create({
-			collection: "jobs",
-			data: {
-				client: client.id,
-				status: "intake_received",
+		const jobData = {
+			client: client.id,
+			status: "intake_received" as const,
 				job_type: stripeAutoFill?.jobType,
 				delivery_method: stripeAutoFill?.deliveryMethod,
 				referral: (formData.get("referral") as string) || undefined,
@@ -162,8 +170,8 @@ export async function POST(request: NextRequest) {
 				stripe_amount_paid_cents: stripe?.amountPaidCents,
 				stripe_currency: stripe?.currency,
 				stripe_payment_status: isStripePaymentStatus(stripe?.paymentStatus)
-					? stripe?.paymentStatus
-					: undefined,
+				? (stripe?.paymentStatus as "paid" | "unpaid" | "no_payment_required")
+				: undefined,
 				stripe_amount_discount_cents: stripe?.amountDiscountCents ?? 0,
 				stripe_amount_tax_cents: stripe?.amountTaxCents ?? 0,
 				stripe_discount_codes:
@@ -182,8 +190,16 @@ export async function POST(request: NextRequest) {
 						pics: uploadedPicIds,
 					},
 				],
-			},
-		});
+			};
+
+		// Reconcile: if a Stripe webhook (POS or checkout) already created a stub
+		// Job for this payment, update it in place — pets, notes, referral and
+		// the real client link land on the existing record. `client` is included
+		// in the update data so a walk-up placeholder link is replaced by the
+		// real client the form just found/created by email.
+		const job = existingJob
+			? await payload.update({ collection: "jobs", id: existingJob.id, data: jobData })
+			: await payload.create({ collection: "jobs", data: jobData });
 
 		try {
 			// Resolve uploaded pet photo URLs for the notification

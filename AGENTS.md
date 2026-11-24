@@ -1170,3 +1170,14 @@ Do not mint numbers. A doc number identifies a **scope**, and assigning scopes i
 Ongoing risks that outlive any single feature — where data lives, vendor dependencies, sync gaps — do not belong to a spec scope. They go in `docs/000--concern--<slug>.md`.
 
 Every concern doc shares the number `000` and differs by slug, so nothing ever increments and the series cannot collide with the numbered spec series. Numbered concerns inside the doc are plain table rows (`1`, `2`, `3`), referenced as "concern 3", so adding one never renumbers the others.
+
+### Confidence assessment is mandatory on major changes
+
+Every major change MUST end its spec doc (`N--llm--*.md`) with a **confidence
+assessment** section: the degree of confidence it will not break or disrupt
+existing systems (with the evidence — which suites ran, which were skipped and
+why), ranked possible points of failure from most to least likely, and a
+recovery step for each. State what the change does not touch. Assumed vs.
+verified must be distinguishable at a glance. Established 2026-11-22 (doc 23);
+the global version of this rule belongs in `~/Sites/AGENTS.md` — the agent
+sandbox cannot write there, so Alvar pastes it by hand.

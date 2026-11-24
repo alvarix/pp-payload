@@ -4,6 +4,46 @@ Notable changes to `pp-v2`. Dates in YYYY-MM-DD.
 
 ## Unreleased
 
+### Stripe capture completeness — every transaction enters the CRM
+
+Incident: `pi_3UeJm9KsvaxLGOVJ2nHV3Ojl` (USD 163.31, Tap-to-Pay key-in custom amount,
+no product) never produced a CRM record. Root cause was **not** the custom
+amount — the charge had no email and no customer attached, and every webhook
+path required an email. Full spec: `docs/023--llm--spec.md`.
+
+- New shared capture library `src/lib/stripe-capture.ts` —
+  `capturePaymentStub()` (dedupe by Stripe ids → find-or-create client → stub
+  Job), `findJobByStripeIds()`, `extractCaptureFromSession()`,
+  `resolveJobType()`, `resolveDeliveryMethod()`. Both webhooks and the intake
+  API route through it.
+- POS webhook no longer skips email-less card-present charges: they link to
+  one shared walk-up placeholder client (`pos-walkup@petportraits.ink`, forced
+to `marketing_consent: false`, `marketing_status: never_asked`,
+  `consent_basis: none`). A per-payment fake email would have fragmented the
+  CRM into unmergeable single-use clients.
+- New `POST /api/stripe/checkout` webhook (`STRIPE_CHECKOUT_WEBHOOK_SECRET`):
+  `checkout.session.completed` (paid only) → stub Job, `source: website`.
+  Closes the gap where a customer pays online but never submits the intake
+  form. Separate endpoint from POS so one can never break the other.
+- `POST /api/intake` reconciliation: a form submission for a payment that
+  already has a stub Job updates that Job in place (pets, notes, referral,
+  real client link) instead of creating a duplicate.
+- Migration `20261122_000000_unique_stripe_payment_intent`: unique index on
+  `jobs.stripe_payment_intent_id` — DB backstop for the webhook/form create
+  race; `capturePaymentStub()` catches 23505 and reports `duplicate: true`.
+- New `scripts/reconcile-stripe.mjs`: scans Stripe history for succeeded
+  charges, reports every one missing from the CRM, `--backfill` creates them
+  (dry-run default, `--pi=` for a single payment intent).
+- Unit tests: `stripe-pos.test.ts` updated (email-less charge now captures,
+  not skips) + new `stripe-capture.test.ts` — 15 passing.
+- `docs/023--llm--spec.md` + `docs/023--usr--spec.md` added; README API routes
+  section updated; `.env.example` gains `STRIPE_CHECKOUT_WEBHOOK_SECRET`.
+
+Manual steps still open (Alvar): Stripe webhook endpoint
+`/api/stripe/checkout` + secret in Vercel, backup + duplicate-check +
+`pnpm payload migrate`, `stripe trigger checkout.session.completed`
+verification, and the backfill of the missing $163.31.
+
 ### Install and typecheck gates repaired
 
 - `pnpm install --frozen-lockfile` was failing with `ERR_PNPM_IGNORED_BUILDS`

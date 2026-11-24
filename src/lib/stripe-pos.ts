@@ -4,9 +4,13 @@ import type Stripe from "stripe";
  * Unified shape returned by both extractPosPayment() and extractPosFromInvoice().
  * The route handler uses this to create a Client + Job stub regardless of which
  * Stripe event triggered the webhook.
+ *
+ * email may be null — email-less POS walk-up sales (e.g. Tap-to-Pay with a
+ * key-in custom amount and no customer attached) still capture a Job,
+ * linked to the shared walk-up placeholder client.
  */
 export interface PosPaymentData {
-  email: string;
+  email: string | null;
   amountCents: number;
   currency: string;
   paymentIntentId: string;
@@ -18,11 +22,14 @@ export interface PosPaymentData {
  * Extracts POS-relevant data from a Stripe PaymentIntent.
  *
  * Returns `null` when the charge is not card-present (i.e. not a Terminal
- * payment) or when no email is available — both cases should be silently
- * ignored by the webhook handler.
+ * payment). Email is optional: when absent (no receipt_email, no
+ * billing_details.email) the data is still returned with email === null —
+ * the webhook then captures the Job against the shared walk-up client.
+ * This is the fix for Tap-to-Pay key-in sales that previously produced no
+ * CRM record at all.
  *
  * @param pi - Fully-expanded PaymentIntent from Stripe (with latest_charge expanded)
- * @returns Extracted data object, or null if this is not a billable POS event
+ * @returns Extracted data object, or null if this is not a POS (card_present) charge
  */
 export function extractPosPayment(
   pi: Stripe.PaymentIntent & { latest_charge?: Stripe.Charge | null },
@@ -34,17 +41,10 @@ export function extractPosPayment(
     return null;
   }
 
-  // Email is required — skip and log if absent
+  // Email is optional — email-less sales link to the walk-up placeholder.
   const email =
     pi.receipt_email ??
     (charge?.billing_details?.email || null);
-
-  if (!email) {
-    console.warn(
-      `[stripe-pos] PaymentIntent ${pi.id} has no email — skipping record creation`,
-    );
-    return null;
-  }
 
   return {
     email,

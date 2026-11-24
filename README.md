@@ -61,7 +61,7 @@ Background and ongoing risks: [`docs/000--concern--where-the-data-lives.md`](doc
 
 ## API routes
 
-`POST /api/intake` - public intake form endpoint. Accepts client contact info, pet data, and photo uploads. Enforces 10MB per file, 10 files max, 70MB total. Add `?partial=1` to skip photo validation — creates the job anyway with a notes prefix indicating photos are pending via IG/email. Creates or updates the client by email and creates a job.
+`POST /api/intake` - public intake form endpoint. Accepts client contact info, pet data, and photo uploads. Enforces 10MB per file, 10 files max, 70MB total. Add `?partial=1` to skip photo validation — creates the job anyway with a notes prefix indicating photos are pending via IG/email. Creates or updates the client by email and creates a job. If a Stripe webhook already created a stub Job for this payment (by `stripe_payment_intent_id` / `stripe_checkout_session_id`), the submission updates that stub in place instead of creating a duplicate.
 
 `POST /api/intake/events` - unauthenticated telemetry endpoint. Accepts `{ type, sessionId, snapshot, error }` and creates a row in `intake-events`. Sends an alert email to Alvar for `submit_failed`, `validation_blocked` (≥30s with photo error), and `abandoned` events, deduped once per session per type. Always returns HTTP 200 so telemetry failures never block the form.
 
@@ -70,6 +70,12 @@ Background and ongoing risks: [`docs/000--concern--where-the-data-lives.md`](doc
 `POST /api/dashboard/org-actions` - auth-protected. Org actions: `set_status`, `set_fit_score`, `toggle_pinned`, `delete`.
 
 `GET /api/dashboard/export/clients` - auth-protected. Returns a Brevo-shaped CSV download (`text/csv`, `no-store`, UTF-8 without BOM, CRLF, RFC 4180 quoting, sorted by email). Query param `filter=sendable` restricts output to clients where `isSendable()` is true. Response headers `X-Total-Clients`, `X-Sendable-Clients` and `X-Rows-Exported` report counts. Paginates at 200 rows and refuses beyond 10,000 rather than timing out. Logic is shared with the `/dashboard/export/clients` page via `src/lib/client-export.ts`.
+
+`POST /api/stripe/pos` - Stripe Terminal / POS webhook (secret `STRIPE_POS_WEBHOOK_SECRET`). Handles `customer.updated`, `invoice.updated` (paid), and `payment_intent.succeeded`. Card-present charges without an email are captured against the shared walk-up placeholder client (`pos-walkup@petportraits.ink`, never marketing-mailable). Deduped by `stripe_payment_intent_id`.
+
+`POST /api/stripe/checkout` - Stripe online-payment webhook (secret `STRIPE_CHECKOUT_WEBHOOK_SECRET`). Handles `checkout.session.completed` (paid only) and creates a stub Client + Job with `source: website` — the backstop for customers who pay but never submit the intake form. Shares capture logic with the POS webhook via `src/lib/stripe-capture.ts`.
+
+`node scripts/reconcile-stripe.mjs` (CLI, not an HTTP route) - scans all Stripe succeeded charges, reports which have no matching Job, and with `--backfill` creates the missing records through the Payload REST API. Dry-run by default. See `docs/023--llm--spec.md`.
 
 ## Tech stack
 

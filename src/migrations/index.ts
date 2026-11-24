@@ -15,6 +15,7 @@ import * as migration_20260509_000000_add_intake_events from "./20260509_000000_
 import * as migration_20260603_000000_add_jobs_source from "./20260603_000000_add_jobs_source";
 import * as migration_20260712_000000_add_jobs_testimonial from "./20260712_000000_add_jobs_testimonial";
 import * as migration_20261021_000000_add_clients_marketing_status from "./20261021_000000_add_clients_marketing_status";
+import * as migration_20261122_000000_unique_stripe_payment_intent from "./20261122_000000_unique_stripe_payment_intent";
 
 export const migrations = [
 	{
@@ -101,5 +102,10 @@ export const migrations = [
 		up: migration_20261021_000000_add_clients_marketing_status.up,
 		down: migration_20261021_000000_add_clients_marketing_status.down,
 		name: "20261021_000000_add_clients_marketing_status",
+	},
+	{
+		up: migration_20261122_000000_unique_stripe_payment_intent.up,
+		down: migration_20261122_000000_unique_stripe_payment_intent.down,
+		name: "20261122_000000_unique_stripe_payment_intent",
 	},
 ];

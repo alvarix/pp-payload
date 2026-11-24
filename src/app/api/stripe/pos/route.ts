@@ -5,7 +5,7 @@ import configPromise from "@payload-config";
 import { getStripeClient } from "@/lib/stripe";
 import { extractPosPayment } from "@/lib/stripe-pos";
 import type { PosPaymentData } from "@/lib/stripe-pos";
-import { findOrCreateClient } from "@/lib/findOrCreateClient";
+import { capturePaymentStub, WALKUP_CLIENT_EMAIL } from "@/lib/stripe-capture";
 import { sendPosIntakeNotification } from "@/lib/email";
 
 /**
@@ -229,62 +229,37 @@ async function createPosRecord(data: PosPaymentData): Promise<NextResponse> {
 	try {
 		const payload = await getPayload({ config: configPromise });
 
-		// ── Dedup check ──────────────────────────────────────────────────────────
-		// Prevents duplicate Jobs when both invoice.updated and
-		// payment_intent.succeeded deliver for the same charge.
-		const existing = await payload.find({
-			collection: "jobs",
-			where: { stripe_payment_intent_id: { equals: data.paymentIntentId } },
-			limit: 1,
+		// Dedupe, client linking (walk-up placeholder when email === null) and
+		// Job stub creation all live in capturePaymentStub — shared with the
+		// checkout webhook so one payment can never produce two Jobs.
+		const { job, duplicate } = await capturePaymentStub(payload, {
+			email: data.email,
+			amountCents: data.amountCents,
+			currency: data.currency,
+			paymentIntentId: data.paymentIntentId,
+			customerId: data.customerId,
+			metadata: data.metadata,
+			source: "pos",
 		});
 
-		if (existing.totalDocs > 0) {
+		if (duplicate) {
 			console.log(
-				`[stripe-pos] Job already exists for PI ${data.paymentIntentId} — skipping duplicate`,
+				`[stripe-pos] Job ${job?.id} already exists for PI ${data.paymentIntentId} — skipping duplicate`,
 			);
 			return NextResponse.json({ received: true, duplicate: true });
 		}
 
-		// ── Find or create client ────────────────────────────────────────────────
-		const client = await findOrCreateClient(payload, { email: data.email });
-
-		// ── Create Job stub ──────────────────────────────────────────────────────
 		const jobType =
 			data.metadata?.job_type === "street" ||
 			data.metadata?.job_type === "studio"
 				? (data.metadata.job_type as "street" | "studio")
 				: undefined;
 
-		const job = await payload.create({
-			collection: "jobs",
-			data: {
-				client: client.id,
-				source: "pos",
-				status: "intake_received",
-				notes: "[POS sale — intake details pending]",
-				job_type: jobType,
-				stripe_payment_intent_id: data.paymentIntentId,
-				stripe_customer_id: data.customerId ?? undefined,
-				stripe_amount_paid_cents: data.amountCents,
-				stripe_currency: data.currency,
-				stripe_payment_status: "paid",
-				payment_methods: [
-					{
-						method: "pos",
-						amount: data.amountCents / 100,
-						date: new Date().toISOString(),
-					},
-				],
-				// pets is intentionally empty — POS stubs have no pet data yet
-				pets: [],
-			},
-		});
-
 		// ── Notify admin ─────────────────────────────────────────────────────────
 		try {
 			await sendPosIntakeNotification({
-				email: data.email,
-				jobId: job.id,
+				email: data.email ?? WALKUP_CLIENT_EMAIL,
+				jobId: job?.id ?? 0,
 				amountCents: data.amountCents,
 				paymentIntentId: data.paymentIntentId,
 				jobType,
@@ -295,10 +270,10 @@ async function createPosRecord(data: PosPaymentData): Promise<NextResponse> {
 		}
 
 		console.log(
-			`[stripe-pos] Created job ${job.id} for client ${client.id} (${data.email}) — ${data.amountCents} ${data.currency}`,
+			`[stripe-pos] Created job ${job?.id} (${data.email ?? WALKUP_CLIENT_EMAIL}) — ${data.amountCents} ${data.currency}`,
 		);
 
-		return NextResponse.json({ received: true, jobId: job.id });
+		return NextResponse.json({ received: true, jobId: job?.id });
 	} catch (err) {
 		console.error("[stripe-pos] Failed to create job:", err);
 		// Return 500 so Stripe retries the delivery
